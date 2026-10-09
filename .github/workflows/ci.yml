@@ -32,9 +32,13 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-      # The only network access: Python and the locked packages. No secrets, no paid services.
+      # The only network access: Python and the packages (locked, plus cffconvert). No secrets, no paid services.
       - name: Install
         run: uv sync --frozen
+
+      # cffconvert pins an older jsonschema than geoevals, so it runs in its own uvx environment.
+      - name: Validate CITATION.cff
+        run: uvx cffconvert==2.0.0 --validate -i CITATION.cff
 
       - name: Ruff lint
         run: uv run --frozen ruff check .

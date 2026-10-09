@@ -7,6 +7,7 @@ import subprocess
 from pathlib import Path
 
 import pytest
+import yaml
 
 REPO = Path(__file__).parent.parent
 README = REPO / "README.md"
@@ -19,6 +20,17 @@ REQUIRED_DOCS = [
     "benchmark-authoring.md",
     "reproducibility.md",
     "human-context.md",
+]
+
+GOVERNANCE_FILES = [
+    "CONTRIBUTING.md",
+    "CODE_OF_CONDUCT.md",
+    "SECURITY.md",
+    "CITATION.cff",
+    ".github/ISSUE_TEMPLATE/bug_report.md",
+    ".github/ISSUE_TEMPLATE/benchmark_proposal.md",
+    ".github/ISSUE_TEMPLATE/new_adapter.md",
+    ".github/pull_request_template.md",
 ]
 
 MAX_QUICKSTART_COMMANDS = 3
@@ -38,7 +50,9 @@ BRITISH_SPELLINGS = re.compile(
 
 
 def _markdown_files() -> list[Path]:
-    files = [README, *sorted((REPO / "docs").glob("*.md"))]
+    files = [README, *(REPO / name for name in GOVERNANCE_FILES if name.endswith(".md"))]
+    files += sorted((REPO / ".github").glob("**/*.md"))
+    files += sorted((REPO / "docs").glob("*.md"))
     files += sorted((REPO / "benchmarks").glob("*/README.md"))
     files += sorted((REPO / "datasets").glob("**/*.md"))
     return files
@@ -69,6 +83,41 @@ def test_benchmark_authoring_has_the_definition_of_done_and_worked_example() -> 
     assert "## Definition of done" in text
     assert "## Worked example" in text
     assert text.count("| ☐ |") == 10, "Appendix A of the kickoff plan has 10 items"
+
+
+def test_governance_files_exist() -> None:
+    for name in GOVERNANCE_FILES:
+        assert (REPO / name).is_file(), name
+
+
+def test_code_of_conduct_is_contributor_covenant_with_a_contact_placeholder() -> None:
+    text = (REPO / "CODE_OF_CONDUCT.md").read_text(encoding="utf-8")
+    assert text.startswith("# Contributor Covenant Code of Conduct")
+    assert "version 2.1" in text
+    assert "TODO(maintainer)" in text
+    assert "[INSERT CONTACT METHOD]" not in text
+
+
+def test_citation_version_is_0_1_0() -> None:
+    citation = yaml.safe_load((REPO / "CITATION.cff").read_text(encoding="utf-8"))
+    assert citation["cff-version"] == "1.2.0"
+    assert citation["version"] == "0.1.0"
+    assert citation["license"] == "MIT"
+
+
+def _definition_of_done() -> list[str]:
+    """The requirement column of the definition-of-done table in benchmark-authoring.md."""
+    text = (REPO / "docs" / "benchmark-authoring.md").read_text(encoding="utf-8")
+    return re.findall(r"^\| ☐ \| (.+?) \|", text, flags=re.MULTILINE)
+
+
+def test_pull_request_template_has_the_definition_of_done_checklist() -> None:
+    text = (REPO / ".github" / "pull_request_template.md").read_text(encoding="utf-8")
+    checklist = re.findall(r"^- \[ \] (.+)$", text, flags=re.MULTILINE)
+    items = _definition_of_done()
+    assert len(items) == 10
+    for item in items:
+        assert item in checklist, item
 
 
 def test_docs_use_american_spelling() -> None:

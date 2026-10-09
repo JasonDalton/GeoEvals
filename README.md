@@ -156,7 +156,10 @@ See [`docs/data-governance.md`](docs/data-governance.md).
 
 ## Contributing
 
-Set up the environment and run the quality gates before you open a pull request:
+[`CONTRIBUTING.md`](CONTRIBUTING.md) covers the development setup, the quality gates, the
+benchmark definition of done and the version rules. Everyone who takes part follows the
+[code of conduct](CODE_OF_CONDUCT.md). In short, set up the environment and run the quality
+gates before you open a pull request:
 
 ```sh
 uv sync
@@ -169,14 +172,16 @@ quickstart, and reproduces the published baseline. A new benchmark must meet the
 done in [`docs/benchmark-authoring.md`](docs/benchmark-authoring.md#definition-of-done).
 
 **Security:** report vulnerabilities privately through GitHub Security Advisories ("Report a
-vulnerability" on the repository's Security tab), not in a public issue.
+vulnerability" on the repository's Security tab), not in a public issue. See
+[`SECURITY.md`](SECURITY.md).
 
 ## Citation
 
-Until a `CITATION.cff` file is added, cite GeoEvals as:
+[`CITATION.cff`](CITATION.cff) has the citation metadata (GitHub shows it as "Cite this
+repository"). In text:
 
 > GeoEvals contributors (2026). *GeoEvals: a reproducible framework for evaluating geospatial
-> AI systems*, version 0.1.0.dev0. MIT License.
+> AI systems*, version 0.1.0. MIT License.
 
 When you report results, also cite the benchmark ID and version, the metric versions and the
 dataset manifest hash, and cite each dataset as its manifest asks (`citation`, `attribution`).

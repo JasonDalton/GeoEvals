@@ -1,0 +1,23 @@
+cff-version: 1.2.0
+message: >-
+  If you use GeoEvals, please cite it as below. When you report results, also cite the
+  benchmark ID and version, the metric versions and the dataset manifest hash, and cite each
+  dataset as its manifest asks.
+type: software
+title: "GeoEvals: a reproducible framework for evaluating geospatial AI systems"
+abstract: >-
+  GeoEvals is a reproducible, practitioner-focused framework for evaluating geospatial AI
+  systems. It defines versioned benchmark specs, dataset manifests, adapters, metrics with
+  explicit units and tolerances, a runner that records timing and cost, and machine-readable
+  run results and reports.
+authors:
+  - name: GeoEvals contributors
+version: 0.1.0
+license: MIT
+keywords:
+  - geospatial
+  - GIS
+  - evaluation
+  - benchmark
+  - AI
+  - reproducibility
