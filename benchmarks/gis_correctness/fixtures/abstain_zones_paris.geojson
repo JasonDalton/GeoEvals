@@ -1,0 +1,5 @@
+{"type": "FeatureCollection", "name": "abstain_zones_paris", "features": [
+    {"type": "Feature", "properties": {"zone_id": "pz1", "zone_name": "rive_gauche"}, "geometry": {"type": "Polygon", "coordinates": [[[2.25, 48.8], [2.42, 48.8], [2.42, 48.855], [2.25, 48.855], [2.25, 48.8]]]}},
+    {"type": "Feature", "properties": {"zone_id": "pz2", "zone_name": "rive_droite"}, "geometry": {"type": "Polygon", "coordinates": [[[2.25, 48.855], [2.42, 48.855], [2.42, 48.9], [2.25, 48.9], [2.25, 48.855]]]}}
+  ]
+}

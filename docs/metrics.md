@@ -135,6 +135,8 @@ distance) is written as `null`.
   given). A trajectory or tool call never counts toward it.
 - **Version:** 1.1.0 added `reason_match`; 1.2.0 added `feature_count` and takes a list `key`
   (see `geometry_match` 1.1.0). A reference without `reason` or `features` scores as in 1.0.0.
+  1.3.0 uses `status_match` 1.1.0, so `checks.status_match.detail` always holds `predicted` and
+  `expected` and names a mismatch `reason`; every value and pass/fail is as in 1.2.0.
 - **Units:** fraction. Higher is better.
 - **Implementation:** `geoevals.metrics.gis.TaskSuccess`.
 - **Detail:** `checks` maps every applicable check to `{passed, detail}`; `failed` lists the
@@ -211,9 +213,16 @@ distance) is written as `null`.
 - **Definition:** 1.0 when `pred.status == ref.status` (exact string), else 0.0.
 - **Units:** fraction. Higher is better.
 - **Implementation:** `geoevals.metrics.status.StatusMatch`.
-- **Detail:** `predicted`, `expected` on mismatch.
+- **Detail:** always `predicted` and `expected` (the two statuses). A mismatch adds `reason`:
+  `answered_when_should_abstain` (the reference abstains, with `needs_clarification`,
+  `insufficient_data` or `invalid_request`, and the prediction is `ok`),
+  `abstained_when_should_answer` (the reverse), `wrong_abstention_status` (both abstain with
+  different statuses) or `status_differs` (anything else, for example a missing status).
+- **Version:** 1.1.0 records `predicted` and `expected` on a pass too (the report's abstention
+  confusion counts read them) and added `reason`; values and pass/fail are as in 1.0.0.
 - **Edge cases:** a missing status, or a prediction that is not an object, counts as null; null
-  equals only null. Unlike the other checks it always applies.
+  equals only null. Unlike the other checks it always applies. It is the primary metric of an
+  abstention case: there the reference is only a status, so `task_success` is `status_match`.
 
 ### `value_abs_error`
 

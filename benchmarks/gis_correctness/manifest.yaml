@@ -144,6 +144,41 @@ assets:
     known_limitations:
       - Synthetic points with invented names, the positions of four join_points features transformed to UTM zone 33N and rounded to 1 cm.
       - The CRS is stated in a pre-RFC 7946 GeoJSON crs member, which RFC 7946 readers may ignore.
+  - asset_id: abstain_points_nocrs
+    path: fixtures/abstain_points_nocrs.geojson
+    citation: GeoEvals contributors (2026). Synthetic points without CRS information for the GIS correctness benchmark.
+    access_date: 2026-10-09
+    license: MIT
+    attribution: GeoEvals contributors
+    redistributable: true
+    sha256: b7ef04ca0ba7923b81eab20d4d4f0715b2d1408bc1df397c167d7362aa5f2e16
+    crs: EPSG:32633
+    bbox: [391390.73, 5812012.05, 404858.35, 5823342.32]
+    time_range:
+      start: 2026-10-09
+      end: 2026-10-09
+    processing_steps: []
+    split: test
+    known_limitations:
+      - Synthetic points with invented names, three join_points_utm positions in UTM zone 33N.
+      - On purpose the file has no crs member, so a reader cannot know the CRS (RFC 7946 would mean longitude and latitude, which the coordinates cannot be); it tests abstention.
+  - asset_id: abstain_zones_paris
+    path: fixtures/abstain_zones_paris.geojson
+    citation: GeoEvals contributors (2026). Synthetic Paris zones fixture for the GIS correctness benchmark.
+    access_date: 2026-10-09
+    license: MIT
+    attribution: GeoEvals contributors
+    redistributable: true
+    sha256: 47c31690018ec32c702d64e9d76887aa91e24b7a14bfd9b94a66feb7ed5ff646
+    crs: OGC:CRS84
+    bbox: [2.25, 48.8, 2.42, 48.9]
+    time_range:
+      start: 2026-10-09
+      end: 2026-10-09
+    processing_steps: []
+    split: test
+    known_limitations:
+      - Two synthetic rectangles near Paris with invented names; they are not real districts. They lie far from the Berlin join points on purpose, to test a request outside the data extent.
   - asset_id: overlay_parcels
     path: fixtures/overlay_parcels.geojson
     citation: GeoEvals contributors (2026). Synthetic overlay parcels fixture for the GIS correctness benchmark.

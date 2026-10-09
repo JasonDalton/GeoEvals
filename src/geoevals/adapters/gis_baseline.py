@@ -5,6 +5,9 @@
 the benchmark directory, ``params``: the operation's parameters) and the benchmark directory,
 and returns an output in the benchmark's output contract. An operation that is not in
 ``OPERATIONS`` raises ``UnsupportedOperation``, which the runner records as ``adapter_error``.
+A request that should not be answered raises ``Abstain`` inside the operation, and ``predict``
+answers ``{"status": <status>}``; the operation ``abstention`` dispatches such requests to the
+operation in ``params.operation``.
 
 Fixture files are read with GeoPandas. A file without a CRS (GeoJSON without a ``crs`` member)
 is taken to be in ``OGC:CRS84`` unless the case states ``source_crs``. Coordinates are
@@ -55,6 +58,16 @@ class UnsupportedOperation(ValueError):
     """The case's ``operation`` has no implementation in the baseline."""
 
 
+class Abstain(Exception):
+    """The request cannot be answered: ``needs_clarification`` (a choice that changes the answer
+    is missing), ``insufficient_data`` (the data cannot answer it) or ``invalid_request`` (it is
+    impossible or contradicts itself)."""
+
+    def __init__(self, status: str, why: str) -> None:
+        super().__init__(why)
+        self.status = status
+
+
 def _parse_crs(value: Any) -> CRS | None:
     try:
         return CRS.from_user_input(value)
@@ -77,6 +90,9 @@ def _read(inputs: Mapping[str, Any], name: str, base: Path) -> "geopandas.GeoDat
     if frame.crs is None or (
         path.suffix == ".geojson" and "crs" not in json.loads(path.read_text(encoding="utf-8"))
     ):
+        x_min, y_min, x_max, y_max = frame.total_bounds
+        if x_min < -180 or x_max > 180 or y_min < -90 or y_max > 90:
+            raise Abstain("insufficient_data", f"{path.name} has no CRS and is not lon/lat")
         return frame.set_crs(GEOJSON_CRS, allow_override=True)
     return frame
 
@@ -118,9 +134,15 @@ def crs_transform(inputs: Mapping[str, Any], base: Path) -> dict[str, Any]:
 def distance(inputs: Mapping[str, Any], base: Path) -> dict[str, Any]:
     """Distance between the features ``from`` and ``to`` of ``files.layer`` (matched on the
     property ``key``) in ``units``: geodesic on the layer CRS's ellipsoid (``method:
-    geodesic``) or planar in ``crs`` (``method: projected``)."""
+    geodesic``) or planar in the projected ``crs`` (``method: projected``). A missing ``key``
+    attribute or feature is ``insufficient_data``; a geographic ``crs`` for a planar distance is
+    ``invalid_request``."""
     params = inputs["params"]
     frame = _read(inputs, "layer", base)
+    if params["key"] not in frame.columns or bool(frame[params["key"]].isna().any()):
+        raise Abstain("insufficient_data", f"the layer has no attribute {params['key']!r}")
+    if not {params["from"], params["to"]} <= set(frame[params["key"]]):
+        raise Abstain("insufficient_data", "a requested feature is not in the layer")
     layer_crs = CRS.from_user_input(frame.crs)
     if params["method"] == "geodesic":
         if layer_crs.is_projected:
@@ -131,6 +153,8 @@ def distance(inputs: Mapping[str, Any], base: Path) -> dict[str, Any]:
     else:
         crs = params["crs"]
         layer_crs = CRS.from_user_input(crs)
+        if not layer_crs.is_projected:
+            raise Abstain("invalid_request", "a planar distance needs a projected CRS")
         frame = frame.to_crs(layer_crs)
     by_key = frame.set_index(params["key"]).geometry
     start, end = by_key[params["from"]], by_key[params["to"]]
@@ -148,10 +172,13 @@ def buffer(inputs: Mapping[str, Any], base: Path) -> dict[str, Any]:
     """Buffer ``params.geometry`` or the layer ``files.source`` (with ``dissolve: true``, the
     buffers are dissolved into one geometry) by ``distance`` ``units`` with ``cap_style``. The
     buffer is computed in ``crs`` when given, else in the source CRS when it is projected, else
-    in the UTM zone GeoPandas estimates; the answer is in the source CRS."""
+    in the UTM zone GeoPandas estimates; the answer is in the source CRS. Without ``units``
+    the distance is ambiguous: ``needs_clarification``."""
     import geopandas
 
     params = inputs["params"]
+    if "units" not in params:
+        raise Abstain("needs_clarification", "the buffer distance has no units")
     if "geometry" in params:
         source = params.get("source_crs", GEOJSON_CRS)
         series = geopandas.GeoSeries([shape(params["geometry"])], crs=source)
@@ -231,11 +258,23 @@ def spatial_join(inputs: Mapping[str, Any], base: Path) -> dict[str, Any]:
     ``max_distance`` ``units`` in the projected CRS ``crs``, distance in meters as
     ``distance_m``), ``how`` inner (default) or left. The right layer is reprojected to the left
     layer's CRS first (``sjoin`` would only warn about a mismatch); the answer keeps the left
-    geometries and CRS."""
+    geometries and CRS. No ``predicate`` is ``needs_clarification``; a ``min_distance`` above
+    ``max_distance`` is ``invalid_request`` (no other ``min_distance`` is supported); a
+    predicate join of layers whose bounds do not intersect is ``insufficient_data``."""
     import geopandas
 
     params = inputs["params"]
+    if "predicate" not in params:
+        raise Abstain("needs_clarification", "the join has no predicate")
     left, right = _layers(inputs, base, "left", "right")
+    if "min_distance" in params:
+        if params["predicate"] == "nearest" and params["min_distance"] > params["max_distance"]:
+            raise Abstain("invalid_request", "min_distance is greater than max_distance")
+        raise ValueError("min_distance is only checked for a contradiction")
+    if params["predicate"] != "nearest" and not left.union_all().envelope.intersects(
+        right.union_all().envelope
+    ):
+        raise Abstain("insufficient_data", "the layers do not overlap")
     how = params.get("how", "inner")
     if params["predicate"] == "nearest":
         crs = CRS.from_user_input(params["crs"])
@@ -272,6 +311,13 @@ def overlay(inputs: Mapping[str, Any], base: Path) -> dict[str, Any]:
     return {"status": "ok", "features": _feature_collection(result), "crs": _crs_name(a)}
 
 
+def abstention(inputs: Mapping[str, Any], base: Path) -> dict[str, Any]:
+    """Run ``params.operation`` with the other params; the operation raises ``Abstain``."""
+    params = dict(inputs["params"])
+    operation = params.pop("operation")
+    return OPERATIONS[operation]({"files": inputs["files"], "params": params}, base)
+
+
 OPERATIONS: dict[str, Operation] = {
     "crs_transform": crs_transform,
     "distance": distance,
@@ -279,6 +325,7 @@ OPERATIONS: dict[str, Operation] = {
     "validity": validity,
     "spatial_join": spatial_join,
     "overlay": overlay,
+    "abstention": abstention,
 }
 """Operation name (the case ``operation``) -> its implementation."""
 
@@ -301,7 +348,10 @@ class GisBaselineAdapter:
             known = ", ".join(sorted(OPERATIONS))
             raise UnsupportedOperation(f"unsupported operation {operation!r} (supported: {known})")
         base = Path(case_input.get("benchmark_dir", "."))
-        return AdapterResponse(output=handler(case_input["inputs"], base))
+        try:
+            return AdapterResponse(output=handler(case_input["inputs"], base))
+        except Abstain as abstain:
+            return AdapterResponse(output={"status": abstain.status})
 
     def teardown(self) -> None:
         pass

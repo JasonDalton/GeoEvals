@@ -35,7 +35,30 @@ def test_status_match_scores(prediction: object, reference: object, value: float
 
 def test_status_match_detail_names_both_statuses() -> None:
     result = StatusMatch().score({"status": "invalid_request"}, {"status": "ok"}, {})
-    assert result.detail == {"predicted": "invalid_request", "expected": "ok"}
+    assert result.detail == {
+        "predicted": "invalid_request",
+        "expected": "ok",
+        "reason": "abstained_when_should_answer",
+    }
+    passed = StatusMatch().score({"status": "ok"}, {"status": "ok"}, {})
+    assert passed.detail == {"predicted": "ok", "expected": "ok"}
+
+
+@pytest.mark.parametrize(
+    ("predicted", "expected", "reason"),
+    [
+        ("ok", "needs_clarification", "answered_when_should_abstain"),
+        ("ok", "insufficient_data", "answered_when_should_abstain"),
+        ("ok", "invalid_request", "answered_when_should_abstain"),
+        ("invalid_request", "insufficient_data", "wrong_abstention_status"),
+        (None, "invalid_request", "status_differs"),
+        ("done", "ok", "status_differs"),
+    ],
+)
+def test_status_match_names_the_mismatch(predicted: object, expected: str, reason: str) -> None:
+    result = StatusMatch().score({"status": predicted}, {"status": expected}, {})
+    assert (result.value, result.passed) == (0.0, False)
+    assert result.detail["reason"] == reason
 
 
 # --- smoke benchmark ------------------------------------------------------------------------

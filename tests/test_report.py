@@ -128,3 +128,40 @@ def test_report_unreadable_run(tmp_path: Path, capsys: pytest.CaptureFixture[str
     assert main(["report", str(tmp_path / "nope")]) == 2
     assert "file not found" in capsys.readouterr().err
     assert not (tmp_path / "nope").exists()
+
+
+def _status_case(case_id: str, predicted: str | None, expected: str, scored: bool = True) -> dict:
+    result = json.loads((REPORT_FIXTURE / "result.json").read_text(encoding="utf-8"))
+    case = {**result["cases"][0], "case_id": case_id}
+    case["status"] = "scored" if scored else "timeout"
+    case["metrics"] = {
+        "status_match": {
+            "value": float(predicted == expected),
+            "passed": predicted == expected,
+            "detail": {"predicted": predicted, "expected": expected},
+        }
+    }
+    return case
+
+
+def test_abstention_precision_and_recall() -> None:
+    result = json.loads((REPORT_FIXTURE / "result.json").read_text(encoding="utf-8"))
+    assert report_context(result, "test")["abstention"] is None  # no status_match
+    result["cases"] = [
+        _status_case("a1", "invalid_request", "invalid_request"),  # abstained, should
+        _status_case("a2", "insufficient_data", "needs_clarification"),  # abstained, should
+        _status_case("a3", "ok", "insufficient_data"),  # answered, should abstain
+        _status_case("a4", "needs_clarification", "ok"),  # abstained, should answer
+        _status_case("a5", "ok", "ok"),
+        _status_case("a6", None, "ok"),  # no status counts as answered
+        _status_case("a7", "ok", "invalid_request", scored=False),  # not scored: left out
+    ]
+    abstention = report_context(result, "test")["abstention"]
+    assert abstention == {
+        "rows": [("Should abstain", "2", "1"), ("Should answer", "1", "2")],
+        "precision": "0.666667",
+        "recall": "0.666667",
+    }
+    md = render_markdown(report_context(result, "test"))
+    assert "| Should abstain | 2 | 1 |" in md
+    assert "Abstention precision 0.666667, recall 0.666667." in md

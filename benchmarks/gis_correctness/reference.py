@@ -24,7 +24,7 @@ from pyproj.crs import ProjectedCRS
 from pyproj.crs.coordinate_operation import AzimuthalEquidistantConversion
 from pyproj.exceptions import CRSError
 from shapely import get_parts, make_valid, transform, unary_union
-from shapely.geometry import MultiPolygon, Polygon, mapping, shape
+from shapely.geometry import MultiPolygon, Polygon, box, mapping, shape
 from shapely.geometry.base import BaseGeometry
 from shapely.validation import explain_validity
 
@@ -49,6 +49,22 @@ VALIDITY_REASONS = {
 """GEOS ``explain_validity`` message (without the ``[x y]`` location) -> reason category."""
 
 
+class Abstain(Exception):
+    """The request cannot be answered; ``reference_output`` returns ``{"status": status}``.
+
+    - ``needs_clarification``: the request leaves out a choice that changes the answer (the
+      units of a distance, the predicate of a join).
+    - ``insufficient_data``: the request is clear, but the input data cannot answer it (a
+      missing feature or attribute, a layer with no CRS information, layers that do not
+      overlap at all).
+    - ``invalid_request``: the request is impossible or contradicts itself.
+    """
+
+    def __init__(self, status: str, why: str) -> None:
+        super().__init__(why)
+        self.status = status
+
+
 def _geojson(geometry: BaseGeometry) -> dict[str, Any]:
     """GeoJSON of a geometry with lists, not tuples, so it compares equal after a JSON trip."""
     return json.loads(json.dumps(mapping(geometry)))
@@ -61,10 +77,18 @@ def _read_features(path: Path) -> list[dict[str, Any]]:
 
 def _read_layer(path: Path) -> tuple[list[dict[str, Any]], str]:
     """The features of a GeoJSON file and its CRS: the name in its ``crs`` member (written as
-    ``AUTHORITY:CODE`` when pyproj knows one), else ``OGC:CRS84``."""
+    ``AUTHORITY:CODE`` when pyproj knows one), else ``OGC:CRS84``. A file without a ``crs``
+    member whose coordinates are not longitudes and latitudes has no usable CRS information:
+    ``insufficient_data``."""
     collection = json.loads(path.read_text(encoding="utf-8"))
     name = collection.get("crs", {}).get("properties", {}).get("name")
-    return collection["features"], GEOJSON_CRS if name is None else CRS(name).to_string()
+    if name is not None:
+        return collection["features"], CRS(name).to_string()
+    for feature in collection["features"]:
+        x_min, y_min, x_max, y_max = shape(feature["geometry"]).bounds
+        if x_min < -180 or x_max > 180 or y_min < -90 or y_max > 90:
+            raise Abstain("insufficient_data", f"{path.name} has no CRS and is not lon/lat")
+    return collection["features"], GEOJSON_CRS
 
 
 def _transformer(source: str | CRS, target: str | CRS) -> Callable[[BaseGeometry], BaseGeometry]:
@@ -114,13 +138,21 @@ def crs_transform(inputs: Mapping[str, Any], benchmark_dir: Path) -> dict[str, A
 def distance(inputs: Mapping[str, Any], benchmark_dir: Path) -> dict[str, Any]:
     """Distance between the features ``from`` and ``to`` of ``files.layer`` (found by the
     property ``key``) in ``units``. ``method: geodesic`` measures on the WGS 84 ellipsoid with
-    ``pyproj.Geod.inv``; ``method: projected`` measures planar distance in ``crs``."""
+    ``pyproj.Geod.inv``; ``method: projected`` measures planar distance in ``crs``, which must
+    be projected (``invalid_request`` otherwise). A ``key`` attribute or a ``from`` or ``to``
+    feature that is not in the layer is ``insufficient_data``."""
     params = inputs["params"]
+    features = _read_features(benchmark_dir / inputs["files"]["layer"])
+    if any(params["key"] not in feature["properties"] for feature in features):
+        raise Abstain("insufficient_data", f"the layer has no attribute {params['key']!r}")
     by_key = {
-        feature["properties"][params["key"]]: shape(feature["geometry"])
-        for feature in _read_features(benchmark_dir / inputs["files"]["layer"])
+        feature["properties"][params["key"]]: shape(feature["geometry"]) for feature in features
     }
+    if params["from"] not in by_key or params["to"] not in by_key:
+        raise Abstain("insufficient_data", "a requested feature is not in the layer")
     start, end = by_key[params["from"]], by_key[params["to"]]
+    if params["method"] == "projected" and not CRS(params["crs"]).is_projected:
+        raise Abstain("invalid_request", "a planar distance needs a projected CRS")
     if params["method"] == "geodesic":
         _, _, meters = Geod(ellps="WGS84").inv(start.x, start.y, end.x, end.y)
         crs = GEOJSON_CRS
@@ -152,8 +184,11 @@ def buffer(inputs: Mapping[str, Any], benchmark_dir: Path) -> dict[str, Any]:
     (the buffers are dissolved into one geometry), by ``distance`` ``units`` (negative shrinks)
     with ``cap_style`` (default ``round``). The buffer is computed in the projected CRS ``crs``
     when given, else in the source CRS when it is projected, else in a local azimuthal
-    equidistant CRS. The answer is in the source CRS (``source_crs``, default ``OGC:CRS84``)."""
+    equidistant CRS. The answer is in the source CRS (``source_crs``, default ``OGC:CRS84``).
+    A distance without ``units`` is ``needs_clarification``."""
     params = inputs["params"]
+    if "units" not in params:
+        raise Abstain("needs_clarification", "the buffer distance has no units")
     source = params.get("source_crs", GEOJSON_CRS)
     if "geometry" in params:
         geometries = [shape(params["geometry"])]
@@ -239,12 +274,28 @@ def spatial_join(inputs: Mapping[str, Any], benchmark_dir: Path) -> dict[str, An
     feature (all of them on a tie) within ``max_distance`` ``units``, measured planar in the
     projected CRS ``crs``, and adds its distance in meters as ``distance_m``. A right layer in
     another CRS is transformed into the left layer's CRS first; the answer is in that CRS.
+
+    A request without ``predicate`` is ``needs_clarification``. A ``nearest`` join whose
+    ``min_distance`` is greater than its ``max_distance`` is ``invalid_request`` (any other
+    ``min_distance`` is not supported). A predicate join of layers whose extents do not
+    intersect is ``insufficient_data``: the right layer does not cover the left one.
     """
     params = inputs["params"]
+    if "predicate" not in params:
+        raise Abstain("needs_clarification", "the join has no predicate")
     left, crs = _read_layer(benchmark_dir / inputs["files"]["left"])
     right = _layer_in(inputs, benchmark_dir, "right", crs)
     right_names = list(dict.fromkeys(name for properties, _ in right for name in properties))
     predicate = params["predicate"]
+    if "min_distance" in params:
+        if predicate == "nearest" and params["min_distance"] > params["max_distance"]:
+            raise Abstain("invalid_request", "min_distance is greater than max_distance")
+        raise ValueError("min_distance is only checked for a contradiction")
+    if predicate != "nearest":
+        left_extent = box(*unary_union([shape(f["geometry"]) for f in left]).bounds)
+        right_extent = box(*unary_union([geometry for _, geometry in right]).bounds)
+        if not left_extent.intersects(right_extent):
+            raise Abstain("insufficient_data", "the layers do not overlap")
     if predicate == "nearest":
         to_measure = _transformer(crs, params["crs"])
         unit_m = CRS(params["crs"]).axis_info[0].unit_conversion_factor
@@ -361,6 +412,14 @@ def overlay(inputs: Mapping[str, Any], benchmark_dir: Path) -> dict[str, Any]:
     }
 
 
+def abstention(inputs: Mapping[str, Any], benchmark_dir: Path) -> dict[str, Any]:
+    """A request to the operation ``params.operation`` (with the other params) that should not
+    be answered. The operation itself raises ``Abstain``; this only dispatches."""
+    params = dict(inputs["params"])
+    operation = params.pop("operation")
+    return OPERATIONS[operation]({"files": inputs["files"], "params": params}, benchmark_dir)
+
+
 OPERATIONS: dict[str, Callable[[Mapping[str, Any], Path], dict[str, Any]]] = {
     "crs_transform": crs_transform,
     "distance": distance,
@@ -368,9 +427,13 @@ OPERATIONS: dict[str, Callable[[Mapping[str, Any], Path], dict[str, Any]]] = {
     "validity": validity,
     "spatial_join": spatial_join,
     "overlay": overlay,
+    "abstention": abstention,
 }
 
 
 def reference_output(case: Mapping[str, Any], benchmark_dir: Path) -> dict[str, Any]:
     """The expected output of ``case`` (a case line without ``expected``)."""
-    return OPERATIONS[case["operation"]](case["inputs"], benchmark_dir)
+    try:
+        return OPERATIONS[case["operation"]](case["inputs"], benchmark_dir)
+    except Abstain as abstain:
+        return {"status": abstain.status}

@@ -26,6 +26,18 @@ No metrics were recorded.
 
 ## 3. Breakdown by strata
 
+{% if abstention %}
+### Abstention
+
+| Reference | Abstained | Answered |
+| --- | --- | --- |
+{% for label, abstained, answered in abstention.rows %}
+| {{ label }} | {{ abstained }} | {{ answered }} |
+{% endfor %}
+
+Abstention precision {{ abstention.precision }}, recall {{ abstention.recall }}. A case abstains when its status is needs_clarification, insufficient_data or invalid_request (from the status_match detail of the scored cases).
+
+{% endif %}
 {% for stratum in strata %}
 ### {{ stratum.key }}
 

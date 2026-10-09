@@ -43,6 +43,16 @@ code, td.mono { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-siz
 {% endif %}
 
 <h2>3. Breakdown by strata</h2>
+{% if abstention %}
+<h3>Abstention</h3>
+<table>
+<tr><th>Reference</th><th>Abstained</th><th>Answered</th></tr>
+{% for label, abstained, answered in abstention.rows %}
+<tr><td>{{ label }}</td><td class="num">{{ abstained }}</td><td class="num">{{ answered }}</td></tr>
+{% endfor %}
+</table>
+<p>Abstention precision {{ abstention.precision }}, recall {{ abstention.recall }}. A case abstains when its status is needs_clarification, insufficient_data or invalid_request (from the status_match detail of the scored cases).</p>
+{% endif %}
 {% for stratum in strata %}
 <h3>{{ stratum.key }}</h3>
 <table>

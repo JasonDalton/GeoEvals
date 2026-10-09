@@ -20,6 +20,7 @@ from geoevals.cli import main
 from geoevals.data.verify import verify_manifest
 from geoevals.metrics.spatial import reproject
 from geoevals.regenerate import RegenerateError, expected_outputs, regenerate
+from geoevals.reporting.report import report_context
 from geoevals.runner.config import RunConfig
 from geoevals.runner.run import RunError, _resolve_metrics, _score, load_cases, run_benchmark
 from geoevals.validation import load_benchmark_spec, load_dataset_manifest, validate_file
@@ -854,3 +855,93 @@ def test_tolerances_reach_metric_params() -> None:
     assert _score([(metric, params)], output, expected, {})["value_abs_error"]["passed"] is True
     scored = _score([(metric, params)], output, expected, {"abs_tol": 1.0})
     assert scored["value_abs_error"]["passed"] is False
+
+
+# --- abstention cases --------------------------------------------------------------------------
+
+ABSTAIN_STATUSES = set(STATUSES[1:])
+ABSTENTION_KINDS = {
+    "buffer_without_units",
+    "join_without_crs",
+    "missing_features",
+    "missing_attribute",
+    "contradictory_request",
+    "outside_data_extent",
+}
+
+
+def test_abstention_cases_cover_the_kinds() -> None:
+    cases = _cases_of("abstention")
+    assert len(cases) >= 8
+    assert {case["strata"]["abstention"] for case in cases} >= ABSTENTION_KINDS
+    for case in cases:
+        assert set(case["expected"]) == {"status"}, case["case_id"]
+        assert case["expected"]["status"] in ABSTAIN_STATUSES, case["case_id"]
+        assert case["strata"]["expected_status"] == case["expected"]["status"]
+        assert case["inputs"]["params"]["operation"] in OPERATIONS, case["case_id"]
+    # Every abstention status is used.
+    assert {case["expected"]["status"] for case in cases} == ABSTAIN_STATUSES
+
+
+def test_gis_baseline_abstains_on_every_abstention_case() -> None:
+    result = run_benchmark(SPEC, "gis_baseline", RunConfig(split="test"))
+    cases = [c for c in result["cases"] if c["case_id"].startswith("abstention-")]
+    assert len(cases) == len(_cases_of("abstention"))
+    for case in cases:
+        assert case["metrics"]["task_success"]["value"] == 1.0, case["case_id"]
+        assert case["metrics"]["status_match"]["passed"] is True, case["case_id"]
+        assert case["output"]["status"] in ABSTAIN_STATUSES, case["case_id"]
+    # crs_transform-003 (an unknown EPSG code) abstains too.
+    loaded = load_cases(load_benchmark_spec(SPEC), BENCH)
+    abstain = sum(case.expected["status"] != "ok" for case in loaded)
+    answer = len(result["cases"]) - abstain
+    abstention = report_context(result, "test")["abstention"]
+    assert abstention == {
+        "rows": [("Should abstain", str(abstain), "0"), ("Should answer", "0", str(answer))],
+        "precision": "1",
+        "recall": "1",
+    }
+
+
+@pytest.mark.parametrize("case_id", [case["case_id"] for case in _cases_of("abstention")])
+def test_answering_an_abstention_case_fails(case_id: str) -> None:
+    """A confident answer (here: the empty answer the operation would give) is a failure."""
+    case = _loaded_case(case_id)
+    fabricated = {"status": "ok", "value": 0.0, "units": "m", "crs": "OGC:CRS84"}
+    scores = _score(_resolve_metrics(load_benchmark_spec(SPEC)), fabricated, case.expected, {})
+    status = scores["status_match"]
+    assert (status["value"], status["passed"]) == (0.0, False)
+    assert status["detail"]["reason"] == "answered_when_should_abstain"
+    task_success = scores["task_success"]
+    assert task_success["detail"]["failed"] == ["status_match"]
+    reason = task_success["detail"]["checks"]["status_match"]["detail"]["reason"]
+    assert reason == "answered_when_should_abstain"
+
+
+def test_wrong_abstention_status_fails() -> None:
+    [case] = [
+        c for c in _cases_of("abstention") if c["strata"]["abstention"] == "buffer_without_units"
+    ]
+    status = _task_success({"status": "invalid_request"}, case["case_id"])
+    assert status["passed"] is False
+    detail = status["detail"]["checks"]["status_match"]["detail"]
+    assert detail["reason"] == "wrong_abstention_status"
+
+
+def test_abstention_guards_leave_answerable_requests_alone() -> None:
+    """The same requests with the missing piece supplied are answered."""
+    adapter = GisBaselineAdapter()
+    adapter.setup({})
+    base = {"benchmark_dir": str(BENCH), "operation": "abstention"}
+    buffer = {"operation": "buffer", "geometry": {"type": "Point", "coordinates": [13.4, 52.5]}}
+    joined = {"left": "fixtures/join_points.geojson", "right": "fixtures/join_zones.geojson"}
+    requests = [
+        ({}, {**buffer, "distance": 500, "units": "m"}),
+        (joined, {"operation": "spatial_join", "predicate": "within"}),
+        ({"layer": "fixtures/places.geojson"}, {"operation": "distance", "key": "name",
+          "from": "alpha", "to": "bravo", "method": "projected", "crs": "EPSG:32633",
+          "units": "m"}),
+    ]  # fmt: skip
+    for files, params in requests:
+        response = adapter.predict({**base, "inputs": {"files": files, "params": params}})
+        assert response.output["status"] == "ok", params

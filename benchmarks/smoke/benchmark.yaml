@@ -21,7 +21,7 @@ splits:
     description: All 5 smoke cases.
 metrics:
   - id: status_match
-    version: 1.0.0
+    version: 1.1.0
     params: {}
 tolerances: {}
 dataset_manifest: manifest.yaml

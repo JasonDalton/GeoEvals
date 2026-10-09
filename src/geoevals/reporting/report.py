@@ -15,6 +15,7 @@ from typing import Any
 
 from jinja2 import Environment, PackageLoader, StrictUndefined
 
+from geoevals.metrics.status import ABSTAIN_STATUSES
 from geoevals.reporting.compare import load_run
 from geoevals.runner.config import load_run_config
 from geoevals.runner.layout import CONFIG_FILE, RESULT_FILE
@@ -112,6 +113,35 @@ def _strata(cases: list[Mapping[str, Any]], metric_ids: list[str]) -> list[dict[
     return breakdowns
 
 
+def _ratio(numerator: int, denominator: int) -> str:
+    return fmt(numerator / denominator) if denominator else "n/a"
+
+
+def _abstention(cases: list[Mapping[str, Any]]) -> dict[str, Any] | None:
+    """Answered-vs-abstained confusion counts over the scored cases with ``status_match``
+    (whose ``detail`` holds both statuses), with abstaining as the positive class. A case
+    abstains when its status is one of ``ABSTAIN_STATUSES``; any other status, missing
+    included, counts as answered. ``None`` when no case has the counts."""
+    counts = {(expected, predicted): 0 for expected in (True, False) for predicted in (True, False)}
+    for case in cases:
+        detail = case["metrics"].get("status_match", {}).get("detail") or {}
+        if case["status"] == "scored" and "expected" in detail and "predicted" in detail:
+            key = (detail["expected"] in ABSTAIN_STATUSES, detail["predicted"] in ABSTAIN_STATUSES)
+            counts[key] += 1
+    if not any(counts.values()):
+        return None
+    tp, fn = counts[(True, True)], counts[(True, False)]
+    fp, tn = counts[(False, True)], counts[(False, False)]
+    return {
+        "rows": [
+            ("Should abstain", str(tp), str(fn)),
+            ("Should answer", str(fp), str(tn)),
+        ],
+        "precision": _ratio(tp, tp + fp),
+        "recall": _ratio(tp, tp + fn),
+    }
+
+
 def _error_text(error: Mapping[str, Any] | None) -> str:
     if error is None:
         return "no error recorded"
@@ -201,6 +231,7 @@ def report_context(result: Mapping[str, Any], split: str) -> dict[str, Any]:
         "summary": summary,
         "metrics": metrics,
         "metric_ids": metric_ids,
+        "abstention": _abstention(cases),
         "strata": _strata(cases, metric_ids),
         "efficiency": [
             (label, fmt(efficiency[key]) if key in efficiency else NOT_RECORDED)
