@@ -401,23 +401,31 @@ def _run_cli(tmp_path: Path, *extra: str, spec: Path = SPEC) -> int:
     )
 
 
+def run_dir_of(out: Path) -> Path:
+    [run_dir] = out.iterdir()
+    return run_dir
+
+
 def test_cli_run_writes_result_and_log(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
     assert _run_cli(tmp_path) == 0
-    out = tmp_path / "out"
-    result = json.loads((out / "result.json").read_text(encoding="utf-8"))
+    run_dir = run_dir_of(tmp_path / "out")
+    result = json.loads((run_dir / "result.json").read_text(encoding="utf-8"))
     assert validate_run_result_document(result) == []
+    assert run_dir.name == result["run_id"]
     assert _comparable(result)[0][0] == "case-flaky"
-    log = (out / "run.log").read_text(encoding="utf-8")
+    log = (run_dir / "run.log").read_text(encoding="utf-8")
+    # Records logged before the run directory existed are in the log too.
+    assert "geoevals.runner.run: benchmark runner_fixture 0.1.0 and manifest" in log
     assert "INFO geoevals.runner.run: case case-ref: scored" in log
     assert "WARNING geoevals.runner.run: case case-sleep: timeout" in log
     captured = capsys.readouterr()
     assert "case case-ref: scored" in captured.err
-    assert str(out / "result.json") in captured.out
+    assert str(run_dir) in captured.out
 
 
 def test_cli_log_level(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
     assert _run_cli(tmp_path, "--log-level", "warning") == 0
-    log = (tmp_path / "out" / "run.log").read_text(encoding="utf-8")
+    log = (run_dir_of(tmp_path / "out") / "run.log").read_text(encoding="utf-8")
     assert "case case-sleep: timeout" in log
     assert "case case-ref: scored" not in log
     assert "case case-ref: scored" not in capsys.readouterr().err
@@ -432,8 +440,8 @@ def test_cli_rejects_invalid_spec(tmp_path: Path, capsys: pytest.CaptureFixture[
     assert _run_cli(tmp_path, spec=spec) == 1
     err = capsys.readouterr().err
     assert "pillar" in err
-    assert "pillar" in (tmp_path / "out" / "run.log").read_text(encoding="utf-8")
-    assert not (tmp_path / "out" / "result.json").exists()
+    # The spec has no valid ID, so there is no run_id and no run directory.
+    assert not (tmp_path / "out").exists()
 
 
 def test_cli_rejects_invalid_manifest(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:

@@ -1,0 +1,31 @@
+schema_version: "1.0.0"
+id: layout_fixture
+version: 0.1.0
+title: Run directory fixture benchmark
+pillar: spatial_reasoning
+task_statement: Return the requested geometry as GeoJSON.
+intended_use: Fixture for run directory and compare tests.
+input_schema:
+  type: object
+  required: [case_id]
+output_schema:
+  type: object
+  required: [status]
+  properties:
+    status: {enum: [ok, needs_clarification, insufficient_data, invalid_request]}
+cases: cases.jsonl
+splits:
+  test:
+    description: All cases.
+metrics:
+  - id: exact_match
+    version: 1.0.0
+    params: {}
+tolerances: {}
+dataset_manifest: ../manifests/valid_manifest.yaml
+license: MIT
+provenance:
+  authors: [GeoEvals contributors]
+  created: 2026-10-09
+limitations:
+  - Synthetic cases for run directory tests only.

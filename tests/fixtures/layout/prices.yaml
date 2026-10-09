@@ -1,0 +1,17 @@
+# Example price table for `geoevals run --prices <file>` (this file is the default).
+#
+# Maps adapter name to its prices in US dollars. A case costs
+#   calls * usd_per_call
+#   + input tokens / 1000 * usd_per_1k_input_tokens
+#   + output tokens / 1000 * usd_per_1k_output_tokens
+# where calls counts every attempt, retries included.
+#
+# An adapter that is missing here gets cost_usd: null (never 0). Deterministic adapters
+# cost 0.0 without an entry. Record where each price came from and when, because the
+# run result keeps only the hash of this table (efficiency.price_table_hash).
+
+# The mock adapter makes no paid calls; its token counts are simulated.
+mock:
+  usd_per_1k_input_tokens: 0.0
+  usd_per_1k_output_tokens: 0.0
+  usd_per_call: 0.0

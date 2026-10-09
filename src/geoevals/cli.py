@@ -11,10 +11,12 @@ from pathlib import Path
 from geoevals import __version__
 from geoevals.adapters import create_adapter, registered_adapter_names
 from geoevals.data.verify import verify_manifest
+from geoevals.reporting.compare import compare_runs, load_run
 from geoevals.runner.config import RunConfigError, load_run_config
 from geoevals.runner.cost import PriceTable, PriceTableError, load_price_table
-from geoevals.runner.run import RunError, run_benchmark, run_logging, write_result
-from geoevals.validation import SpecValidationError, validate_file
+from geoevals.runner.layout import CONFIG_FILE, LOG_FILE, RESULT_FILE, write_config, write_run_dir
+from geoevals.runner.run import RunError, run_benchmark, run_logging
+from geoevals.validation import SpecValidationError, validate_file, validate_run_result_file
 from geoevals.validation.validate import load_yaml
 
 logger = logging.getLogger("geoevals.cli")
@@ -72,7 +74,10 @@ def build_parser() -> argparse.ArgumentParser:
     add_adapter_argument(run)
     run.add_argument("--config", type=Path, required=True, help="Run config (YAML).")
     run.add_argument(
-        "--out", type=Path, required=True, help="Output directory for result.json and run.log."
+        "--out",
+        type=Path,
+        required=True,
+        help="Parent directory; the run is written to <out>/<run_id>/.",
     )
     run.add_argument(
         "--prices",
@@ -87,6 +92,14 @@ def build_parser() -> argparse.ArgumentParser:
         choices=["DEBUG", "INFO", "WARNING", "ERROR"],
         help="Log level for run.log and stderr (default: INFO).",
     )
+
+    compare = subparsers.add_parser(
+        "compare",
+        help="List per-case differences in status, output and metrics between two runs "
+        "(exit 0: none, 1: some, 2: a run could not be read).",
+    )
+    compare.add_argument("run_a", type=Path, help="Run directory or its result.json.")
+    compare.add_argument("run_b", type=Path, help="Run directory or its result.json.")
     return parser
 
 
@@ -184,17 +197,30 @@ def _run(
     except RunConfigError as exc:
         print(f"{config_path}: {exc}", file=sys.stderr)
         return 1
-    out.mkdir(parents=True, exist_ok=True)
-    with run_logging(out / "run.log", level):
+    run_dir: Path | None = None
+    with run_logging(level) as run_log:
+
+        def start(run_id: str) -> None:
+            nonlocal run_dir
+            run_dir = out / run_id
+            try:
+                run_dir.mkdir(parents=True)
+            except FileExistsError:
+                raise RunError(f"{run_dir} already exists; not overwriting it") from None
+            run_log.attach(run_dir / LOG_FILE)
+            write_config(config, run_dir / CONFIG_FILE)
+            logger.info("writing run %s to %s", run_id, run_dir)
+
         try:
             prices = _load_prices(prices_path)
         except PriceTableError as exc:
             logger.error("%s", exc)
             return 1
         try:
-            result = run_benchmark(benchmark, adapter_name, config, prices)
+            result = run_benchmark(benchmark, adapter_name, config, prices, on_start=start)
         except SpecValidationError as exc:
-            # Logged rather than printed so the reason also lands in run.log.
+            # Logged rather than printed so the reason also lands in run.log once the run
+            # directory exists (an invalid spec stops the run before that).
             for issue in exc.issues:
                 logger.error("%s: %s", exc.path, issue)
             logger.error("%s: invalid (%d error(s))", exc.path, len(exc.issues))
@@ -202,9 +228,33 @@ def _run(
         except (RunError, ValueError) as exc:
             logger.error("run failed: %s", exc)
             return 1
-        write_result(result, out / "result.json")
-    print(out / "result.json")
+        assert run_dir is not None
+        write_run_dir(result, run_dir)
+        issues = validate_run_result_file(run_dir / RESULT_FILE)
+        if issues:
+            for issue in issues:
+                logger.error("%s: %s", run_dir / RESULT_FILE, issue)
+            logger.error("%s: invalid run result", run_dir / RESULT_FILE)
+            return 1
+    print(run_dir)
     return 0
+
+
+def _compare(path_a: Path, path_b: Path) -> int:
+    try:
+        run_a, run_b = load_run(path_a), load_run(path_b)
+    except SpecValidationError as exc:
+        _print_issues(exc.path, exc.issues)
+        return 2
+    differences = compare_runs(run_a, run_b)
+    for difference in differences:
+        print(difference)
+    if not differences:
+        print("no differences")
+        return 0
+    cases = len({difference.case_id for difference in differences})
+    print(f"{len(differences)} difference(s) in {cases} case(s)", file=sys.stderr)
+    return 1
 
 
 def main(argv: Sequence[str] | None = None) -> int:
@@ -224,5 +274,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         return _run(
             args.benchmark, args.adapter, args.config, args.out, args.log_level, args.prices
         )
+    if args.command == "compare":
+        return _compare(args.run_a, args.run_b)
     parser.print_help()
     return 0

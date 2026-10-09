@@ -31,7 +31,7 @@ import logging
 import queue
 import sys
 import time
-from collections.abc import Iterator, Mapping
+from collections.abc import Callable, Iterator
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager
 from dataclasses import dataclass, field
@@ -47,6 +47,7 @@ from geoevals.metrics import Metric, MetricValue, get_metric, percentile
 from geoevals.runner.config import RunConfig, canonical_config, config_hash
 from geoevals.runner.cost import Price, PriceTable, case_cost
 from geoevals.runner.environment import environment_fingerprint
+from geoevals.runner.layout import make_run_id
 from geoevals.runner.memory import RssSampler
 from geoevals.runner.worker import Attempt, Worker, WorkerSetupError
 from geoevals.validation import (
@@ -335,11 +336,14 @@ def run_benchmark(
     adapter_name: str,
     config: RunConfig,
     prices: PriceTable | None = None,
+    on_start: Callable[[str], None] | None = None,
 ) -> dict[str, Any]:
     """Run ``adapter_name`` on every case of ``config.split`` and return the run result.
 
     ``prices`` is the price table for ``cost_usd``; without one, costs are null unless the
-    adapter is deterministic.
+    adapter is deterministic. ``on_start`` is called with the ``run_id`` once the spec,
+    manifest and cases are loaded, before any case runs (the CLI creates the run directory
+    there).
 
     Raises ``SpecValidationError`` for an invalid spec or manifest and ``RunError`` when the run
     cannot start or its result is invalid. Failing cases never raise; they get a failure status.
@@ -364,6 +368,10 @@ def run_benchmark(
     factory = adapter_factory(adapter_name)
     adapter = factory()
     digest = config_hash(config)
+    started = datetime.now(UTC)
+    run_id = make_run_id(spec.id, adapter_name, started, digest)
+    if on_start is not None:
+        on_start(run_id)
     logger.info(
         "running %d case(s) of split %s with adapter %s %s (config_hash %s)",
         len(cases),
@@ -373,7 +381,6 @@ def run_benchmark(
         digest,
     )
 
-    started = datetime.now(UTC)
     clock = time.perf_counter()
     deterministic = bool(getattr(adapter, "deterministic", False))
     price = prices.prices.get(adapter_name) if prices else None
@@ -419,9 +426,8 @@ def run_benchmark(
         for r in records
         if r["status"] != "scored"
     ]
-    stamp = started.strftime("%Y%m%dT%H%M%SZ")
     result: dict[str, Any] = {
-        "run_id": f"{spec.id}-{adapter_name}-{stamp}-{digest[:8]}",
+        "run_id": run_id,
         "schema_version": RUN_RESULT_SCHEMA_VERSION,
         "benchmark": {"id": spec.id, "version": spec.version},
         "adapter": {
@@ -461,30 +467,62 @@ def run_benchmark(
     return result
 
 
+class RunLog(logging.Handler):
+    """Holds log records until ``attach`` names the log file, then writes them there.
+
+    The run directory is named by the ``run_id``, which is known only after the spec is loaded,
+    so the records logged before that are kept and written out when the file is attached.
+    """
+
+    def __init__(self) -> None:
+        super().__init__()
+        self._pending: list[logging.LogRecord] = []
+        self._file: logging.FileHandler | None = None
+
+    def attach(self, path: Path) -> None:
+        file_handler = logging.FileHandler(path, encoding="utf-8")
+        file_handler.setFormatter(self.formatter)
+        self.acquire()  # the lock ``handle`` holds around ``emit``
+        try:
+            self._file = file_handler
+            for record in self._pending:
+                file_handler.handle(record)
+            self._pending.clear()
+        finally:
+            self.release()
+
+    def emit(self, record: logging.LogRecord) -> None:
+        if self._file is not None:
+            self._file.handle(record)
+        else:
+            self._pending.append(record)
+
+    def close(self) -> None:
+        if self._file is not None:
+            self._file.close()
+        super().close()
+
+
 @contextmanager
-def run_logging(log_path: Path, level: str) -> Iterator[None]:
-    """Send ``geoevals`` log records to ``log_path`` and stderr at ``level`` while active."""
+def run_logging(level: str) -> Iterator[RunLog]:
+    """Send ``geoevals`` log records to stderr and the returned ``RunLog`` at ``level``.
+
+    Records logged before ``RunLog.attach`` is called reach the file once it is attached, and
+    stderr only if it never is.
+    """
     root = logging.getLogger("geoevals")
     formatter = logging.Formatter("%(asctime)s %(levelname)s %(name)s: %(message)s")
-    handlers: list[logging.Handler] = [
-        logging.FileHandler(log_path, encoding="utf-8"),
-        logging.StreamHandler(sys.stderr),
-    ]
+    run_log = RunLog()
+    handlers: list[logging.Handler] = [run_log, logging.StreamHandler(sys.stderr)]
     previous_level = root.level
     root.setLevel(level)
     for handler in handlers:
         handler.setFormatter(formatter)
         root.addHandler(handler)
     try:
-        yield
+        yield run_log
     finally:
         for handler in handlers:
             root.removeHandler(handler)
             handler.close()
         root.setLevel(previous_level)
-
-
-def write_result(result: Mapping[str, Any], path: Path) -> None:
-    """Write a run result as JSON with sorted keys."""
-    text = json.dumps(result, indent=2, sort_keys=True, ensure_ascii=False, allow_nan=False)
-    path.write_text(text + "\n", encoding="utf-8")

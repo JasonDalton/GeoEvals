@@ -1,6 +1,7 @@
 import hashlib
 import json
 import os
+import shutil
 import subprocess
 from collections.abc import Mapping
 from pathlib import Path
@@ -194,24 +195,33 @@ def _run_cli(tmp_path: Path, *extra: str) -> int:
     return main([*args, "--out", str(tmp_path / "out"), *extra])
 
 
+def _cli_result(tmp_path: Path) -> dict[str, Any]:
+    """The result of the newest run in ``tmp_path / "out"``, then clear the output directory."""
+    out = tmp_path / "out"
+    [run_dir] = out.iterdir()
+    result = json.loads((run_dir / "result.json").read_text(encoding="utf-8"))
+    shutil.rmtree(out)
+    return result
+
+
 def test_cli_prices(tmp_path: Path) -> None:
     prices = tmp_path / "prices.yaml"
     prices.write_text(json.dumps(PRICES), encoding="utf-8")
     assert _run_cli(tmp_path, "--prices", str(prices)) == 0
-    result = json.loads((tmp_path / "out" / "result.json").read_text(encoding="utf-8"))
+    result = _cli_result(tmp_path)
     assert result["efficiency"]["cost_usd_total"] == pytest.approx(0.19)
 
 
 def test_cli_default_prices(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.chdir(REPO)
     assert _run_cli(tmp_path) == 0
-    result = json.loads((tmp_path / "out" / "result.json").read_text(encoding="utf-8"))
+    result = _cli_result(tmp_path)
     assert result["efficiency"]["price_table_hash"] == load_price_table(DEFAULT_PRICES).hash
     assert result["efficiency"]["cost_usd_total"] == 0.0
     # Without the default file the run still works, with null costs.
     monkeypatch.chdir(tmp_path)
     assert _run_cli(tmp_path) == 0
-    result = json.loads((tmp_path / "out" / "result.json").read_text(encoding="utf-8"))
+    result = _cli_result(tmp_path)
     assert result["efficiency"]["price_table_hash"] is None
 
 
