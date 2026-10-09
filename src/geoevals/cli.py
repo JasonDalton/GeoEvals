@@ -3,6 +3,7 @@
 import argparse
 import dataclasses
 import json
+import logging
 import sys
 from collections.abc import Sequence
 from pathlib import Path
@@ -10,8 +11,12 @@ from pathlib import Path
 from geoevals import __version__
 from geoevals.adapters import create_adapter, registered_adapter_names
 from geoevals.data.verify import verify_manifest
+from geoevals.runner.config import RunConfigError, load_run_config
+from geoevals.runner.run import RunError, run_benchmark, run_logging, write_result
 from geoevals.validation import SpecValidationError, validate_file
 from geoevals.validation.validate import load_yaml
+
+logger = logging.getLogger("geoevals.cli")
 
 
 def add_adapter_argument(parser: argparse.ArgumentParser) -> None:
@@ -57,6 +62,21 @@ def build_parser() -> argparse.ArgumentParser:
     add_adapter_argument(predict)
     predict.add_argument("--config", type=Path, help="Adapter config (YAML).")
     predict.add_argument("case_input", type=Path, help="Path to a case input (JSON object).")
+
+    run = subparsers.add_parser("run", help="Run an adapter on every case of a benchmark split.")
+    run.add_argument("--benchmark", type=Path, required=True, help="Benchmark spec (YAML).")
+    add_adapter_argument(run)
+    run.add_argument("--config", type=Path, required=True, help="Run config (YAML).")
+    run.add_argument(
+        "--out", type=Path, required=True, help="Output directory for result.json and run.log."
+    )
+    run.add_argument(
+        "--log-level",
+        default="INFO",
+        type=str.upper,
+        choices=["DEBUG", "INFO", "WARNING", "ERROR"],
+        help="Log level for run.log and stderr (default: INFO).",
+    )
     return parser
 
 
@@ -122,6 +142,34 @@ def _adapters_predict(adapter_name: str, config_path: Path | None, case_path: Pa
     return 0
 
 
+def _run(benchmark: Path, adapter_name: str, config_path: Path, out: Path, level: str) -> int:
+    for path in (benchmark, config_path):
+        if not path.is_file():
+            print(f"{path}: file not found", file=sys.stderr)
+            return 1
+    try:
+        config = load_run_config(config_path)
+    except RunConfigError as exc:
+        print(f"{config_path}: {exc}", file=sys.stderr)
+        return 1
+    out.mkdir(parents=True, exist_ok=True)
+    with run_logging(out / "run.log", level):
+        try:
+            result = run_benchmark(benchmark, adapter_name, config)
+        except SpecValidationError as exc:
+            # Logged rather than printed so the reason also lands in run.log.
+            for issue in exc.issues:
+                logger.error("%s: %s", exc.path, issue)
+            logger.error("%s: invalid (%d error(s))", exc.path, len(exc.issues))
+            return 1
+        except (RunError, ValueError) as exc:
+            logger.error("run failed: %s", exc)
+            return 1
+        write_result(result, out / "result.json")
+    print(out / "result.json")
+    return 0
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
@@ -135,5 +183,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         return 0
     if args.command == "adapters" and args.adapters_command == "predict":
         return _adapters_predict(args.adapter, args.config, args.case_input)
+    if args.command == "run":
+        return _run(args.benchmark, args.adapter, args.config, args.out, args.log_level)
     parser.print_help()
     return 0

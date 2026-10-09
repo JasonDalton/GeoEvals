@@ -22,11 +22,19 @@ def registered_adapter_names() -> Set[str]:
     return frozenset(_REGISTRY)
 
 
-def create_adapter(name: str) -> Adapter:
-    """Return a new adapter registered as ``name``. Raises ``ValueError`` for an unknown name."""
+def adapter_factory(name: str) -> AdapterFactory:
+    """Return the factory registered as ``name``. Raises ``ValueError`` for an unknown name.
+
+    The runner sends the factory to its worker processes, so it must be picklable (for example a
+    module-level class).
+    """
     try:
-        factory = _REGISTRY[name]
+        return _REGISTRY[name]
     except KeyError:
         known = ", ".join(sorted(_REGISTRY)) or "none"
         raise ValueError(f"unknown adapter {name!r} (registered: {known})") from None
-    return factory()
+
+
+def create_adapter(name: str) -> Adapter:
+    """Return a new adapter registered as ``name``. Raises ``ValueError`` for an unknown name."""
+    return adapter_factory(name)()

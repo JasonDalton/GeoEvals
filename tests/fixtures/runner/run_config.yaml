@@ -1,0 +1,16 @@
+split: test
+seed: 7
+timeout_s: 1
+max_retries: 2
+workers: 1
+adapter:
+  seed: 7
+  tokens: {input: 10, output: 2}
+  cases:
+    case-wrong: {behavior: wrong, output: {status: ok, area_m2: -1}}
+    case-malformed: {behavior: malformed}
+    case-raise: {behavior: raise, message: boom}
+    case-flaky: {behavior: fail_then_succeed, failures: 2}
+    case-sleep: {behavior: sleep, seconds: 5}
+  random:
+    - {probability: 0.5, behavior: wrong, output: {status: ok, area_m2: -1}}

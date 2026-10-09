@@ -1,0 +1,32 @@
+schema_version: "1.0.0"
+id: runner_fixture
+version: 0.1.0
+title: Runner fixture benchmark
+pillar: spatial_reasoning
+task_statement: Return the area of the input polygon in square meters.
+intended_use: Fixture for runner tests.
+input_schema:
+  type: object
+  required: [case_id, operation]
+output_schema:
+  type: object
+  required: [status, area_m2]
+  properties:
+    status: {enum: [ok, needs_clarification, insufficient_data, invalid_request]}
+    area_m2: {type: number}
+cases: cases.jsonl
+splits:
+  test:
+    description: All cases.
+metrics:
+  - id: exact_match
+    version: 1.0.0
+    params: {}
+tolerances: {}
+dataset_manifest: ../manifests/valid_manifest.yaml
+license: MIT
+provenance:
+  authors: [GeoEvals contributors]
+  created: 2026-10-09
+limitations:
+  - Synthetic cases for runner tests only.

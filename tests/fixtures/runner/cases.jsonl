@@ -1,0 +1,10 @@
+{"case_id": "case-ref", "operation": "area", "expected": {"status": "ok", "area_m2": 12.5}, "strata": {"operation": "area", "region": "europe"}}
+{"case_id": "case-wrong", "split": "test", "operation": "area", "expected": {"status": "ok", "area_m2": 3.0}, "strata": {"operation": "area", "region": "africa"}}
+{"case_id": "case-malformed", "split": "test", "operation": "area", "expected": {"status": "ok", "area_m2": 4.0}, "strata": {"operation": "area", "region": "asia"}}
+{"case_id": "case-raise", "split": "test", "operation": "area", "expected": {"status": "ok", "area_m2": 5.0}, "strata": {"operation": "area", "region": "asia"}}
+{"case_id": "case-flaky", "split": "test", "operation": "area", "expected": {"status": "ok", "area_m2": 6.0}, "strata": {"operation": "area", "region": "europe"}}
+{"case_id": "case-rand-1", "split": "test", "operation": "area", "expected": {"status": "ok", "area_m2": 7.0}, "strata": {"operation": "area", "region": "europe"}}
+{"case_id": "case-rand-2", "split": "test", "operation": "area", "expected": {"status": "ok", "area_m2": 8.0}, "strata": {"operation": "area", "region": "africa"}}
+{"case_id": "case-rand-3", "split": "test", "operation": "area", "expected": {"status": "ok", "area_m2": 9.0}, "strata": {"operation": "area", "region": "asia"}}
+{"case_id": "case-rand-4", "split": "test", "operation": "area", "expected": {"status": "ok", "area_m2": 10.0}, "strata": {"operation": "area", "region": "europe"}}
+{"case_id": "case-sleep", "split": "test", "operation": "area", "expected": {"status": "ok", "area_m2": 1.0}, "strata": {"operation": "area", "region": "europe"}}
