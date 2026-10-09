@@ -3,6 +3,7 @@ import shutil
 from pathlib import Path
 
 import pytest
+import yaml
 
 from geoevals.cli import main
 from geoevals.reporting.compare import Tolerance, compare_runs, diff_values, load_run
@@ -12,39 +13,118 @@ from geoevals.runner.run import load_cases
 from geoevals.validation import load_benchmark_spec
 
 REPO = Path(__file__).parent.parent
-BASELINE = REPO / "baselines" / "gis_correctness" / "gis_baseline"
+BASELINES = REPO / "baselines"
+BASELINE = BASELINES / "gis_correctness" / "gis_baseline"
+MOCK_BASELINE = BASELINES / "gis_correctness" / "mock_failures"
 SPEC = REPO / "benchmarks" / "gis_correctness" / "benchmark.yaml"
+CI = REPO / ".github" / "workflows" / "ci.yml"
+
+PUBLISHED = {
+    "gis_correctness/gis_baseline": ("gis_baseline", "benchmarks/gis_correctness"),
+    "gis_correctness/mock_failures": ("mock", "benchmarks/gis_correctness"),
+    "human_context_access/access_baseline": ("access_baseline", "benchmarks/human_context"),
+}
+"""Baseline directory -> (adapter, benchmark directory)."""
+
+CASE_STATUSES = {"scored", "adapter_error", "timeout", "invalid_output", "skipped"}
 
 
-# --- the committed baseline -----------------------------------------------------------------
+# --- the committed baselines ----------------------------------------------------------------
 
 
-def test_baseline_has_the_committed_files() -> None:
-    for name in ("result.json", "cases.jsonl", "config.yaml", "report.md"):
-        assert (BASELINE / name).is_file(), name
+def test_published_baselines_are_the_expected_ones() -> None:
+    dirs = sorted(
+        path.relative_to(BASELINES).as_posix() for path in BASELINES.glob("*/*") if path.is_dir()
+    )
+    assert dirs == sorted(PUBLISHED)
 
 
-def test_baseline_config_is_the_one_it_ran_with() -> None:
-    result = load_run(BASELINE)
-    assert config_hash(load_run_config(BASELINE / "config.yaml")) == result["config_hash"]
-    assert result["adapter"]["name"] == "gis_baseline"
+@pytest.mark.parametrize("name", sorted(PUBLISHED))
+def test_baseline_has_the_committed_files(name: str) -> None:
+    for file in ("result.json", "cases.jsonl", "config.yaml", "report.md"):
+        assert (BASELINES / name / file).is_file(), file
+    assert not (BASELINES / name / "report.html").exists()
 
 
-def test_baseline_covers_every_benchmark_case() -> None:
-    cases = load_cases(load_benchmark_spec(SPEC), SPEC.parent)
-    assert len(cases) >= 50
-    result = load_run(BASELINE)
+@pytest.mark.parametrize("name", sorted(PUBLISHED))
+def test_baseline_config_is_the_one_it_ran_with(name: str) -> None:
+    baseline = BASELINES / name
+    result = load_run(baseline)
+    assert config_hash(load_run_config(baseline / "config.yaml")) == result["config_hash"]
+    assert result["adapter"]["name"] == PUBLISHED[name][0]
+    assert result["benchmark"]["id"] == name.split("/")[0]
+
+
+@pytest.mark.parametrize("name", sorted(PUBLISHED))
+def test_baseline_covers_every_benchmark_case(name: str) -> None:
+    spec = REPO / PUBLISHED[name][1] / "benchmark.yaml"
+    cases = load_cases(load_benchmark_spec(spec), spec.parent)
+    result = load_run(BASELINES / name)
     assert sorted(case["case_id"] for case in result["cases"]) == [c.case_id for c in cases]
-    lines = (BASELINE / "cases.jsonl").read_text(encoding="utf-8").splitlines()
+    lines = (BASELINES / name / "cases.jsonl").read_text(encoding="utf-8").splitlines()
     assert [json.loads(line) for line in lines] == result["cases"]
 
 
+def test_gis_baseline_has_at_least_50_cases() -> None:
+    assert len(load_run(BASELINE)["cases"]) >= 50
+
+
+@pytest.mark.parametrize("name", sorted(PUBLISHED))
+def test_baseline_report_states_model_adapter_manifest_and_limitations(name: str) -> None:
+    result = load_run(BASELINES / name)
+    report = (BASELINES / name / "report.md").read_text(encoding="utf-8")
+    adapter = result["adapter"]
+    assert f"| Adapter | {adapter['name']} {adapter['version']} |" in report
+    assert "| Model | " in report
+    assert f"| Dataset manifest hash | {result['dataset_manifest_hash']} |" in report
+    assert f"| Run ID | {result['run_id']} |" in report
+    limitations = report.split("## 9. Limitations", 1)[1]
+    assert result["limitations"]
+    for limitation in result["limitations"]:
+        assert f"- {limitation}" in limitations
+
+
+def test_mock_baseline_shows_every_status_and_the_abstention_penalty() -> None:
+    result = load_run(MOCK_BASELINE)
+    assert {case["status"] for case in result["cases"]} == CASE_STATUSES
+    reasons = [
+        case["metrics"]["status_match"]["detail"].get("reason")
+        for case in result["cases"]
+        if case["status"] == "scored"
+    ]
+    assert "answered_when_should_abstain" in reasons
+    report = (MOCK_BASELINE / "report.md").read_text(encoding="utf-8")
+    failures = report.split("## 5. Failures", 1)[1].split("## 6.", 1)[0]
+    failed = {
+        case["case_id"]
+        for case in result["cases"]
+        if case["status"] != "scored"
+        or any(metric["passed"] is False for metric in case["metrics"].values())
+    }
+    assert failed
+    for case_id in failed:
+        assert f"| {case_id} |" in failures
+
+
+def test_ci_reproduces_every_baseline_in_a_clean_environment() -> None:
+    workflow = yaml.safe_load(CI.read_text(encoding="utf-8"))
+    job = workflow["jobs"]["reproduce"]
+    assert job["env"]["UV_NO_CACHE"] == "1"
+    setup = next(step for step in job["steps"] if step.get("uses", "").startswith("astral-sh/"))
+    assert setup["with"]["enable-cache"] is False
+    commands = "\n".join(step.get("run", "") for step in job["steps"])
+    assert "uv sync --frozen --no-cache" in commands
+    assert "find baselines -mindepth 2 -maxdepth 2 -type d" in commands
+    assert "geoevals reproduce" in commands
+
+
 @pytest.mark.integration
+@pytest.mark.parametrize("name", sorted(PUBLISHED))
 def test_reproduce_the_committed_baseline(
-    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+    name: str, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
     monkeypatch.chdir(REPO)
-    assert main(["reproduce", "baselines/gis_correctness/gis_baseline"]) == 0
+    assert main(["reproduce", f"baselines/{name}"]) == 0
     assert "no differences" in capsys.readouterr().out
 
 

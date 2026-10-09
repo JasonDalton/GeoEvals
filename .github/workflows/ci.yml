@@ -90,9 +90,38 @@ jobs:
           cat "$run_dir/report.md"
 
 
-      # Also covered by the integration test in tests/test_reproduce.py; this shows the CLI output.
-      - name: Reproduce the published baseline
-        run: uv run --frozen geoevals reproduce baselines/gis_correctness/gis_baseline
+  # Reruns every published baseline in a fresh environment built only from uv.lock: no uv cache,
+  # no restored .venv. Any difference from a committed result fails the job.
+  reproduce:
+    name: Reproduce published baselines (clean environment)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      UV_PYTHON: "3.11"
+      UV_NO_CACHE: "1"
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: "3.11"
+          enable-cache: false
+
+      - name: Create a fresh environment
+        run: |
+          test ! -e .venv
+          uv sync --frozen --no-cache
+
+      - name: Reproduce every baseline
+        run: |
+          status=0
+          dirs=$(find baselines -mindepth 2 -maxdepth 2 -type d | sort)
+          if [ -z "$dirs" ]; then echo "no baselines found"; exit 1; fi
+          for dir in $dirs; do
+            echo "== $dir"
+            uv run --frozen --no-cache geoevals reproduce "$dir" || status=1
+          done
+          exit $status
 
   secrets:
     name: Secrets scan (gitleaks, full history)

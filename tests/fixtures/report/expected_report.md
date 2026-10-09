@@ -8,6 +8,7 @@
 | Benchmark | example_distance 1.0.0 |
 | Split | test |
 | Adapter | mock 0.1.0 |
+| Model | none recorded (the adapter config has no model) |
 | Adapter config | {"behavior": "reference", "seed": 7} |
 | Metric versions | value_abs_error 1.0.0 |
 | Config hash | be3fe5552cda5245e16d3639bb82740851ec6a941b9c2f2d532a79c80565a61e |

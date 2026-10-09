@@ -1,0 +1,34 @@
+# Mock-failure baseline for gis_correctness: the mock adapter returns the reference output for
+# every case except the ones below, which show each case status and the abstention penalty.
+split: test
+seed: 0
+timeout_s: 2
+max_retries: 1
+workers: 1
+adapter:
+  seed: 0
+  tokens: {input: 100, output: 20}
+  cases:
+    # scored, but answered when it should abstain (status_match: answered_when_should_abstain)
+    abstention-001:
+      behavior: wrong
+      output: {status: ok, value: 1.0, units: m, crs: "OGC:CRS84"}
+    crs_transform-003:
+      behavior: wrong
+      output: {status: ok, geometry: {type: Point, coordinates: [0.0, 0.0]}, crs: "EPSG:3857"}
+    # scored, abstains with the wrong status
+    abstention-002: {behavior: wrong, output: {status: needs_clarification}}
+    # scored, wrong value (the reference is 880.223093784306 km)
+    distance-001:
+      behavior: wrong
+      output: {status: ok, value: 980.0, units: km, crs: "OGC:CRS84"}
+    # scored after one retry
+    validity-001: {behavior: fail_then_succeed, failures: 1, message: transient mock failure}
+    # adapter_error: fails on both attempts
+    distance-002: {behavior: raise, message: mock adapter failure}
+    # timeout: sleeps past timeout_s
+    buffer-001: {behavior: sleep, seconds: 10}
+    # invalid_output: fails the benchmark's output_schema
+    overlay-001: {behavior: malformed}
+    # skipped: the adapter declines the case
+    spatial_join-001: {behavior: skip, message: mock adapter declines spatial_join cases}

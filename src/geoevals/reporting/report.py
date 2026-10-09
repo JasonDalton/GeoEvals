@@ -232,6 +232,14 @@ def _split(result: Mapping[str, Any], run_dir: Path | None) -> str:
     return ", ".join(splits) if splits else NOT_RECORDED
 
 
+def _model(adapter_config: Mapping[str, Any]) -> str:
+    """The ``model`` in the adapter config, where model-based adapters take their model ID."""
+    model = adapter_config.get("model")
+    if model is None:
+        return "none recorded (the adapter config has no model)"
+    return fmt(model)
+
+
 def report_context(result: Mapping[str, Any], split: str) -> dict[str, Any]:
     """The values both report templates render, all formatted as strings."""
     cases = list(result["cases"])
@@ -244,6 +252,7 @@ def report_context(result: Mapping[str, Any], split: str) -> dict[str, Any]:
         ("Benchmark", f"{benchmark['id']} {benchmark['version']}"),
         ("Split", split),
         ("Adapter", f"{adapter['name']} {adapter['version']}"),
+        ("Model", _model(adapter["config"])),
         ("Adapter config", fmt(adapter["config"])),
         (
             "Metric versions",

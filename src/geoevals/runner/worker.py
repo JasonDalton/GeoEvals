@@ -20,7 +20,7 @@ from dataclasses import dataclass
 from multiprocessing.connection import Connection
 from typing import Any, Literal
 
-from geoevals.adapters.base import AdapterResponse
+from geoevals.adapters.base import AdapterResponse, SkipCase
 from geoevals.adapters.registry import AdapterFactory
 
 logger = logging.getLogger(__name__)
@@ -28,7 +28,7 @@ logger = logging.getLogger(__name__)
 # spawn on every platform: the same behavior on Linux and macOS, and no forked thread state.
 _CONTEXT = multiprocessing.get_context("spawn")
 
-AttemptKind = Literal["ok", "error", "timeout"]
+AttemptKind = Literal["ok", "error", "timeout", "skipped"]
 
 
 class WorkerSetupError(RuntimeError):
@@ -40,7 +40,8 @@ class Attempt:
     """Result of one ``predict`` call.
 
     ``latency_s`` is the adapter's wall-clock time (the time waited, for a timeout). ``error_type``
-    and ``error_message`` are set when ``kind`` is ``error`` or ``timeout``. ``peak_memory_bytes``
+    and ``error_message`` are set when ``kind`` is ``error``, ``timeout`` or ``skipped`` (the
+    adapter raised ``SkipCase``). ``peak_memory_bytes``
     is the peak traced allocation during ``predict`` above what was live when it started; it is
     set only when the worker tracks memory and the call returned or raised.
     """
@@ -85,6 +86,11 @@ def _serve(
             start = time.perf_counter()
             try:
                 response = adapter.predict(case_input)
+            except SkipCase as exc:
+                elapsed = time.perf_counter() - start
+                peak = _peak_since(baseline) if track_memory else None
+                conn.send(("skipped", elapsed, peak, type(exc).__name__, str(exc)))
+                continue
             except Exception as exc:
                 elapsed = time.perf_counter() - start
                 peak = _peak_since(baseline) if track_memory else None
@@ -177,10 +183,10 @@ class Worker:
                 error_type="WorkerCrashed",
                 error_message=f"adapter worker exited during predict (exit code {exitcode})",
             )
-        if message[0] == "error":
-            _, latency, peak, error_type, error_message = message
+        if message[0] in ("error", "skipped"):
+            kind, latency, peak, error_type, error_message = message
             return Attempt(
-                "error",
+                kind,
                 latency,
                 error_type=error_type,
                 error_message=error_message,

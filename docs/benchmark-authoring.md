@@ -167,6 +167,12 @@ class MyAdapter:
 - `predict` signals a failure by raising. The runner records `adapter_error`, retries up to
   `max_retries` times and continues with the next case. A case that runs longer than
   `timeout_s` is killed and recorded as `timeout`.
+- To decline a case the adapter does not support, raise `geoevals.adapters.SkipCase(reason)`.
+  The runner records `skipped` with the reason and does not retry it.
+- A model-based adapter takes the model ID as `model` in its config (the run config's
+  `adapter` mapping, for example `adapter: {model: <model id>}`). The run result records the
+  adapter config, and the report shows it in the Model row. Without a `model` key the row
+  says "none recorded".
 - Return `tokens` (`TokenUsage(input, output)`) when the adapter uses tokens. Cost comes from
   the price table (`--prices`, default `examples/prices.example.yaml`); an adapter that is
   missing from the table gets `cost_usd: null`, never 0.

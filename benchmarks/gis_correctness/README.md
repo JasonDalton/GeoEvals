@@ -7,7 +7,7 @@
 | Cases | 56, one split (`test`) |
 | License | MIT (spec, cases and fixtures) |
 | Reference workflow | [`reference.py`](reference.py) (Shapely, pyproj, GEOS, PROJ) |
-| Published baseline | [`baselines/gis_correctness/gis_baseline/`](../../baselines/gis_correctness/gis_baseline/) |
+| Published baselines | [`baselines/gis_correctness/gis_baseline/`](../../baselines/gis_correctness/gis_baseline/) (deterministic baseline), [`baselines/gis_correctness/mock_failures/`](../../baselines/gis_correctness/mock_failures/) (scripted failures) |
 
 ## Purpose
 
@@ -173,8 +173,18 @@ with this macOS arm64 baseline, a Linux x86_64 rerun differed by at most 6.0e-09
 else must match exactly. CI runs the same check (`tests/test_reproduce.py`, marked
 `integration`).
 
+A second published run,
+[`baselines/gis_correctness/mock_failures/`](../../baselines/gis_correctness/mock_failures/),
+uses the `mock` adapter to show what failures look like in a run result and its report. The
+mock returns the reference output for every case except nine, chosen in the commented
+`config.yaml`: every failure status (`adapter_error`, `timeout`, `invalid_output`, `skipped`), two
+answers to requests that should have been declined (`status_match` reason
+`answered_when_should_abstain`), a wrong abstention status, a wrong value and a case that
+succeeds on its retry. Its scores say nothing about any real system.
+
 To publish a new baseline after an intended change to the benchmark or the adapter, run it
-with the committed config and replace the files:
+with the committed config and replace the files (for `mock_failures`, use `--adapter mock`
+and keep the commented `config.yaml`: it has the same config hash as the copy):
 
 ```sh
 uv run geoevals run --benchmark benchmarks/gis_correctness/benchmark.yaml \

@@ -8,6 +8,7 @@
 | Benchmark | gis_correctness 0.1.0 |
 | Split | test |
 | Adapter | gis_baseline 0.1.0 |
+| Model | none recorded (the adapter config has no model) |
 | Adapter config | {} |
 | Metric versions | attribute_match 1.1.0, crs_match 1.0.0, geometry_match 1.1.0, status_match 1.1.0, task_success 1.3.0, validity_match 1.1.0, value_abs_error 1.0.0, value_rel_error 1.0.0 |
 | Config hash | 1fadf0a0380009519a4a65492cfd2d1547306df17984ec49975a58dfa39f62fc |

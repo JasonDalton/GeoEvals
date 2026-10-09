@@ -21,7 +21,8 @@ Behaviors:
 - ``wrong``: return ``output`` if given, else the reference with every number increased by 1,
   every bool flipped, and ``_wrong`` appended to every string (same shape, wrong values).
 - ``malformed``: return ``output`` if given, else ``{"mock_malformed_output": true}``.
-- ``raise``: raise ``MockAdapterError(message)``.
+- ``raise``: raise ``MockAdapterError(message)`` (the runner records ``adapter_error``).
+- ``skip``: raise ``SkipCase(message)`` (the runner records ``skipped``).
 - ``sleep``: sleep ``seconds``, then return the reference output.
 - ``fail_then_succeed``: raise on the first ``failures`` calls for the case, then return the
   reference output. The count is kept per adapter instance and reset by ``setup``.
@@ -63,9 +64,11 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, model_validator
 
-from geoevals.adapters.base import AdapterResponse, TokenUsage
+from geoevals.adapters.base import AdapterResponse, SkipCase, TokenUsage
 
-MockBehavior = Literal["reference", "wrong", "malformed", "raise", "sleep", "fail_then_succeed"]
+MockBehavior = Literal[
+    "reference", "wrong", "malformed", "raise", "skip", "sleep", "fail_then_succeed"
+]
 MockMode = Literal["mock", "mock_agent"]
 AgentScript = Literal["all_ok", "error_then_recover", "loop_guard"]
 
@@ -231,6 +234,8 @@ class MockAdapter:
 
         if rule.behavior == "raise":
             raise MockAdapterError(rule.message)
+        if rule.behavior == "skip":
+            raise SkipCase(rule.message)
         if rule.behavior == "fail_then_succeed" and call <= (rule.failures or 0):
             raise MockAdapterError(f"{rule.message} (attempt {call} of {rule.failures})")
         if rule.behavior == "sleep":

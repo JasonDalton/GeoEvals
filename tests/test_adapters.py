@@ -11,6 +11,7 @@ from geoevals.adapters import (
     MockAdapter,
     MockAdapterError,
     MockConfigError,
+    SkipCase,
     TokenUsage,
     create_adapter,
     register_adapter,
@@ -117,6 +118,13 @@ def test_raise_behavior() -> None:
     for _ in range(3):
         with pytest.raises(MockAdapterError, match=r"^boom$"):
             adapter.predict({"case_id": "case-raise"})
+
+
+def test_skip_behavior_raises_skip_case() -> None:
+    adapter = MockAdapter()
+    adapter.setup({"cases": {"case-skip": {"behavior": "skip", "message": "not supported"}}})
+    with pytest.raises(SkipCase, match=r"^not supported$"):
+        adapter.predict({"case_id": "case-skip"})
 
 
 def test_sleep_behavior_sleeps_then_returns_reference() -> None:

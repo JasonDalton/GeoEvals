@@ -83,7 +83,12 @@ uv run geoevals reproduce baselines/gis_correctness/gis_baseline
 The command runs `benchmarks/<benchmark_id>/benchmark.yaml` with the committed config and the
 adapter named in `result.json`. It then compares each case and the run-level fields: the
 benchmark, the adapter, the config hash, the dataset manifest hash, the summary metrics and the
-failures. Exit status 0 means no differences. CI runs this on every push.
+failures. Exit status 0 means no differences.
+
+CI's `reproduce` job runs it on every push for every directory under `baselines/`, in a fresh
+environment: `uv sync --frozen --no-cache` from `uv.lock`, with the uv cache turned off. Any
+difference, or a baseline that cannot be read, fails the job. The published baselines are
+listed in [`baselines/README.md`](../baselines/README.md).
 
 ## Across platforms
 

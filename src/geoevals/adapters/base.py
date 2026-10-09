@@ -5,6 +5,15 @@ from dataclasses import dataclass
 from typing import Any, Protocol, runtime_checkable
 
 
+class SkipCase(Exception):
+    """Raised by ``predict`` to decline a case the adapter does not support.
+
+    The runner records the case as ``skipped`` with the exception message and does not retry
+    it. Use it for a case outside the adapter's scope (an operation it does not implement, for
+    example), not for a failure: a failure should raise any other exception (``adapter_error``).
+    """
+
+
 @dataclass(frozen=True)
 class TokenUsage:
     """Token counts for one ``predict`` call. Same fields as ``tokens`` in a run result."""
@@ -37,7 +46,8 @@ class Adapter(Protocol):
     """A model, classical method, or agent that the runner can call for each case.
 
     The runner calls ``setup`` once with the adapter config, ``predict`` once per attempt for
-    each case, and ``teardown`` once at the end. ``predict`` signals a failed case by raising.
+    each case, and ``teardown`` once at the end. ``predict`` signals a failed case by raising,
+    and declines a case by raising ``SkipCase``.
 
     An adapter may set the class attribute ``deterministic = True`` when it makes no paid calls
     (a classical method, for example); its cases then cost ``0.0`` without a price table entry.

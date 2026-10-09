@@ -9,6 +9,7 @@
 | License | MIT (spec, cases, generator and fixtures) |
 | Reference workflow | [`reference.py`](reference.py) (networkx Dijkstra via `geoevals.metrics.network`) |
 | Second implementation | `access_baseline` adapter (`scipy.sparse.csgraph`, GeoPandas) |
+| Published baseline | [`baselines/human_context_access/access_baseline/`](../../baselines/human_context_access/access_baseline/) |
 | Real-geography pilot | `human_context_pilot`, built locally from OpenStreetMap (ODbL-1.0, not committed); see [below](#real-geography-pilot) |
 
 ## Purpose
@@ -157,6 +158,19 @@ uv run geoevals run --benchmark benchmarks/human_context/benchmark.yaml \
 ```
 
 It scores `task_success = 1.0` on all 51 cases.
+
+The published baseline in
+[`baselines/human_context_access/access_baseline/`](../../baselines/human_context_access/access_baseline/)
+is this run with the same config. Rerun it and compare with the committed result:
+
+```sh
+uv run geoevals reproduce baselines/human_context_access/access_baseline
+```
+
+To publish a new baseline after an intended change, follow the steps in the
+[`gis_correctness` card](../gis_correctness/README.md#reproduce-the-published-baseline) with
+this benchmark's spec, the `access_baseline` adapter and
+`baselines/human_context_access/access_baseline/`.
 
 ## Limitations
 

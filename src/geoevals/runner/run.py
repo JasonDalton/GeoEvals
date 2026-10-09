@@ -22,8 +22,9 @@ are relative to the spec file).
 
 Every case ends with exactly one status. An adapter that raises gives ``adapter_error`` (retried
 up to ``max_retries`` times), a case that runs longer than ``timeout_s`` is killed and gives
-``timeout``, output that fails the spec's ``output_schema`` gives ``invalid_output``, and anything
-else is ``scored``.
+``timeout``, output that fails the spec's ``output_schema`` gives ``invalid_output``, a case the
+adapter declines (it raises ``adapters.base.SkipCase``; never retried) gives ``skipped``, and
+anything else is ``scored``.
 
 Efficiency: ``latency_s`` is the adapter's wall-clock time and ``scoring_s`` the metric scoring
 time of a case. ``peak_memory_bytes`` comes from ``tracemalloc`` in the worker and is measured
@@ -335,6 +336,10 @@ class _Runner:
             record["memory_note"] = memory_note
         if attempt.kind == "timeout":
             record["status"] = "timeout"
+            record["error"] = _error(attempt.error_type, attempt.error_message)
+            return record
+        if attempt.kind == "skipped":
+            record["status"] = "skipped"
             record["error"] = _error(attempt.error_type, attempt.error_message)
             return record
         if attempt.kind == "error":

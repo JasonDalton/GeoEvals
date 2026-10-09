@@ -191,6 +191,20 @@ def test_retries_are_limited(max_retries: int) -> None:
         assert cases[case_id]["retries"] == max_retries
 
 
+def test_skipped_case_is_recorded_and_not_retried() -> None:
+    rule = {"behavior": "skip", "message": "operation not supported"}
+    result = run_benchmark(SPEC, "mock", _config(adapter={"cases": {"case-ref": rule}}))
+    assert validate_run_result_document(result) == []
+    case = _cases(result)["case-ref"]
+    assert case["status"] == "skipped"
+    assert case["error"] == {"type": "SkipCase", "message": "operation not supported"}
+    assert case["retries"] == 0
+    assert (case["output"], case["metrics"]) == (None, {})
+    assert {"case_id": "case-ref", "status": "skipped", "error": case["error"]} in result[
+        "failures"
+    ]
+
+
 def test_invalid_output(result: dict[str, Any]) -> None:
     case = _cases(result)["case-malformed"]
     assert case["status"] == "invalid_output"
