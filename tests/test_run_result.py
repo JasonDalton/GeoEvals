@@ -72,8 +72,8 @@ def test_schema_requires_story_fields() -> None:
 
     case = schema["$defs"]["caseRecord"]
     case_fields = {
-        "case_id", "split", "status", "strata", "output", "metrics", "latency_s", "retries",
-        "tokens", "cost_usd", "peak_memory_bytes", "error",
+        "case_id", "split", "status", "strata", "output", "metrics", "latency_s", "scoring_s",
+        "retries", "tokens", "cost_usd", "peak_memory_bytes", "error",
     }  # fmt: skip
     assert case_fields <= set(case["required"])
     assert {"memory_note", "trajectory"} <= set(case["properties"])

@@ -5,12 +5,16 @@ over a pipe until it is closed. Keeping the adapter in one process means per-ins
 as the mock adapter's ``fail_then_succeed`` count) survives retries. A thread-based timeout cannot
 stop a stuck call into native code (Shapely, GEOS), so on timeout the runner kills the process and
 starts a new one for the next case.
+
+With ``track_memory`` the worker runs ``tracemalloc`` and reports each call's peak allocation.
+``tracemalloc`` is per process, so the figure covers only this adapter's ``predict`` call.
 """
 
 import logging
 import multiprocessing
 import random
 import time
+import tracemalloc
 from collections.abc import Mapping
 from dataclasses import dataclass
 from multiprocessing.connection import Connection
@@ -36,7 +40,9 @@ class Attempt:
     """Result of one ``predict`` call.
 
     ``latency_s`` is the adapter's wall-clock time (the time waited, for a timeout). ``error_type``
-    and ``error_message`` are set when ``kind`` is ``error`` or ``timeout``.
+    and ``error_message`` are set when ``kind`` is ``error`` or ``timeout``. ``peak_memory_bytes``
+    is the peak traced allocation during ``predict`` above what was live when it started; it is
+    set only when the worker tracks memory and the call returned or raised.
     """
 
     kind: AttemptKind
@@ -46,9 +52,12 @@ class Attempt:
     trajectory: list[dict[str, Any]] | None = None
     error_type: str | None = None
     error_message: str | None = None
+    peak_memory_bytes: int | None = None
 
 
-def _serve(conn: Connection, factory: AdapterFactory, config: Mapping[str, Any]) -> None:
+def _serve(
+    conn: Connection, factory: AdapterFactory, config: Mapping[str, Any], track_memory: bool
+) -> None:
     """Worker process entry point."""
     try:
         adapter = factory()
@@ -56,6 +65,8 @@ def _serve(conn: Connection, factory: AdapterFactory, config: Mapping[str, Any])
     except BaseException as exc:
         conn.send(("setup_error", type(exc).__name__, str(exc)))
         return
+    if track_memory:
+        tracemalloc.start()
     conn.send(("ready",))
     try:
         while True:
@@ -67,41 +78,57 @@ def _serve(conn: Connection, factory: AdapterFactory, config: Mapping[str, Any])
                 return
             case_input, seed = message
             random.seed(seed)
+            baseline = 0
+            if track_memory:
+                tracemalloc.reset_peak()
+                baseline = tracemalloc.get_traced_memory()[0]
             start = time.perf_counter()
             try:
                 response = adapter.predict(case_input)
             except Exception as exc:
                 elapsed = time.perf_counter() - start
-                conn.send(("error", elapsed, type(exc).__name__, str(exc)))
+                peak = _peak_since(baseline) if track_memory else None
+                conn.send(("error", elapsed, peak, type(exc).__name__, str(exc)))
                 continue
             elapsed = time.perf_counter() - start
+            peak = _peak_since(baseline) if track_memory else None
             if not isinstance(response, AdapterResponse):
                 kind = type(response).__name__
                 message = f"predict returned {kind}, not AdapterResponse"
-                conn.send(("error", elapsed, "TypeError", message))
+                conn.send(("error", elapsed, peak, "TypeError", message))
                 continue
             tokens = (response.tokens.input, response.tokens.output) if response.tokens else None
             try:
-                conn.send(("ok", elapsed, response.output, tokens, response.trajectory))
+                conn.send(("ok", elapsed, peak, response.output, tokens, response.trajectory))
             except Exception as exc:  # the response could not be pickled
-                conn.send(("error", elapsed, type(exc).__name__, f"unsendable response: {exc}"))
+                message = f"unsendable response: {exc}"
+                conn.send(("error", elapsed, peak, type(exc).__name__, message))
     finally:
         adapter.teardown()
+
+
+def _peak_since(baseline: int) -> int:
+    return max(tracemalloc.get_traced_memory()[1] - baseline, 0)
 
 
 class Worker:
     """One adapter in its own process. Not thread-safe: use each worker from one thread."""
 
-    def __init__(self, factory: AdapterFactory, config: Mapping[str, Any]) -> None:
+    def __init__(
+        self, factory: AdapterFactory, config: Mapping[str, Any], track_memory: bool = False
+    ) -> None:
         self._factory = factory
         self._config = dict(config)
+        self._track_memory = track_memory
         self._process: Any = None
         self._conn: Connection | None = None
 
     def _start(self) -> Connection:
         parent, child = _CONTEXT.Pipe()
         process = _CONTEXT.Process(
-            target=_serve, args=(child, self._factory, self._config), daemon=True
+            target=_serve,
+            args=(child, self._factory, self._config, self._track_memory),
+            daemon=True,
         )
         process.start()
         child.close()
@@ -151,10 +178,23 @@ class Worker:
                 error_message=f"adapter worker exited during predict (exit code {exitcode})",
             )
         if message[0] == "error":
-            _, latency, error_type, error_message = message
-            return Attempt("error", latency, error_type=error_type, error_message=error_message)
-        _, latency, output, tokens, trajectory = message
-        return Attempt("ok", latency, output=output, tokens=tokens, trajectory=trajectory)
+            _, latency, peak, error_type, error_message = message
+            return Attempt(
+                "error",
+                latency,
+                error_type=error_type,
+                error_message=error_message,
+                peak_memory_bytes=peak,
+            )
+        _, latency, peak, output, tokens, trajectory = message
+        return Attempt(
+            "ok",
+            latency,
+            output=output,
+            tokens=tokens,
+            trajectory=trajectory,
+            peak_memory_bytes=peak,
+        )
 
     def close(self) -> None:
         """Stop the process, letting the adapter run ``teardown``."""

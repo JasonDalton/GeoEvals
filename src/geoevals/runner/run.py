@@ -13,6 +13,12 @@ Every case ends with exactly one status. An adapter that raises gives ``adapter_
 up to ``max_retries`` times), a case that runs longer than ``timeout_s`` is killed and gives
 ``timeout``, output that fails the spec's ``output_schema`` gives ``invalid_output``, and anything
 else is ``scored``.
+
+Efficiency: ``latency_s`` is the adapter's wall-clock time and ``scoring_s`` the metric scoring
+time of a case. ``peak_memory_bytes`` comes from ``tracemalloc`` in the worker and is measured
+only with ``workers: 1``, since concurrent cases would share the figure. The run's
+``efficiency`` adds throughput, latency percentiles, timeout and failure rates, retries, and the
+peak RSS of the runner and its workers (sampled with ``psutil``).
 """
 
 import hashlib
@@ -34,8 +40,9 @@ from jsonschema import Draft202012Validator
 from jsonschema.exceptions import SchemaError
 
 from geoevals.adapters import MockAdapter, adapter_factory
-from geoevals.metrics import Metric, MetricValue, get_metric
+from geoevals.metrics import Metric, MetricValue, get_metric, percentile
 from geoevals.runner.config import RunConfig, canonical_config, config_hash
+from geoevals.runner.memory import RssSampler
 from geoevals.runner.worker import Attempt, Worker, WorkerSetupError
 from geoevals.validation import (
     RUN_RESULT_SCHEMA_VERSION,
@@ -48,7 +55,8 @@ from geoevals.validation import (
 
 logger = logging.getLogger(__name__)
 
-MEMORY_NOTE = "per-case memory is not measured"
+MEMORY_NOTE_WORKERS = "per-case memory unavailable when workers > 1"
+MEMORY_NOTE_KILLED = "per-case memory unavailable: the worker was killed or exited"
 
 
 class RunError(RuntimeError):
@@ -200,6 +208,12 @@ class _Runner:
         return record
 
     def _record(self, case: Case, attempt: Attempt, retries: int) -> dict[str, Any]:
+        if self.config.workers > 1:
+            memory_note: str | None = MEMORY_NOTE_WORKERS
+        elif attempt.peak_memory_bytes is None:
+            memory_note = MEMORY_NOTE_KILLED
+        else:
+            memory_note = None
         record: dict[str, Any] = {
             "case_id": case.case_id,
             "split": case.split,
@@ -207,13 +221,15 @@ class _Runner:
             "output": None,
             "metrics": {},
             "latency_s": attempt.latency_s,
+            "scoring_s": None,
             "retries": retries,
             "tokens": None,
             "cost_usd": None,
-            "peak_memory_bytes": None,
-            "memory_note": MEMORY_NOTE,
+            "peak_memory_bytes": None if memory_note else attempt.peak_memory_bytes,
             "error": None,
         }
+        if memory_note:
+            record["memory_note"] = memory_note
         if attempt.kind == "timeout":
             record["status"] = "timeout"
             record["error"] = _error(attempt.error_type, attempt.error_message)
@@ -235,7 +251,9 @@ class _Runner:
             return record
         record["status"] = "scored"
         record["output"] = attempt.output
+        start = time.perf_counter()
         record["metrics"] = _score(self.metrics, attempt.output, case.expected)
+        record["scoring_s"] = time.perf_counter() - start
         return record
 
 
@@ -252,6 +270,34 @@ def _resolve_metrics(spec: BenchmarkSpec) -> list[tuple[Metric, dict[str, Any]]]
             )
         resolved.append((metric, dict(ref.params)))
     return resolved
+
+
+def _efficiency(
+    records: list[dict[str, Any]], wall_clock_s: float, peak_rss_bytes: int
+) -> dict[str, Any]:
+    """Run-level efficiency figures. Rates and percentiles are null when there are no cases."""
+    total = len(records)
+    latencies = sorted(r["latency_s"] for r in records if r["latency_s"] is not None)
+
+    def latency(q: float) -> float | None:
+        return percentile(latencies, q) if latencies else None
+
+    def rate(count: int) -> float | None:
+        return count / total if total else None
+
+    return {
+        "wall_clock_s": wall_clock_s,
+        "cases_total": total,
+        "cases_per_s": total / wall_clock_s if wall_clock_s > 0 else None,
+        "latency_p50_s": latency(0.5),
+        "latency_p90_s": latency(0.9),
+        "latency_p99_s": latency(0.99),
+        "latency_max_s": latencies[-1] if latencies else None,
+        "timeout_rate": rate(sum(r["status"] == "timeout" for r in records)),
+        "failure_rate": rate(sum(r["status"] != "scored" for r in records)),
+        "retries_total": sum(r["retries"] for r in records),
+        "peak_rss_bytes": peak_rss_bytes,
+    }
 
 
 def _timestamp(moment: datetime) -> str:
@@ -298,8 +344,10 @@ def run_benchmark(spec_path: Path, adapter_name: str, config: RunConfig) -> dict
     runner = _Runner(spec, config, metrics)
     workers: queue.SimpleQueue[Worker] = queue.SimpleQueue()
     adapter_config = _adapter_config(adapter_name, config, cases)
+    track_memory = config.workers == 1
     all_workers = [
-        Worker(factory, adapter_config) for _ in range(min(config.workers, max(len(cases), 1)))
+        Worker(factory, adapter_config, track_memory)
+        for _ in range(min(config.workers, max(len(cases), 1)))
     ]
     for worker in all_workers:
         workers.put(worker)
@@ -312,7 +360,7 @@ def run_benchmark(spec_path: Path, adapter_name: str, config: RunConfig) -> dict
             workers.put(worker)
 
     try:
-        with ThreadPoolExecutor(max_workers=len(all_workers)) as pool:
+        with RssSampler() as rss, ThreadPoolExecutor(max_workers=len(all_workers)) as pool:
             records = list(pool.map(run_one, cases))
     except WorkerSetupError as exc:
         raise RunError(str(exc)) from exc
@@ -349,11 +397,7 @@ def run_benchmark(spec_path: Path, adapter_name: str, config: RunConfig) -> dict
         "started_at": _timestamp(started),
         "finished_at": _timestamp(finished),
         "summary_metrics": summary_metrics,
-        "efficiency": {
-            "wall_clock_s": wall_clock_s,
-            "cases_total": len(records),
-            "retries_total": sum(r["retries"] for r in records),
-        },
+        "efficiency": _efficiency(records, wall_clock_s, rss.peak_rss_bytes),
         "failures": failures,
         "limitations": list(spec.limitations),
         "cases": records,

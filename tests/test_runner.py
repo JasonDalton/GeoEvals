@@ -286,6 +286,101 @@ def test_unknown_split_stops_the_run() -> None:
         run_benchmark(SPEC, "mock", _config(split="train"))
 
 
+# --- efficiency -----------------------------------------------------------------------------
+
+THROUGHPUT_SPEC = FIXTURES / "throughput.yaml"
+
+
+class SlowMetric(ExactMatch):
+    """Takes 0.3 s to score, so scoring time is clearly separate from adapter latency."""
+
+    def score(self, prediction: Any, reference: Any, params: Mapping[str, Any]) -> MetricValue:
+        time.sleep(0.3)
+        return super().score(prediction, reference, params)
+
+
+class AllocatingAdapter(CrashingAdapter):
+    """Allocates 8 MB during each call and releases it before returning."""
+
+    name = "allocating"
+
+    def predict(self, case_input: Mapping[str, Any]) -> AdapterResponse:
+        block = bytearray(8_000_000)
+        del block
+        return AdapterResponse(output={"status": "ok", "area_m2": 0.0})
+
+
+def test_efficiency_figures(result: dict[str, Any]) -> None:
+    efficiency = result["efficiency"]
+    cases = result["cases"]
+    latencies = sorted(c["latency_s"] for c in cases)
+    assert efficiency["cases_total"] == 10
+    assert efficiency["cases_per_s"] == pytest.approx(10 / efficiency["wall_clock_s"])
+    assert efficiency["latency_max_s"] == latencies[-1]
+    assert efficiency["latency_p50_s"] == pytest.approx((latencies[4] + latencies[5]) / 2)
+    assert efficiency["latency_p50_s"] <= efficiency["latency_p90_s"] <= efficiency["latency_p99_s"]
+    assert efficiency["latency_p99_s"] <= efficiency["latency_max_s"]
+    assert efficiency["timeout_rate"] == pytest.approx(1 / 10)  # case-sleep
+    failed = sum(c["status"] != "scored" for c in cases)
+    assert efficiency["failure_rate"] == pytest.approx(failed / 10)
+    assert efficiency["retries_total"] == 4  # case-raise 2, case-flaky 2
+    assert isinstance(efficiency["peak_rss_bytes"], int)
+    assert efficiency["peak_rss_bytes"] > 10_000_000  # at least the runner's own interpreter
+
+
+def test_scoring_time_is_separate_from_latency(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(metric_registry, "_REGISTRY", {"exact_match": SlowMetric()})
+    result = run_benchmark(SPEC, "mock", _config(adapter={}))
+    case = _cases(result)["case-ref"]
+    assert case["status"] == "scored"
+    assert case["latency_s"] < 0.2
+    assert case["scoring_s"] >= 0.3
+    unscored = [c for c in result["cases"] if c["status"] != "scored"]
+    assert all(c["scoring_s"] is None for c in unscored)
+
+
+def test_per_case_memory_with_one_worker(result: dict[str, Any]) -> None:
+    for case in result["cases"]:
+        if case["status"] == "timeout":
+            assert case["peak_memory_bytes"] is None
+            assert "killed" in case["memory_note"]
+        else:
+            assert isinstance(case["peak_memory_bytes"], int)
+            assert "memory_note" not in case
+
+
+def test_per_case_memory_measures_predict(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(registry, "_REGISTRY", {"allocating": AllocatingAdapter})
+    result = run_benchmark(SPEC, "allocating", _config(adapter={}))
+    for case in result["cases"]:
+        assert case["peak_memory_bytes"] >= 8_000_000
+
+
+def test_per_case_memory_unavailable_with_several_workers() -> None:
+    result = run_benchmark(SPEC, "mock", _config(workers=2))
+    assert validate_run_result_document(result) == []
+    for case in result["cases"]:
+        assert case["peak_memory_bytes"] is None
+        assert case["memory_note"] == "per-case memory unavailable when workers > 1"
+
+
+def test_workers_increase_throughput() -> None:
+    adapter = {"default": {"behavior": "sleep", "seconds": 0.2}}
+    runs = {
+        workers: run_benchmark(
+            THROUGHPUT_SPEC, "mock", _config(workers=workers, max_retries=0, adapter=adapter)
+        )
+        for workers in (1, 4)
+    }
+    for run in runs.values():
+        assert [c["case_id"] for c in run["cases"]] == [f"case-{i:02d}" for i in range(1, 21)]
+        assert {c["status"] for c in run["cases"]} == {"scored"}
+        assert all(c["latency_s"] >= 0.2 for c in run["cases"])
+    serial, parallel = runs[1]["efficiency"], runs[4]["efficiency"]
+    assert serial["cases_total"] == parallel["cases_total"] == 20
+    assert parallel["cases_per_s"] > serial["cases_per_s"]
+
+
 # --- CLI ------------------------------------------------------------------------------------
 
 

@@ -49,7 +49,7 @@ class AggregateValue:
     ci_high: float | None
 
 
-def _percentile(sorted_values: Sequence[float], q: float) -> float:
+def percentile(sorted_values: Sequence[float], q: float) -> float:
     """Linear-interpolation percentile of already sorted values, ``q`` in [0, 1]."""
     position = (len(sorted_values) - 1) * q
     low = int(position)
@@ -72,7 +72,7 @@ def bootstrap_ci(
     n = len(values)
     means = sorted(sum(rng.choices(values, k=n)) / n for _ in range(n_resamples))
     alpha = (1 - confidence) / 2
-    return _percentile(means, alpha), _percentile(means, 1 - alpha)
+    return percentile(means, alpha), percentile(means, 1 - alpha)
 
 
 def aggregate_values(

@@ -236,6 +236,7 @@
         "output",
         "metrics",
         "latency_s",
+        "scoring_s",
         "retries",
         "tokens",
         "cost_usd",
@@ -276,6 +277,10 @@
           "description": "Adapter wall-clock time in seconds; null when the adapter was not called.",
           "$ref": "#/$defs/nonNegativeNumberOrNull"
         },
+        "scoring_s": {
+          "description": "Metric scoring time in seconds, excluded from latency_s; null when the case was not scored.",
+          "$ref": "#/$defs/nonNegativeNumberOrNull"
+        },
         "retries": { "$ref": "#/$defs/nonNegativeInteger" },
         "tokens": {
           "anyOf": [{ "$ref": "#/$defs/tokens" }, { "type": "null" }]
@@ -285,6 +290,7 @@
           "$ref": "#/$defs/nonNegativeNumberOrNull"
         },
         "peak_memory_bytes": {
+          "description": "Peak bytes allocated during predict, above the allocations live when it started (tracemalloc).",
           "type": ["integer", "null"],
           "minimum": 0
         },

@@ -7,6 +7,7 @@ from geoevals.metrics.base import (
     MetricValue,
     aggregate_values,
     bootstrap_ci,
+    percentile,
 )
 from geoevals.metrics.registry import get_metric, register_metric, registered_metric_ids
 
@@ -18,6 +19,7 @@ __all__ = [
     "aggregate_values",
     "bootstrap_ci",
     "get_metric",
+    "percentile",
     "register_metric",
     "registered_metric_ids",
 ]

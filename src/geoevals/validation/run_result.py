@@ -96,6 +96,7 @@ class CaseRecord(_SchemaModel):
     output: dict[str, Any] | None
     metrics: dict[Identifier, MetricValue]
     latency_s: NonNegativeFloat | None
+    scoring_s: NonNegativeFloat | None
     retries: NonNegativeInt
     tokens: Tokens | None
     cost_usd: NonNegativeFloat | None
