@@ -1,0 +1,18 @@
+# Build settings of the real-geography pilot (`geoevals bench build human_context_pilot`).
+# The geography itself (bounding box, snapshot date) is in the dataset manifest; see
+# README.md, "Real-geography pilot".
+id: human_context_pilot
+dataset_manifest: ../../datasets/manifests/human_context_pilot.yaml
+# IANA time zone of the placeholder bounding box (Burlington, Vermont). Change it with the box.
+timezone: America/New_York
+seed: 20261009
+# Origins are sampled evenly across the three street-density terciles (at least 30 in all).
+origins: 36
+# Street-network density (meters of street per square kilometer) is measured on this grid.
+density_cell_m: 250
+# Amenity-count results are aggregated on these grids for the spatial-unit sensitivity table.
+sensitivity_cells_m: [250, 1000]
+count_minutes: 15
+count_categories: [grocery, transit_stop]
+# The opening-hours question asked from every origin (a Saturday evening before the snapshot).
+open_question: {category: grocery, minutes: 15, date: "2025-12-13", time: "19:00"}

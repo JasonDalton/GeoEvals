@@ -1,0 +1,33 @@
+schema_version: "1.0.0"
+dataset_id: human_context_pilot
+description: >-
+  OpenStreetMap streets and points of interest for the real-geography pilot of the
+  human-context access benchmark. The bounding box is a PLACEHOLDER (part of Burlington,
+  Vermont, USA) until the pilot geography is decided (PRD open question 1); change it here, or
+  pass --bbox to `geoevals data fetch human_context_pilot`. The extract is licensed under the
+  ODbL and is never committed: `geoevals data fetch human_context_pilot` downloads it into the
+  gitignored data/raw/human_context_pilot/ and records the access date and SHA-256 there. See
+  datasets/download_instructions/human_context_pilot.md.
+assets:
+  - asset_id: osm_extract
+    path: ../../data/raw/human_context_pilot/osm_extract.json
+    source_url: https://overpass-api.de/api/interpreter
+    citation: OpenStreetMap contributors. OpenStreetMap data via the Overpass API, https://www.openstreetmap.org/copyright
+    access_date: 2026-10-09
+    license: ODbL-1.0
+    attribution: © OpenStreetMap contributors
+    redistributable: false
+    sha256: b7ca09931fa7ab809b605f19d000bda860e58c44a34c3280f6b7bf8a032a4817
+    crs: EPSG:4326
+    bbox: [-73.225, 44.465, -73.2, 44.485]
+    time_range:
+      start: 2026-01-01
+      end: 2026-01-01
+    processing_steps:
+      - Overpass API query (geoevals.data.fetch.overpass_query) pinned to the snapshot date time_range.end at 00:00 UTC, for walkable highway ways (with node coordinates) and points of interest (shops, amenities, parks, transit stops; ways and relations as their center) in the bounding box.
+      - Normalized by geoevals.data.fetch.normalize_overpass (server header dropped, elements sorted by type and ID, compact JSON) before the SHA-256 is taken.
+    split: test
+    known_limitations:
+      - OpenStreetMap completeness varies by region and by feature type; sidewalks, footpaths and opening_hours are often missing, so access values reflect mapping effort as well as the built environment.
+      - The sha256 is for the default bounding box and snapshot date; a fetch with another --bbox or --date records its own checksum in data/raw/human_context_pilot/manifest.yaml. Overpass attic data can change after redactions, which changes the checksum.
+      - Placeholder geography, chosen only to exercise the pipeline; it is not a representative sample of any population.

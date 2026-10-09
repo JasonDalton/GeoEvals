@@ -9,6 +9,7 @@
 | License | MIT (spec, cases, generator and fixtures) |
 | Reference workflow | [`reference.py`](reference.py) (networkx Dijkstra via `geoevals.metrics.network`) |
 | Second implementation | `access_baseline` adapter (`scipy.sparse.csgraph`, GeoPandas) |
+| Real-geography pilot | `human_context_pilot`, built locally from OpenStreetMap (ODbL-1.0, not committed); see [below](#real-geography-pilot) |
 
 ## Purpose
 
@@ -20,7 +21,9 @@ declines requests that the data cannot answer. The concepts (snapping, walking s
 thresholds, the detour ratio, opening hours at an instant) are defined in
 [`docs/human-context.md`](../../docs/human-context.md); every value is a `proxy`.
 
-It runs in CI on a synthetic town, so it needs no licensed data.
+It runs in CI on a synthetic town, so it needs no licensed data. A real-geography pilot
+(`human_context_pilot`, [below](#real-geography-pilot)) runs the same operations on an
+OpenStreetMap extract that each user downloads; it is a manual path, outside CI.
 
 ## The synthetic town
 
@@ -127,3 +130,111 @@ It scores `task_success = 1.0` on all 51 cases.
   mobility are not modeled.
 - Opening hours use one time zone and a subset of the OpenStreetMap syntax (no months, week
   numbers, school holidays or sunrise/sunset); values outside it count as unknown.
+
+## Real-geography pilot
+
+### Purpose
+
+The pilot shows that the access benchmark works beyond the synthetic town: the same operations,
+reference workflow and adapters run on a real street network and real points of interest from
+OpenStreetMap (OSM). It also reports what real data adds: missing attributes, origins that do
+not reach the network, and how much results depend on the spatial unit used to summarize them.
+Its cases are generated, never committed, and are not a published baseline.
+
+### Geography and time range
+
+| Field | Value |
+| --- | --- |
+| Bounding box | `[-73.225, 44.465, -73.2, 44.485]` (lon/lat, about 2 km x 2.2 km): a **placeholder**, part of Burlington, Vermont, USA, chosen only to exercise the pipeline. The pilot geography is an open question (PRD section 9, question 1) |
+| Time range | OSM as of 2026-01-01 00:00 UTC (an Overpass `date:` snapshot); the opening-hours question is asked for Saturday 2025-12-13 at 19:00 `America/New_York` |
+| Configuration | Box and snapshot date in [`datasets/manifests/human_context_pilot.yaml`](../../datasets/manifests/human_context_pilot.yaml) (or `--bbox`/`--date` on `geoevals data fetch`); time zone, seed, origin count, grid sizes and questions in [`pilot.yaml`](pilot.yaml) |
+
+### Licenses
+
+- The OSM extract and everything built from it (the pilot's fixtures, cases and report form a
+  derived database) are under the Open Database License, `ODbL-1.0`, with the attribution
+  "© OpenStreetMap contributors". They are `redistributable: false` here and stay in the
+  gitignored `data/raw/human_context_pilot/`. Whether small derived samples could ever be
+  committed is an open question (PRD section 9, question 2); until a qualified reviewer
+  answers it, they are not.
+- The code, the manifest, `pilot.yaml` and these instructions are MIT, like the rest of the
+  repository.
+
+### How to run it (manual)
+
+Download instructions and details: [`datasets/download_instructions/human_context_pilot.md`](../../datasets/download_instructions/human_context_pilot.md).
+
+```sh
+uv run geoevals data fetch human_context_pilot   # Overpass API -> data/raw/human_context_pilot/
+uv run geoevals bench build human_context_pilot  # -> data/raw/human_context_pilot/benchmark/
+uv run geoevals run --benchmark data/raw/human_context_pilot/benchmark/benchmark.yaml \
+  --adapter access_baseline --config data/raw/human_context_pilot/benchmark/run_config.yaml \
+  --out data/raw/human_context_pilot/runs
+```
+
+The fetch records the `access_date` and `sha256` of the extract in
+`data/raw/human_context_pilot/manifest.yaml` and refuses to write to a path git would commit.
+The real-data test is marked `network` and excluded from the default `pytest` run and CI; run
+it with `uv run pytest -m network`. The offline tests in `tests/test_pilot.py` cover the same
+code on an invented street pattern.
+
+### How the cases are built
+
+`geoevals bench build` (`geoevals.pilot`) converts the extract to the benchmark's GeoParquet
+layout: every node of a walkable way is a network node, and each pair of consecutive nodes is an
+edge with its WGS 84 geodesic length. OSM tags map to the six amenity categories (`shop` =
+supermarket/convenience/greengrocer: grocery; `amenity` = pharmacy, school, clinic/doctors;
+`leisure=park`; `highway=bus_stop` and rail stations or tram stops: transit_stop).
+Neighborhood types are **street-network density terciles**. 250 m UTM grid cells wholly inside
+the box are ranked by meters of street per km^2 and split into three equal-count groups:
+`low_density`, `medium_density` and `high_density`. 36 origins (at least 30), 12 per tercile,
+are drawn at random (seed in `pilot.yaml`) inside cells of each tercile. They are not moved onto
+the network. Each origin gets four cases: the nearest amenity (the category cycles), the grocery
+and transit-stop counts within 15 minutes, and the open groceries at the stated instant. The
+expected outputs come from `reference.py`, which is copied into the build. Strata are
+`neighborhood_type`, `amenity_category`, `operation`, `time_of_day`, `threshold_min` and
+`origin_snaps`.
+
+For the default box (built on 2026-10-09), the build gave 144 cases from 36 origins on a network
+of 7116 nodes and 8763 edges. The `access_baseline` adapter scored `task_success = 1.0` on all
+144 cases, so the networkx and csgraph implementations agree on the real network as well.
+
+### The pilot report
+
+The build writes `report.md` next to the benchmark. It has:
+
+- **Data freshness**: the extract (snapshot) date, the access date, the server's database
+  timestamp, the box and the extract's SHA-256.
+- **Missingness**: the share of POIs without `opening_hours`, per category, and the share of
+  origins that fail to snap to the network (no node within 25 m), per neighborhood type.
+- **Spatial-unit sensitivity**: amenity counts aggregated on 250 m and 1 km grids (nested UTM
+  cells; a cell's value is the mean count of its origins). For each neighborhood type it shows
+  the mean at each cell size and the difference, and it lists each 1 km cell with the 250 m
+  cell values inside it.
+
+### Known biases
+
+- **OSM completeness varies by region** and by feature type. Footpaths, sidewalks, shops and
+  especially `opening_hours` are mapped more completely in some places (and by some mapping
+  communities) than others. Access values therefore reflect mapping effort as well as the
+  built environment, and comparisons between regions can mislead. For the default box, 94% of
+  POIs had no `opening_hours`.
+- Origins fall uniformly in grid cells, including water, parks and parking lots. Many fail to
+  snap (44% for the default box), and those that do are not weighted by population.
+- Density terciles are relative to the chosen box. `high_density` in one box can be
+  `low_density` in another.
+- Walking is a constant speed on mapped lengths. Barriers, crossings, slope, private paths
+  (`access=private` is not filtered) and personal mobility are not modeled.
+- Results change with the spatial unit (the modifiable areal unit problem). The report shows
+  this for two grid sizes; it does not correct for it.
+
+### Prohibited uses
+
+- Do not commit or redistribute the extract, the built pilot or its report outside the terms
+  of the ODbL. Keep the attribution "© OpenStreetMap contributors" on anything shared.
+- Do not use pilot results to rank, score or make decisions about real neighborhoods, their
+  residents or their property (for example lending, insurance, policing or service
+  allocation). The values are proxies of mapped access, not measures of anyone's life.
+- Do not infer anything about individuals or social relationships from them (see
+  [`docs/human-context.md`](../../docs/human-context.md)).
+- Do not treat the placeholder geography as a chosen study area or report it as representative.

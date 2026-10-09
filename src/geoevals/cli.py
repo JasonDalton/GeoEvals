@@ -12,6 +12,13 @@ from typing import Any
 
 from geoevals import __version__
 from geoevals.adapters import create_adapter, registered_adapter_names
+from geoevals.data.fetch import (
+    DEFAULT_MANIFESTS,
+    FetchError,
+    fetch_dataset,
+    manifest_path,
+    parse_bbox,
+)
 from geoevals.data.verify import verify_manifest
 from geoevals.regenerate import RegenerateError, find_benchmark_dir, regenerate
 from geoevals.reporting.compare import Tolerance, compare_runs, load_run
@@ -59,6 +66,13 @@ def add_tolerance_arguments(parser: argparse.ArgumentParser, default: Tolerance)
     )
 
 
+def _bbox_argument(text: str) -> tuple[float, float, float, float]:
+    try:
+        return parse_bbox(text)
+    except FetchError as exc:
+        raise argparse.ArgumentTypeError(str(exc)) from None
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="geoevals",
@@ -82,6 +96,33 @@ def build_parser() -> argparse.ArgumentParser:
         "verify", help="Recompute SHA-256 checksums of a manifest's local assets."
     )
     verify.add_argument("manifest", type=Path, help="Path to a dataset manifest.")
+    fetch = data_commands.add_parser(
+        "fetch",
+        help="Download a dataset that may not be committed into its gitignored path (data/raw/) "
+        "and record its access date and SHA-256 there; never writes into a tracked path.",
+    )
+    fetch.add_argument("dataset_id", help="Dataset ID: <manifests>/<dataset_id>.yaml.")
+    fetch.add_argument(
+        "--manifests",
+        type=Path,
+        default=DEFAULT_MANIFESTS,
+        help=f"Directory of dataset manifests (default: {DEFAULT_MANIFESTS}).",
+    )
+    fetch.add_argument(
+        "--bbox",
+        type=_bbox_argument,
+        help="min_lon,min_lat,max_lon,max_lat (default: the manifest asset's bbox).",
+    )
+    fetch.add_argument(
+        "--date",
+        help="Snapshot date YYYY-MM-DD (default: the manifest asset's time_range end).",
+    )
+    fetch.add_argument(
+        "--out",
+        type=Path,
+        help="Directory to write into; must be gitignored (default: the directory of the "
+        "manifest asset's path).",
+    )
 
     adapters = subparsers.add_parser("adapters", help="Adapter tools.")
     adapter_commands = adapters.add_subparsers(dest="adapters_command", required=True)
@@ -187,6 +228,30 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Write nothing; exit 1 when a committed expected output is out of date.",
     )
+    build = bench_commands.add_parser(
+        "build",
+        help="Build a pilot benchmark from fetched data (settings in <root>/*/pilot.yaml), "
+        "with a data report, into a gitignored directory.",
+    )
+    build.add_argument("pilot_id", help="The id in a pilot.yaml under --root.")
+    build.add_argument(
+        "--root",
+        type=Path,
+        default=DEFAULT_BENCHMARKS,
+        help=f"Directory of benchmark directories (default: {DEFAULT_BENCHMARKS}).",
+    )
+    build.add_argument(
+        "--source",
+        type=Path,
+        help="Directory written by `geoevals data fetch` (default: the directory of the "
+        "dataset manifest asset's path).",
+    )
+    build.add_argument(
+        "--out",
+        type=Path,
+        help="Directory to write the benchmark into; must be gitignored and is replaced "
+        "(default: <source>/benchmark).",
+    )
     return parser
 
 
@@ -227,6 +292,47 @@ def _data_verify(manifest: Path) -> int:
         summary = f"{failed} of {len(checks)} asset(s) failed verification"
         print(f"{manifest}: {summary}", file=sys.stderr)
         return 1
+    return 0
+
+
+def _data_fetch(
+    dataset_id: str, manifests: Path, bbox: Any, date: str | None, out: Path | None
+) -> int:
+    try:
+        record = fetch_dataset(dataset_id, manifests, out, bbox, date)
+    except SpecValidationError as exc:
+        _print_issues(exc.path, exc.issues)
+        return 1
+    except FetchError as exc:
+        print(exc, file=sys.stderr)
+        return 1
+    print(f"{record.path}: {record.bytes} bytes, sha256 {record.sha256}")
+    print(f"access_date {record.access_date}, snapshot {record.snapshot_date}, bbox {record.bbox}")
+    if bbox is None and date is None:
+        committed = load_yaml(manifest_path(dataset_id, manifests))["assets"][0]["sha256"]
+        if committed != record.sha256:
+            print(
+                f"warning: the committed manifest records sha256 {committed}; the server "
+                "returned different data for the same bounding box and date",
+                file=sys.stderr,
+            )
+    return 0
+
+
+def _bench_build(pilot_id: str, root: Path, source: Path | None, out: Path | None) -> int:
+    # Imported here: only this command needs numpy and the pilot code.
+    from geoevals.pilot import PilotError, build_pilot
+
+    try:
+        result = build_pilot(pilot_id, root, source, out)
+    except SpecValidationError as exc:
+        _print_issues(exc.path, exc.issues)
+        return 1
+    except (PilotError, FetchError, RegenerateError) as exc:
+        print(exc, file=sys.stderr)
+        return 1
+    print(f"{result.out_dir}: {result.cases} cases from {result.origins} origins")
+    print(result.report)
     return 0
 
 
@@ -436,6 +542,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         return _validate(args.path)
     if args.command == "data" and args.data_command == "verify":
         return _data_verify(args.manifest)
+    if args.command == "data" and args.data_command == "fetch":
+        return _data_fetch(args.dataset_id, args.manifests, args.bbox, args.date, args.out)
     if args.command == "adapters" and args.adapters_command == "list":
         for name in sorted(registered_adapter_names()):
             print(name)
@@ -455,5 +563,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         return _reproduce(args.baseline_dir, args.root, args.out, args.log_level, tolerance)
     if args.command == "bench" and args.bench_command == "regenerate":
         return _bench_regenerate(args.benchmark_id, args.root, args.check)
+    if args.command == "bench" and args.bench_command == "build":
+        return _bench_build(args.pilot_id, args.root, args.source, args.out)
     parser.print_help()
     return 0
