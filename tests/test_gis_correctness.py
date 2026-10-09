@@ -96,6 +96,7 @@ def test_expected_outputs_satisfy_the_output_contract() -> None:
         {"status": "ok", "features": {"type": "FeatureCollection", "features": []}, "crs": "x"},
         {"status": "ok", "value": 1.5, "units": "m", "crs": "EPSG:32633"},
         {"status": "ok", "value": True, "units": "bool", "crs": "OGC:CRS84"},
+        {"status": "ok", "value": False, "units": "bool", "reason": "unclosed_ring", "crs": "x"},
         *({"status": status} for status in STATUSES[1:]),
     ],
 )
@@ -482,6 +483,118 @@ def test_negative_buffer_that_does_not_collapse_fails() -> None:
     square = shape(_loaded_case("buffer-003").input["inputs"]["params"]["geometry"])
     detail = _failed_buffer(square, "buffer-003")
     assert detail["reason"] == "empty_reference"
+
+
+# --- validity cases ----------------------------------------------------------------------------
+
+VALIDITY_DEFECTS = {
+    ("detect", "bowtie"),
+    ("detect", "unclosed_ring"),
+    ("detect", "duplicate_vertex"),
+    ("detect", "hole_outside_shell"),
+    ("detect", "overlapping_parts"),
+    ("detect", "zero_area_sliver"),
+    ("detect", "empty"),
+    ("repair", "bowtie"),
+    ("repair", "figure_eight"),
+}
+
+
+def _validity_case(task: str, defect: str) -> Any:
+    [case] = [
+        case
+        for case in _cases_of("validity")
+        if (case["strata"]["task"], case["strata"]["defect"]) == (task, defect)
+    ]
+    return _loaded_case(case["case_id"])
+
+
+def test_validity_cases_cover_the_defects() -> None:
+    cases = _cases_of("validity")
+    assert len(cases) >= 8
+    assert {(c["strata"]["task"], c["strata"]["defect"]) for c in cases} == VALIDITY_DEFECTS
+    for case in cases:
+        assert isinstance(case["strata"]["trap"], bool), case["case_id"]
+        expected = _loaded_case(case["case_id"]).expected
+        if case["strata"]["task"] == "detect":
+            assert isinstance(expected["value"], bool), case["case_id"]
+            assert expected["reason"], case["case_id"]
+            assert "geometry" not in expected, case["case_id"]
+        else:
+            assert shape(expected["geometry"]).is_valid, case["case_id"]
+            assert set(case["tolerances"]) == {"tol_m", "area_tol_rel"}, case["case_id"]
+    detected = {}
+    for task, defect in VALIDITY_DEFECTS - {("repair", "bowtie"), ("repair", "figure_eight")}:
+        expected = _validity_case(task, defect).expected
+        detected[defect] = (expected["value"], expected["reason"])
+    assert detected == {
+        "bowtie": (False, "self_intersection"),
+        "unclosed_ring": (False, "unclosed_ring"),
+        "duplicate_vertex": (True, "valid"),
+        "hole_outside_shell": (False, "hole_outside_shell"),
+        "overlapping_parts": (False, "self_intersection"),
+        "zero_area_sliver": (False, "self_intersection"),
+        "empty": (True, "valid"),
+    }
+
+
+def test_repairs_keep_the_area_of_every_lobe() -> None:
+    for defect in ("bowtie", "figure_eight"):
+        case = _validity_case("repair", defect)
+        repaired = shape(case.expected["geometry"])
+        assert isinstance(repaired, MultiPolygon) and len(repaired.geoms) == 2
+        lobes = shape(case.input["inputs"]["params"]["geometry"]).buffer(0)
+        assert repaired.area > lobes.area, "buffer(0) drops a lobe"
+
+
+def test_gis_baseline_passes_every_validity_case() -> None:
+    result = run_benchmark(SPEC, "gis_baseline", RunConfig(split="test"))
+    cases = [case for case in result["cases"] if case["case_id"].startswith("validity-")]
+    assert len(cases) == len(_cases_of("validity"))
+    for case in cases:
+        assert case["metrics"]["task_success"]["value"] == 1.0, case["case_id"]
+        checks = case["metrics"]["task_success"]["detail"]["checks"]
+        if "value_equal" in checks:
+            assert "reason_match" in checks, case["case_id"]
+
+
+def _detection(case: Any, value: bool, reason: str) -> dict[str, Any]:
+    return _task_success({**case.expected, "value": value, "reason": reason}, case.case_id)
+
+
+def test_shapely_closing_the_ring_is_not_a_valid_answer() -> None:
+    case = _validity_case("detect", "unclosed_ring")
+    assert shape(case.input["inputs"]["params"]["geometry"]).is_valid
+    result = _detection(case, True, "valid")
+    assert result["detail"]["failed"] == ["value_equal", "reason_match"]
+
+
+def test_wrong_reason_category_fails() -> None:
+    case = _validity_case("detect", "hole_outside_shell")
+    result = _detection(case, False, "self_intersection")
+    assert result["detail"]["failed"] == ["reason_match"]
+    detail = result["detail"]["checks"]["reason_match"]["detail"]
+    assert (detail["predicted"], detail["expected"]) == ("self_intersection", "hole_outside_shell")
+    missing = _task_success({"status": "ok", "value": False, "units": "bool"}, case.case_id)
+    assert missing["detail"]["failed"] == ["crs_match", "reason_match"]
+
+
+def test_empty_geometry_reported_invalid_fails() -> None:
+    case = _validity_case("detect", "empty")
+    assert _detection(case, False, "empty")["passed"] is False
+
+
+def test_repair_that_drops_a_lobe_fails() -> None:
+    case = _validity_case("repair", "bowtie")
+    bowtie = shape(case.input["inputs"]["params"]["geometry"])
+    output = {**case.expected, "geometry": mapping(bowtie.buffer(0))}
+    result = _task_success(json.loads(json.dumps(output)), case.case_id)
+    assert result["detail"]["failed"] == ["geometry_match"]
+    detail = result["detail"]["checks"]["geometry_match"]["detail"]
+    assert detail["area_error_rel"] == pytest.approx(0.5)
+    unrepaired = {**case.expected, "geometry": case.input["inputs"]["params"]["geometry"]}
+    result = _task_success(unrepaired, case.case_id)
+    assert "validity_match" in result["detail"]["failed"]
 
 
 # --- runner: expected files, tolerances, benchmark_dir -----------------------------------------

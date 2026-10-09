@@ -33,6 +33,21 @@ GEOJSON_CRS = "OGC:CRS84"
 UNITS_IN_M = {"m": 1.0, "km": 1000.0, "ft": 0.3048, "us_ft": 1200 / 3937, "mi": 1609.344}
 """Length units an answer may be requested in, in meters."""
 
+VALIDITY_REASONS = {
+    "Valid Geometry": "valid",
+    "Self-intersection": "self_intersection",
+    "Ring Self-intersection": "self_intersection",
+    "Hole lies outside shell": "hole_outside_shell",
+    "Holes are nested": "nested_holes",
+    "Interior is disconnected": "disconnected_interior",
+    "Nested shells": "nested_shells",
+    "Duplicate Rings": "duplicate_rings",
+    "Too few points in geometry component": "too_few_points",
+    "Ring is not closed": "unclosed_ring",
+    "Invalid Coordinate": "invalid_coordinate",
+}
+"""GEOS validity message (without the ``[x y]`` location) -> reason category."""
+
 Operation = Callable[[Mapping[str, Any], Path], dict[str, Any]]
 
 
@@ -149,10 +164,50 @@ def buffer(inputs: Mapping[str, Any], base: Path) -> dict[str, Any]:
     return {"status": "ok", "geometry": geometry, "crs": params.get("source_crs", GEOJSON_CRS)}
 
 
+def _rings(geometry: Mapping[str, Any]) -> list[list[Any]]:
+    """The rings of a GeoJSON Polygon or MultiPolygon as written (none for other types)."""
+    if geometry["type"] == "Polygon":
+        return list(geometry["coordinates"])
+    if geometry["type"] == "MultiPolygon":
+        return [ring for polygon in geometry["coordinates"] for ring in polygon]
+    return []
+
+
+def validity(inputs: Mapping[str, Any], base: Path) -> dict[str, Any]:
+    """Detect (``task: detect``) or repair (``task: repair``) the validity of
+    ``params.geometry``. Detection checks the GeoJSON rings first (RFC 7946: closed, at least
+    four positions; Shapely would silently close an open ring), then GEOS validity, and answers
+    a boolean ``value`` with a ``reason`` category. Repair uses GeoPandas ``make_valid``."""
+    import geopandas
+
+    params = inputs["params"]
+    crs = params.get("source_crs", GEOJSON_CRS)
+    series = geopandas.GeoSeries([shape(params["geometry"])], crs=crs)
+    if params["task"] == "repair":
+        geometry = _geojson(mapping(series.make_valid().iloc[0]))
+        return {"status": "ok", "geometry": geometry, "crs": crs}
+    rings = _rings(params["geometry"])
+    if any(ring[0] != ring[-1] for ring in rings):
+        reason = "unclosed_ring"
+    elif any(len(ring) < 4 for ring in rings):
+        reason = "too_few_points"
+    else:
+        message = series.is_valid_reason().iloc[0]
+        reason = VALIDITY_REASONS[message.partition("[")[0]]
+    return {
+        "status": "ok",
+        "value": reason == "valid",
+        "units": "bool",
+        "reason": reason,
+        "crs": crs,
+    }
+
+
 OPERATIONS: dict[str, Operation] = {
     "crs_transform": crs_transform,
     "distance": distance,
     "buffer": buffer,
+    "validity": validity,
 }
 """Operation name (the case ``operation``) -> its implementation."""
 

@@ -17,6 +17,7 @@ A prediction and its reference are JSON objects:
 | `geometry` | a GeoJSON geometry |
 | `features` | a GeoJSON FeatureCollection |
 | `value`, `units` | a scalar answer (number, boolean or string) and its units |
+| `reason` | a category that explains a `value`, for example why a geometry is invalid |
 | `crs` | the CRS of `geometry` or `features`, anything `pyproj.CRS.from_user_input` accepts |
 
 Coordinates are always in traditional GIS order, x = easting or longitude and y = northing or
@@ -34,6 +35,7 @@ A check applies to a case only when the **reference** has the field it checks:
 | `geometry_match`, `validity_match` | `geometry` or `features` |
 | `attribute_match` | `features` |
 | `value_abs_error`, `value_rel_error` | a numeric `value` (not a boolean) |
+| `reason_match` | `reason` (inside `task_success` only) |
 
 A check that does not apply scores `value: null`, `passed: null`,
 `detail: {"applicable": false}`.
@@ -119,10 +121,12 @@ distance) is written as `null`.
 
 - **Definition:** 1.0 when every applicable check passes, else 0.0. The checks are
   `status_match`, `crs_match`, `geometry_match`, `validity_match`, `attribute_match`,
-  `value_equal` (a non-numeric reference `value` must be equal, type included) and, for a
-  numeric `value`, `value_abs_error` (when `abs_tol` is given, or when neither `abs_tol` nor
-  `rel_tol` is) and `value_rel_error` (when `rel_tol` is given). A trajectory or tool call never
-  counts toward it.
+  `value_equal` (a non-numeric reference `value` must be equal, type included), `reason_match`
+  (a reference `reason` must be equal, exact string; on failure reason `reason_differs` with
+  `predicted` and `expected`) and, for a numeric `value`, `value_abs_error` (when `abs_tol` is
+  given, or when neither `abs_tol` nor `rel_tol` is) and `value_rel_error` (when `rel_tol` is
+  given). A trajectory or tool call never counts toward it.
+- **Version:** 1.1.0 added `reason_match`. A reference without `reason` scores as in 1.0.0.
 - **Units:** fraction. Higher is better.
 - **Implementation:** `geoevals.metrics.gis.TaskSuccess`.
 - **Detail:** `checks` maps every applicable check to `{passed, detail}`; `failed` lists the

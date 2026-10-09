@@ -412,3 +412,21 @@ def test_task_success_value_checks():
     boolean = {"status": "ok", "value": False}
     assert metric.score({"status": "ok", "value": False}, boolean, {}).passed is True
     assert metric.score({"status": "ok", "value": 0}, boolean, {}).passed is False
+
+
+def test_task_success_reason_match():
+    metric = get_metric("task_success")
+    reference = {"status": "ok", "value": False, "reason": "self_intersection"}
+    assert metric.score(reference, reference, {}).passed is True
+    wrong = metric.score({**reference, "reason": "unclosed_ring"}, reference, {})
+    assert wrong.detail["failed"] == ["reason_match"]
+    assert wrong.detail["checks"]["reason_match"]["detail"] == {
+        "reason": "reason_differs",
+        "predicted": "unclosed_ring",
+        "expected": "self_intersection",
+    }
+    without_reason = {"status": "ok", "value": False}
+    assert set(metric.score(reference, without_reason, {}).detail["checks"]) == {
+        "status_match",
+        "value_equal",
+    }

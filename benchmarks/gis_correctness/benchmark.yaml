@@ -100,6 +100,12 @@ output_schema:
     features: {$ref: "#/$defs/feature_collection"}
     value: {type: [number, boolean, string]}
     units: {type: string, minLength: 1}
+    reason:
+      description: >-
+        A category that explains the value, for example why a geometry is invalid
+        (self_intersection, unclosed_ring, ...) or valid.
+      type: string
+      minLength: 1
     crs:
       description: CRS of the answer; anything pyproj.CRS.from_user_input accepts.
       type: string
@@ -117,12 +123,13 @@ cases:
   - cases/crs_transform.jsonl
   - cases/distance.jsonl
   - cases/buffer.jsonl
+  - cases/validity.jsonl
 splits:
   test:
     description: Every case.
 metrics:
   - id: task_success
-    version: 1.0.0
+    version: 1.1.0
     params: {}
   - id: status_match
     version: 1.0.0

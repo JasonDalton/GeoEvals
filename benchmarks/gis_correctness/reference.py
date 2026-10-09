@@ -22,14 +22,30 @@ from pyproj import CRS, Geod, Transformer
 from pyproj.crs import ProjectedCRS
 from pyproj.crs.coordinate_operation import AzimuthalEquidistantConversion
 from pyproj.exceptions import CRSError
-from shapely import transform, unary_union
+from shapely import make_valid, transform, unary_union
 from shapely.geometry import mapping, shape
 from shapely.geometry.base import BaseGeometry
+from shapely.validation import explain_validity
 
 GEOJSON_CRS = "OGC:CRS84"
 
 UNITS_IN_M = {"m": 1.0, "km": 1000.0, "ft": 0.3048, "us_ft": 1200 / 3937, "mi": 1609.344}
 """Length units an answer may be requested in, in meters."""
+
+VALIDITY_REASONS = {
+    "Valid Geometry": "valid",
+    "Self-intersection": "self_intersection",
+    "Ring Self-intersection": "self_intersection",
+    "Hole lies outside shell": "hole_outside_shell",
+    "Holes are nested": "nested_holes",
+    "Interior is disconnected": "disconnected_interior",
+    "Nested shells": "nested_shells",
+    "Duplicate Rings": "duplicate_rings",
+    "Too few points in geometry component": "too_few_points",
+    "Ring is not closed": "unclosed_ring",
+    "Invalid Coordinate": "invalid_coordinate",
+}
+"""GEOS ``explain_validity`` message (without the ``[x y]`` location) -> reason category."""
 
 
 def _geojson(geometry: BaseGeometry) -> dict[str, Any]:
@@ -147,10 +163,51 @@ def buffer(inputs: Mapping[str, Any], benchmark_dir: Path) -> dict[str, Any]:
     return {"status": "ok", "geometry": _geojson(result), "crs": source}
 
 
+def _ring_reason(geometry: Mapping[str, Any]) -> str | None:
+    """``unclosed_ring`` or ``too_few_points`` for a GeoJSON polygon ring that breaks RFC 7946
+    (closed, at least four positions), else ``None``. Shapely closes an open ring when it reads
+    one, so this is checked on the GeoJSON coordinates."""
+    if geometry["type"] == "Polygon":
+        polygons = [geometry["coordinates"]]
+    elif geometry["type"] == "MultiPolygon":
+        polygons = geometry["coordinates"]
+    else:
+        return None
+    for ring in (ring for polygon in polygons for ring in polygon):
+        if ring[0] != ring[-1]:
+            return "unclosed_ring"
+        if len(ring) < 4:
+            return "too_few_points"
+    return None
+
+
+def validity(inputs: Mapping[str, Any], benchmark_dir: Path) -> dict[str, Any]:
+    """``task: detect``: whether ``params.geometry`` is valid (RFC 7946 rings, then OGC validity
+    by GEOS), as a boolean ``value`` with a ``reason`` category from ``VALIDITY_REASONS``.
+    ``task: repair``: the geometry made valid by ``shapely.make_valid`` (the ``linework``
+    method). The answer is in ``source_crs`` (default ``OGC:CRS84``)."""
+    params = inputs["params"]
+    crs = params.get("source_crs", GEOJSON_CRS)
+    geometry = shape(params["geometry"])
+    if params["task"] == "repair":
+        return {"status": "ok", "geometry": _geojson(make_valid(geometry)), "crs": crs}
+    reason = _ring_reason(params["geometry"])
+    if reason is None:
+        reason = VALIDITY_REASONS[explain_validity(geometry).split("[")[0]]
+    return {
+        "status": "ok",
+        "value": reason == "valid",
+        "units": "bool",
+        "reason": reason,
+        "crs": crs,
+    }
+
+
 OPERATIONS: dict[str, Callable[[Mapping[str, Any], Path], dict[str, Any]]] = {
     "crs_transform": crs_transform,
     "distance": distance,
     "buffer": buffer,
+    "validity": validity,
 }
 
 

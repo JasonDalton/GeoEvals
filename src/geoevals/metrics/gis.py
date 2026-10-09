@@ -2,10 +2,11 @@
 
 A prediction and its reference are mappings with ``status`` and, for an answer, one of
 ``geometry`` (a GeoJSON geometry), ``features`` (a GeoJSON FeatureCollection) or ``value`` (with
-optional ``units``), plus ``crs``. Each metric is one independent check. It applies to a case
-only when the reference has the field it checks; otherwise it scores ``value = None`` and
-``passed = None`` with ``detail = {"applicable": False}``, so the case is left out of the
-metric's aggregate. ``task_success`` passes only when every applicable check passes.
+optional ``units`` and ``reason``, a category), plus ``crs``. Each metric is one independent
+check. It applies to a case only when the reference has the field it checks; otherwise it
+scores ``value = None`` and ``passed = None`` with ``detail = {"applicable": False}``, so the
+case is left out of the metric's aggregate. ``task_success`` passes only when every applicable
+check passes.
 
 Tolerance params (all inclusive, default 0.0, which means exact): ``tol_m`` (meters),
 ``area_tol_rel`` and ``length_tol_rel`` (unitless, checked only when given), ``float_tol``
@@ -394,6 +395,19 @@ def check_value_equal(
     return _failed("value_differs", predicted=predicted, expected=expected)
 
 
+def check_reason(
+    pred: Mapping[str, Any], ref: Mapping[str, Any], params: Mapping[str, Any]
+) -> MetricValue | None:
+    """``reason_match``: the predicted ``reason`` category equals the reference's (exact
+    string), applicable when the reference has a ``reason``."""
+    if "reason" not in ref:
+        return None
+    expected, predicted = ref["reason"], pred.get("reason")
+    if type(predicted) is type(expected) and predicted == expected:
+        return _verdict(True, {})
+    return _failed("reason_differs", predicted=predicted, expected=expected)
+
+
 def check_status(
     pred: Mapping[str, Any], ref: Mapping[str, Any], params: Mapping[str, Any]
 ) -> MetricValue | None:
@@ -485,6 +499,7 @@ def _task_checks(params: Mapping[str, Any]) -> list[tuple[str, Check]]:
         ("validity_match", check_validity),
         ("attribute_match", check_attributes),
         ("value_equal", check_value_equal),
+        ("reason_match", check_reason),
     ]
     if "abs_tol" in params or "rel_tol" not in params:
         checks.append(("value_abs_error", check_value_abs))
@@ -497,15 +512,16 @@ class TaskSuccess(Metric):
     """1.0 when every check that applies to the reference passes, else 0.0.
 
     The checks are ``status_match``, ``crs_match``, ``geometry_match``, ``validity_match``,
-    ``attribute_match``, ``value_equal`` (non-numeric values) and, for a numeric value,
-    ``value_abs_error`` (when ``abs_tol`` is given, or when neither ``abs_tol`` nor ``rel_tol``
-    is) and ``value_rel_error`` (when ``rel_tol`` is given). All take this metric's params.
+    ``attribute_match``, ``value_equal`` (non-numeric values), ``reason_match`` (a ``reason``
+    category) and, for a numeric value, ``value_abs_error`` (when ``abs_tol`` is given, or when
+    neither ``abs_tol`` nor ``rel_tol`` is) and ``value_rel_error`` (when ``rel_tol`` is given).
+    All take this metric's params.
     ``detail.checks`` holds every applicable check's ``passed`` and ``detail``;
     ``detail.failed`` lists the failed checks.
     """
 
     id = "task_success"
-    version = "1.0.0"
+    version = "1.1.0"
     units = "fraction"
     higher_is_better = True
 
