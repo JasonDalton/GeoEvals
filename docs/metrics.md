@@ -242,6 +242,87 @@ distance) is written as `null`.
 - **Edge cases:** as `value_abs_error`; a reference of 0 gives 0.0 when the prediction is also
   0, else value null, failed, reason `zero_reference`.
 
+## Network access
+
+The human-context pillar ([`human-context.md`](human-context.md)) asks how far, how long and how
+directly people can walk to places. The reference answers are computed on a walking network with
+`geoevals.metrics.network`, which needs the optional extra `geoevals[network]` (`networkx`).
+The four metrics below only compare answers, so they are registered without the extra.
+
+### Graph construction rules
+
+| Rule | Definition |
+| --- | --- |
+| Nodes | One node per network vertex, with WGS 84 longitude/latitude coordinates (`OGC:CRS84`, x = longitude). |
+| Edges | Undirected. **One-way segments are ignored for walking:** an edge tagged `oneway` can be walked both ways. |
+| Edge weight | `length_m`, in **meters**: the edge's stated length, or else the geodesic distance between its two nodes on the WGS 84 ellipsoid (`pyproj.Geod`). It must be finite and >= 0. Parallel edges keep the shortest length; self-loops are dropped. |
+| Node snapping | A point (an origin or a point of interest) snaps to the nearest node by geodesic distance when that distance is at most the **snapping tolerance, 25 m** by default (`DEFAULT_SNAP_TOL_M`; inclusive). Ties go to the node added first. A point beyond the tolerance is not on the network, and the expected answer is `insufficient_data`. |
+| Shortest path | Dijkstra on `length_m` between the snapped nodes. No path (different components) means no distance. |
+| Travel time | Shortest-path length in meters divided by the walking speed, **1.33 m/s** by default (`DEFAULT_WALK_SPEED_MPS`), in seconds. |
+
+### Network primitives (`geoevals.metrics.network`)
+
+| Function | Result | Units |
+| --- | --- | --- |
+| `build_walk_graph(nodes, edges)` | the undirected graph under the rules above | edge weight m |
+| `snap_point(graph, point, snap_tol_m=25.0)` | the nearest node, or `None` beyond the tolerance | m |
+| `shortest_path_m(graph, origin, destination)` | shortest-path walking distance between two nodes, `None` without a path | m |
+| `travel_time_s(distance_m, speed_mps)`, `shortest_path_time_s(graph, origin, destination, speed_mps)` | walking time | s |
+| `reachable_within(graph, origin, destinations, minutes, speed_mps)`, `reachable_count(...)` | the destination IDs (or their number) whose walking time is <= `minutes * 60` s; `destinations` maps each ID to its snapped node, and each ID counts once | IDs, count |
+| `route_stretch(graph, origin, destination, snap_tol_m=25.0)` | network distance between the snapped nodes divided by the geodesic distance between the original points; `None` when a point does not snap, there is no path, or the points coincide | ratio |
+| `component_count(graph)`, `connected(graph, a, b)` | number of connected components (an isolated node is one); whether a path joins two nodes | count, bool |
+
+### Answers and applicability
+
+An access answer is `{status, value, units}`, plus `ids` (the list of reachable point-of-interest
+IDs, strings or integers) for a reachable-set question. Each metric applies only when the
+reference has what it checks; otherwise it scores `{"applicable": false}` with a null value, as
+the GIS checks do. A predicted value that is missing, not a number or not finite gives value
+null, failed, reason `missing_value`; predicted `units` that differ from the reference's give
+reason `units_mismatch` (no conversion is done). Tolerances are inclusive.
+
+### `travel_time_abs_error_s`
+
+- **Definition:** `abs(pred.value - ref.value)`; passed when `<= time_tol_s` (seconds, default
+  0.0).
+- **Applies when:** the reference has a numeric `value` with `units: s`.
+- **Units:** s. Lower is better.
+- **Implementation:** `geoevals.metrics.access.TravelTimeAbsError`.
+- **Detail:** `signed_error` (`pred - ref`, s); on failure also `predicted`, `expected`,
+  `tolerance`.
+
+### `reachable_count_error`
+
+- **Definition:** `abs(pred.value - ref.value)`, the error in the number of destinations
+  reachable within T minutes; passed when `<= count_tol` (default 0).
+- **Applies when:** the reference has a numeric `value` with `units: count`.
+- **Units:** count. Lower is better.
+- **Implementation:** `geoevals.metrics.access.ReachableCountError`.
+- **Detail:** as `travel_time_abs_error_s`.
+
+### `reachable_set_jaccard`
+
+- **Definition:** `|P ∩ R| / |P ∪ R|` of the predicted and reference `ids` sets; 1.0 when both
+  are empty. Passed when `>= min_jaccard` (default 1.0, the exact set).
+- **Applies when:** the reference has an `ids` list.
+- **Units:** fraction. Higher is better.
+- **Implementation:** `geoevals.metrics.access.ReachableSetJaccard`.
+- **Detail:** `missing` (reference IDs not predicted) and `extra` (predicted IDs not in the
+  reference), sorted; `duplicates: true` when the prediction repeats an ID (repeats do not
+  change the value); `min_jaccard` on failure.
+- **Edge cases:** missing `ids`, or an ID that is not a string or integer (booleans are not
+  IDs), gives value null, failed, reason `missing_ids`. IDs compare exactly: `1` and `"1"`
+  differ.
+
+### `route_stretch_abs_error`
+
+- **Definition:** `abs(pred.value - ref.value)` of the network detour ratio; passed when
+  `<= stretch_tol` (unitless, default 0.0).
+- **Applies when:** the reference has a numeric `value` with `units: ratio`.
+- **Units:** ratio (unitless). Lower is better.
+- **Implementation:** `geoevals.metrics.access.RouteStretchAbsError`.
+- **Detail:** as `travel_time_abs_error_s`.
+
 ## Agent trajectories
 
 An agent adapter may return a trajectory: its steps for the case, in order. Each step records

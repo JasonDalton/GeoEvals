@@ -1,5 +1,6 @@
 """GeoEvals metrics package."""
 
+from geoevals.metrics.access import ACCESS_METRICS
 from geoevals.metrics.base import (
     BOOTSTRAP_SEED,
     AggregateValue,
@@ -14,7 +15,7 @@ from geoevals.metrics.registry import get_metric, register_metric, registered_me
 from geoevals.metrics.status import StatusMatch
 
 register_metric(StatusMatch())
-for _metric in SPATIAL_METRICS:
+for _metric in (*SPATIAL_METRICS, *ACCESS_METRICS):
     register_metric(_metric)
 
 __all__ = [
