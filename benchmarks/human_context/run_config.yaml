@@ -1,0 +1,6 @@
+adapter: {}
+max_retries: 0
+seed: 0
+split: test
+timeout_s: 60
+workers: 1

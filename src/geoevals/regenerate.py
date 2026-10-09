@@ -20,8 +20,11 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import Any, cast
 
+import yaml
+
 from geoevals.runner.layout import dumps, stable
 from geoevals.validation import load_benchmark_spec
+from geoevals.validation.validate import load_yaml
 
 SPEC_FILE = "benchmark.yaml"
 REFERENCE_FILE = "reference.py"
@@ -31,6 +34,27 @@ ReferenceOutput = Callable[[dict[str, Any], Path], dict[str, Any]]
 
 class RegenerateError(RuntimeError):
     """The benchmark, its reference workflow or a case file cannot be read."""
+
+
+def find_benchmark_dir(root: Path, benchmark_id: str) -> Path:
+    """The directory under ``root`` that holds the spec of ``benchmark_id``.
+
+    That is ``<root>/<benchmark_id>/`` when it has a spec, else the first directory (in name
+    order) whose ``benchmark.yaml`` has ``id: <benchmark_id>`` (a benchmark's directory name may
+    differ from its ID, as ``human_context`` holds ``human_context_access``). When none does,
+    ``<root>/<benchmark_id>/``, so that the caller reports the missing spec there.
+    """
+    direct = root / benchmark_id
+    if (direct / SPEC_FILE).is_file():
+        return direct
+    for spec_path in sorted(root.glob(f"*/{SPEC_FILE}")):
+        try:
+            document = load_yaml(spec_path)
+        except (OSError, yaml.YAMLError):
+            continue
+        if isinstance(document, dict) and document.get("id") == benchmark_id:
+            return spec_path.parent
+    return direct
 
 
 def _reference_output(benchmark_dir: Path, benchmark_id: str) -> ReferenceOutput:

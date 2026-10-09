@@ -1,5 +1,6 @@
 """GeoEvals adapters package."""
 
+from geoevals.adapters.access_baseline import AccessBaselineAdapter, UnsupportedAccessOperation
 from geoevals.adapters.base import Adapter, AdapterResponse, TokenUsage
 from geoevals.adapters.gis_baseline import GisBaselineAdapter, UnsupportedOperation
 from geoevals.adapters.mock import MockAdapter, MockAdapterError, MockConfigError
@@ -11,9 +12,11 @@ from geoevals.adapters.registry import (
 )
 
 register_adapter(MockAdapter.name, MockAdapter)
+register_adapter(AccessBaselineAdapter.name, AccessBaselineAdapter)
 register_adapter(GisBaselineAdapter.name, GisBaselineAdapter)
 
 __all__ = [
+    "AccessBaselineAdapter",
     "Adapter",
     "AdapterResponse",
     "GisBaselineAdapter",
@@ -21,6 +24,7 @@ __all__ = [
     "MockAdapterError",
     "MockConfigError",
     "TokenUsage",
+    "UnsupportedAccessOperation",
     "UnsupportedOperation",
     "adapter_factory",
     "create_adapter",

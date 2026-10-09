@@ -13,7 +13,7 @@ from typing import Any
 from geoevals import __version__
 from geoevals.adapters import create_adapter, registered_adapter_names
 from geoevals.data.verify import verify_manifest
-from geoevals.regenerate import RegenerateError, regenerate
+from geoevals.regenerate import RegenerateError, find_benchmark_dir, regenerate
 from geoevals.reporting.compare import Tolerance, compare_runs, load_run
 from geoevals.reporting.report import write_report
 from geoevals.reproduce import DEFAULT_TOLERANCE, baseline_spec, compare_reproduction
@@ -169,9 +169,13 @@ def build_parser() -> argparse.ArgumentParser:
     regen = bench_commands.add_parser(
         "regenerate",
         help="Recompute every expected output of a benchmark with its reference workflow "
-        "(<root>/<benchmark_id>/reference.py).",
+        "(reference.py in the benchmark's directory under --root).",
     )
-    regen.add_argument("benchmark_id", help="Benchmark ID (its directory name under --root).")
+    regen.add_argument(
+        "benchmark_id",
+        help="Benchmark ID: its directory name under --root, or the id in that directory's "
+        "benchmark.yaml.",
+    )
     regen.add_argument(
         "--root",
         type=Path,
@@ -409,7 +413,7 @@ def _reproduce_into(
 
 
 def _bench_regenerate(benchmark_id: str, root: Path, check: bool) -> int:
-    benchmark_dir = root / benchmark_id
+    benchmark_dir = find_benchmark_dir(root, benchmark_id)
     try:
         stale = regenerate(benchmark_dir, benchmark_id, write=not check)
     except SpecValidationError as exc:

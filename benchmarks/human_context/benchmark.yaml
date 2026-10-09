@@ -1,0 +1,154 @@
+schema_version: "1.1.0"
+id: human_context_access
+version: 0.1.0
+title: Human-context walking access
+pillar: human_context
+task_statement: >-
+  On the street network of a small synthetic town, answer a walking-access question: the travel
+  time from an origin to the nearest amenity of a category, the number of amenities of a
+  category within 10 or 15 minutes, or the network detour ratio between two points. Return the
+  answer in the output contract: a status and, for an answer, a value with units and, for
+  amenity questions, the IDs of the points of interest. Requests that cannot be answered must
+  get the matching status.
+intended_use: >-
+  Check whether a system, classical or model-based, computes walking access on a stated network
+  correctly (shortest paths on stated edge lengths, snapping, inclusive thresholds, the stated
+  walking speed) and abstains when the data cannot answer. The concepts are defined in
+  docs/human-context.md and the metrics in docs/metrics.md. The values are proxies: they say
+  nothing about whether a particular person can or does make a trip.
+input_schema:
+  $defs:
+    position:
+      description: A point as [longitude, latitude] in OGC:CRS84.
+      type: array
+      minItems: 2
+      maxItems: 2
+      items: {type: number}
+  type: object
+  required: [case_id, operation, prompt, inputs, tolerances, strata]
+  properties:
+    case_id: {type: string, minLength: 1}
+    operation:
+      description: The access operation; it is also the name of the case file.
+      enum: [nearest_amenity, amenity_count, network_detour, abstention]
+    prompt:
+      description: The request in natural language, for model-based adapters.
+      type: string
+      minLength: 1
+    inputs:
+      description: >-
+        The town's GeoParquet files (nodes, edges, pois; paths relative to this spec) and the
+        operation parameters. Points are [longitude, latitude] in OGC:CRS84.
+      type: object
+      additionalProperties: false
+      required: [files, params]
+      properties:
+        files:
+          type: object
+          additionalProperties: false
+          required: [nodes, edges, pois]
+          properties:
+            nodes: {type: string, minLength: 1}
+            edges: {type: string, minLength: 1}
+            pois: {type: string, minLength: 1}
+        params:
+          type: object
+          properties:
+            operation: {type: string}
+            origin: {$ref: "#/$defs/position"}
+            destination: {$ref: "#/$defs/position"}
+            category: {type: string, minLength: 1}
+            minutes: {type: number}
+            speed_mps: {type: number}
+    tolerances:
+      description: Tolerance name (a metric param) -> value with explicit units.
+      type: object
+      additionalProperties:
+        type: object
+        additionalProperties: false
+        required: [value, units]
+        properties:
+          value: {type: number, minimum: 0}
+          units: {type: string, minLength: 1}
+    strata:
+      type: object
+      required: [operation, neighborhood_type, amenity_category]
+      properties:
+        operation: {type: string}
+        neighborhood_type:
+          description: Neighborhood type of the origin (outside_network when it is off the network).
+          enum: [grid, mixed_use_core, cul_de_sac_suburban, rural_fringe, outside_network]
+        amenity_category:
+          description: The requested amenity category, or none for a detour question.
+          type: string
+    split: {type: string}
+output_schema:
+  type: object
+  required: [status]
+  properties:
+    status:
+      enum: [ok, needs_clarification, insufficient_data, invalid_request]
+      evidence_type: proxy
+    value:
+      description: Travel time (s), amenity count (count) or detour ratio (ratio).
+      type: number
+      evidence_type: proxy
+    units:
+      enum: [s, count, ratio]
+      evidence_type: proxy
+    ids:
+      description: >-
+        POI IDs the answer refers to: the nearest POI (every POI at the minimum time, when
+        several are) or the POIs within the threshold.
+      type: array
+      items: {type: string}
+      evidence_type: proxy
+  if:
+    properties:
+      status: {const: ok}
+  then:
+    required: [value, units]
+cases:
+  - cases/nearest_amenity.jsonl
+  - cases/amenity_count.jsonl
+  - cases/network_detour.jsonl
+  - cases/abstention.jsonl
+splits:
+  test:
+    description: Every case.
+metrics:
+  - id: task_success
+    version: 1.3.0
+    params: {}
+  - id: status_match
+    version: 1.1.0
+    params: {}
+  - id: travel_time_abs_error_s
+    version: 1.0.0
+    params: {}
+  - id: reachable_count_error
+    version: 1.0.0
+    params: {}
+  - id: reachable_set_jaccard
+    version: 1.0.0
+    params: {}
+  - id: route_stretch_abs_error
+    version: 1.0.0
+    params: {}
+tolerances: {}
+dataset_manifest: manifest.yaml
+license: MIT
+provenance:
+  authors: [GeoEvals contributors]
+  created: 2026-10-09
+  reference_workflow: reference.py
+  notes: >-
+    The town is generated by make_fixture.py (seeded). Every expected output is computed by
+    reference.py with networkx Dijkstra; regenerate them with
+    `geoevals bench regenerate human_context_access`. The tests check every expected output
+    against an independent scipy.sparse.csgraph implementation (the access_baseline adapter).
+limitations:
+  - One small synthetic town; it tests access computations, not scale or real-world data quality.
+  - Walking is modeled as a constant speed on mapped street lengths; crossings, slope, signals and personal mobility are not modeled.
+  - Opening hours are in the data but not used by these cases (time-specific availability comes in a later version).
+  - Tolerances are tight because the network, lengths and speed are all given; they absorb only floating-point summation order.

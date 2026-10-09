@@ -2,7 +2,8 @@
 
 A baseline directory, such as ``baselines/<benchmark_id>/<adapter>/``, holds a run's
 ``result.json``, ``cases.jsonl``, ``config.yaml`` and ``report.md``. Reproducing it reruns the
-benchmark named in ``result.json`` (``<benchmarks_root>/<benchmark.id>/benchmark.yaml``) with the
+benchmark named in ``result.json`` (``benchmark.yaml`` in the directory of ``benchmark.id``
+under ``<benchmarks_root>``, see ``regenerate.find_benchmark_dir``) with the
 adapter named there and the committed ``config.yaml``, then compares the new run with the
 committed one:
 
@@ -24,6 +25,7 @@ from collections.abc import Mapping
 from pathlib import Path
 from typing import Any
 
+from geoevals.regenerate import find_benchmark_dir
 from geoevals.reporting.compare import MISSING, Difference, Tolerance, compare_runs, diff_values
 
 SPEC_FILE = "benchmark.yaml"
@@ -46,7 +48,7 @@ RUN_CASE_ID = "<run>"
 
 def baseline_spec(baseline: Mapping[str, Any], benchmarks_root: Path) -> Path:
     """Path of the benchmark spec that produced ``baseline`` (a run result)."""
-    return benchmarks_root / baseline["benchmark"]["id"] / SPEC_FILE
+    return find_benchmark_dir(benchmarks_root, baseline["benchmark"]["id"]) / SPEC_FILE
 
 
 def compare_reproduction(
