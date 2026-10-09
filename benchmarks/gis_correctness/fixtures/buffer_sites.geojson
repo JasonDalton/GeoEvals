@@ -1,0 +1,9 @@
+{
+  "type": "FeatureCollection",
+  "name": "buffer_sites",
+  "features": [
+    {"type": "Feature", "properties": {"site": "north"}, "geometry": {"type": "Point", "coordinates": [13.4, 52.52]}},
+    {"type": "Feature", "properties": {"site": "middle"}, "geometry": {"type": "Point", "coordinates": [13.405, 52.517]}},
+    {"type": "Feature", "properties": {"site": "south"}, "geometry": {"type": "Point", "coordinates": [13.42, 52.505]}}
+  ]
+}

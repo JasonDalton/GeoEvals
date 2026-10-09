@@ -19,8 +19,10 @@ from typing import Any
 
 import numpy as np
 from pyproj import CRS, Geod, Transformer
+from pyproj.crs import ProjectedCRS
+from pyproj.crs.coordinate_operation import AzimuthalEquidistantConversion
 from pyproj.exceptions import CRSError
-from shapely import transform
+from shapely import transform, unary_union
 from shapely.geometry import mapping, shape
 from shapely.geometry.base import BaseGeometry
 
@@ -40,7 +42,7 @@ def _read_features(path: Path) -> list[dict[str, Any]]:
     return collection["features"]
 
 
-def _transformer(source: str, target: str) -> Callable[[BaseGeometry], BaseGeometry]:
+def _transformer(source: str | CRS, target: str | CRS) -> Callable[[BaseGeometry], BaseGeometry]:
     project = Transformer.from_crs(source, target, always_xy=True).transform
 
     def apply(geometry: BaseGeometry) -> BaseGeometry:
@@ -107,9 +109,48 @@ def distance(inputs: Mapping[str, Any], benchmark_dir: Path) -> dict[str, Any]:
     return {"status": "ok", "value": meters / UNITS_IN_M[units], "units": units, "crs": crs}
 
 
+def _local_crs(source: str, geometry: BaseGeometry) -> CRS:
+    """``source`` when it is projected, else an azimuthal equidistant CRS on the source's
+    ellipsoid centered on the centroid of ``geometry``, so distances from it are true."""
+    crs = CRS(source)
+    if crs.is_projected:
+        return crs
+    center = geometry.centroid
+    conversion = AzimuthalEquidistantConversion(
+        latitude_natural_origin=center.y, longitude_natural_origin=center.x
+    )
+    return ProjectedCRS(conversion=conversion, geodetic_crs=crs.geodetic_crs or crs)
+
+
+def buffer(inputs: Mapping[str, Any], benchmark_dir: Path) -> dict[str, Any]:
+    """Buffer ``params.geometry``, or every feature of ``files.source`` with ``dissolve: true``
+    (the buffers are dissolved into one geometry), by ``distance`` ``units`` (negative shrinks)
+    with ``cap_style`` (default ``round``). The buffer is computed in the projected CRS ``crs``
+    when given, else in the source CRS when it is projected, else in a local azimuthal
+    equidistant CRS. The answer is in the source CRS (``source_crs``, default ``OGC:CRS84``)."""
+    params = inputs["params"]
+    source = params.get("source_crs", GEOJSON_CRS)
+    if "geometry" in params:
+        geometries = [shape(params["geometry"])]
+    elif params.get("dissolve") is True:
+        path = benchmark_dir / inputs["files"]["source"]
+        geometries = [shape(feature["geometry"]) for feature in _read_features(path)]
+    else:
+        raise ValueError("a buffer of a layer needs dissolve: true")
+    local = CRS(params["crs"]) if "crs" in params else _local_crs(source, unary_union(geometries))
+    to_local, to_source = _transformer(source, local), _transformer(local, source)
+    meters = params["distance"] * UNITS_IN_M[params["units"]]
+    distance = meters / local.axis_info[0].unit_conversion_factor
+    cap_style = params.get("cap_style", "round")
+    buffers = [to_local(geometry).buffer(distance, cap_style=cap_style) for geometry in geometries]
+    result = to_source(buffers[0] if len(buffers) == 1 else unary_union(buffers))
+    return {"status": "ok", "geometry": _geojson(result), "crs": source}
+
+
 OPERATIONS: dict[str, Callable[[Mapping[str, Any], Path], dict[str, Any]]] = {
     "crs_transform": crs_transform,
     "distance": distance,
+    "buffer": buffer,
 }
 
 

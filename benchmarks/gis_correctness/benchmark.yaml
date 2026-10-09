@@ -116,6 +116,7 @@ output_schema:
 cases:
   - cases/crs_transform.jsonl
   - cases/distance.jsonl
+  - cases/buffer.jsonl
 splits:
   test:
     description: Every case.

@@ -1,0 +1,8 @@
+{
+  "crs": "EPSG:32633",
+  "geometry": {
+    "coordinates": [],
+    "type": "Polygon"
+  },
+  "status": "ok"
+}

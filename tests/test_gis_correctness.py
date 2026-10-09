@@ -1,10 +1,13 @@
 import json
 import shutil
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import pytest
 from jsonschema import Draft202012Validator
+from pyproj import Transformer
+from shapely.geometry import MultiPolygon, Point, Polygon, mapping, shape
+from shapely.geometry.base import BaseGeometry
 
 from geoevals.adapters import (
     GisBaselineAdapter,
@@ -12,9 +15,10 @@ from geoevals.adapters import (
     create_adapter,
     registered_adapter_names,
 )
-from geoevals.adapters.gis_baseline import OPERATIONS
+from geoevals.adapters.gis_baseline import OPERATIONS, UNITS_IN_M
 from geoevals.cli import main
 from geoevals.data.verify import verify_manifest
+from geoevals.metrics.spatial import reproject
 from geoevals.regenerate import RegenerateError, expected_outputs, regenerate
 from geoevals.runner.config import RunConfig
 from geoevals.runner.run import RunError, _resolve_metrics, _score, load_cases, run_benchmark
@@ -289,6 +293,195 @@ def test_mock_with_swapped_axes_fails_and_names_the_swap() -> None:
     assert case["metrics"]["geometry_match"]["detail"]["reason"] == "axis_order_swapped"
     others = [c for c in result["cases"] if c["case_id"] != AXIS_TRAP_CASE]
     assert all(c["metrics"]["task_success"]["passed"] for c in others)
+
+
+# --- distance cases ----------------------------------------------------------------------------
+
+DEGREE_TRAP_CASES = ["distance-005", "distance-007"]
+"""Planar distance in degrees is wrong here: across the antimeridian and at latitude 70."""
+METERS_PER_DEGREE = 111_320.0
+
+
+def _cases_of(operation: str) -> list[dict[str, Any]]:
+    return [case for path, case in _case_lines() if path.stem == operation]
+
+
+def _loaded_case(case_id: str) -> Any:
+    [case] = [c for c in load_cases(load_benchmark_spec(SPEC), BENCH) if c.case_id == case_id]
+    return case
+
+
+def _task_success(output: dict[str, Any], case_id: str) -> dict[str, Any]:
+    case = _loaded_case(case_id)
+    metrics = _resolve_metrics(load_benchmark_spec(SPEC))
+    return _score(metrics, output, case.expected, case.tolerances)["task_success"]
+
+
+def _layer_points(path: str) -> dict[str, tuple[float, float]]:
+    collection = json.loads((BENCH / path).read_text(encoding="utf-8"))
+    return {
+        feature["properties"]["name"]: tuple(feature["geometry"]["coordinates"])
+        for feature in collection["features"]
+    }
+
+
+def test_distance_cases_cover_the_traps() -> None:
+    cases = _cases_of("distance")
+    assert len(cases) >= 8
+    for case in cases:
+        params, tolerances = case["inputs"]["params"], case["tolerances"]
+        assert case["strata"]["method"] == params["method"], case["case_id"]
+        assert isinstance(case["strata"]["trap"], bool), case["case_id"]
+        assert tolerances["abs_tol"]["units"] == params["units"], case["case_id"]
+        assert tolerances["rel_tol"]["units"] == "ratio", case["case_id"]
+    expected = {case["case_id"]: case["expected"] for case in cases}
+    geodesic = [case for case in cases if case["inputs"]["params"]["method"] == "geodesic"]
+
+    def meters(case: dict[str, Any]) -> float:
+        value = expected[case["case_id"]]
+        return value["value"] * UNITS_IN_M[value["units"]]
+
+    assert any(meters(case) < 10_000 for case in geodesic), "short geodesic distance"
+    assert any(meters(case) > 1_000_000 for case in geodesic), "geodesic distance over 1,000 km"
+    projected = [case for case in cases if case["inputs"]["params"]["method"] == "projected"]
+    assert projected and all(case["inputs"]["params"]["crs"] for case in projected)
+    assert {"m", "ft", "us_ft", "mi"} <= {case["inputs"]["params"]["units"] for case in cases}
+    assert all(case["expected"]["crs"] == "OGC:CRS84" for case in geodesic)
+
+
+@pytest.mark.parametrize("case_id", DEGREE_TRAP_CASES)
+def test_planar_distance_in_degrees_fails(case_id: str) -> None:
+    case = _loaded_case(case_id)
+    params = case.input["inputs"]["params"]
+    points = _layer_points(case.input["inputs"]["files"]["layer"])
+    (x1, y1), (x2, y2) = points[params["from"]], points[params["to"]]
+    degrees = ((x2 - x1) ** 2 + (y2 - y1) ** 2) ** 0.5
+    naive = degrees * METERS_PER_DEGREE / UNITS_IN_M[params["units"]]
+    output = {**case.expected, "value": naive}
+    assert _task_success(case.expected, case_id)["passed"] is True
+    result = _task_success(output, case_id)
+    assert result["passed"] is False
+    assert abs(naive - case.expected["value"]) / case.expected["value"] > 0.1
+
+
+def test_wrong_distance_units_fail() -> None:
+    expected = _loaded_case("distance-006").expected
+    meters_as_us_ft = expected["value"] * UNITS_IN_M["us_ft"]
+    assert _task_success({**expected, "value": meters_as_us_ft}, "distance-006")["passed"] is False
+    feet_as_us_ft = expected["value"] * UNITS_IN_M["us_ft"] / UNITS_IN_M["ft"]
+    assert _task_success({**expected, "value": feet_as_us_ft}, "distance-006")["passed"] is False
+
+
+# --- buffer cases ------------------------------------------------------------------------------
+
+BUFFER_KINDS = {
+    "point_geographic",
+    "line",
+    "negative_collapse",
+    "cap_style",
+    "dissolve",
+    "negative_units",
+}
+
+
+def test_buffer_cases_cover_the_kinds_and_state_tolerances() -> None:
+    cases = _cases_of("buffer")
+    assert len(cases) >= 6
+    assert {case["strata"]["buffer_kind"] for case in cases} == BUFFER_KINDS
+    for case in cases:
+        assert set(case["tolerances"]) == {"tol_m", "area_tol_rel"}, case["case_id"]
+        assert case["tolerances"]["tol_m"]["units"] == "m", case["case_id"]
+        assert case["tolerances"]["area_tol_rel"]["units"] == "ratio", case["case_id"]
+    by_kind = {case["strata"]["buffer_kind"]: case for case in cases}
+    point = by_kind["point_geographic"]["inputs"]["params"]
+    assert point["geometry"]["type"] == "Point" and "crs" not in point
+    assert "source_crs" not in point, "geographic input"
+    assert by_kind["line"]["inputs"]["params"]["geometry"]["type"] == "LineString"
+    assert {case["inputs"]["params"].get("cap_style") for case in cases} >= {"flat", "square"}
+    collapse = _loaded_case(by_kind["negative_collapse"]["case_id"]).expected
+    assert collapse["geometry"] == {"type": "Polygon", "coordinates": []}
+    dissolved = _loaded_case(by_kind["dissolve"]["case_id"]).expected
+    assert dissolved["geometry"]["type"] == "MultiPolygon"
+    assert len(dissolved["geometry"]["coordinates"]) == 2, "two of the three buffers overlap"
+
+
+def test_buffer_scoring_reports_hausdorff_and_area_error() -> None:
+    result = run_benchmark(SPEC, "gis_baseline", RunConfig(split="test"))
+    buffers = [case for case in result["cases"] if case["case_id"].startswith("buffer-")]
+    assert len(buffers) == len(_cases_of("buffer"))
+    for case in buffers:
+        detail = case["metrics"]["geometry_match"]["detail"]
+        tolerances = {name: tol.value for name, tol in _tolerances(case["case_id"]).items()}
+        assert detail["tol_m"] == tolerances["tol_m"]
+        assert detail["area_tol_rel"] == tolerances["area_tol_rel"]
+        assert detail["hausdorff_m"] <= detail["tol_m"], case["case_id"]
+        assert detail["area_error_rel"] <= detail["area_tol_rel"], case["case_id"]
+        assert case["metrics"]["task_success"]["value"] == 1.0, case["case_id"]
+
+
+def _tolerances(case_id: str) -> dict[str, Tolerance]:
+    [case] = [case for case in _cases_of("buffer") if case["case_id"] == case_id]
+    return {name: Tolerance(**value) for name, value in case["tolerances"].items()}
+
+
+def _buffered(geometry: BaseGeometry, crs: str, distance: float, **kwargs: Any) -> BaseGeometry:
+    """Buffer ``geometry`` (in OGC:CRS84) by ``distance`` units of ``crs``, back in CRS84."""
+    to_crs = Transformer.from_crs("OGC:CRS84", crs, always_xy=True)
+    back = Transformer.from_crs(crs, "OGC:CRS84", always_xy=True)
+    return reproject(reproject(geometry, to_crs).buffer(distance, **kwargs), back)
+
+
+def _failed_buffer(
+    output_geometry: BaseGeometry, case_id: str, failed: tuple[str, ...] = ("geometry_match",)
+) -> dict[str, Any]:
+    output = {**_loaded_case(case_id).expected, "geometry": mapping(output_geometry)}
+    result = _task_success(json.loads(json.dumps(output)), case_id)
+    assert result["passed"] is False
+    assert result["detail"]["failed"] == list(failed)
+    return result["detail"]["checks"]["geometry_match"]["detail"]
+
+
+def test_point_buffer_without_projecting_fails() -> None:
+    point = Point(13.405, 52.52)
+    in_degrees = point.buffer(500 / METERS_PER_DEGREE)
+    assert _failed_buffer(in_degrees, "buffer-001")["hausdorff_m"] > 100
+    in_web_mercator = _buffered(point, "EPSG:3857", 500)
+    assert _failed_buffer(in_web_mercator, "buffer-001")["area_error_rel"] > 0.5
+
+
+def test_wrong_cap_style_fails() -> None:
+    line = shape(_loaded_case("buffer-004").input["inputs"]["params"]["geometry"])
+    detail = _failed_buffer(line.buffer(10), "buffer-004")
+    assert detail["hausdorff_m"] == pytest.approx(10.0)
+
+
+def test_buffers_that_are_not_dissolved_fail() -> None:
+    points = [Point(*xy) for xy in _site_points()]
+    parts = [_buffered(point, "EPSG:32633", 300) for point in points]
+    assert all(isinstance(part, Polygon) for part in parts)
+    # Overlapping MultiPolygon parts are also invalid geometry.
+    detail = _failed_buffer(
+        MultiPolygon(cast(list[Polygon], parts)), "buffer-006", ("geometry_match", "validity_match")
+    )
+    assert detail["topology"]["predicted"]["parts"] == 3
+    assert detail["topology"]["expected"]["parts"] == 2
+
+
+def _site_points() -> list[tuple[float, float]]:
+    collection = json.loads((BENCH / "fixtures/buffer_sites.geojson").read_text(encoding="utf-8"))
+    return [tuple(feature["geometry"]["coordinates"]) for feature in collection["features"]]
+
+
+def test_negative_buffer_in_the_wrong_units_fails() -> None:
+    rectangle = shape(_loaded_case("buffer-007").input["inputs"]["params"]["geometry"])
+    detail = _failed_buffer(rectangle.buffer(-50), "buffer-007")
+    assert detail["reason"] == "empty_prediction"
+
+
+def test_negative_buffer_that_does_not_collapse_fails() -> None:
+    square = shape(_loaded_case("buffer-003").input["inputs"]["params"]["geometry"])
+    detail = _failed_buffer(square, "buffer-003")
+    assert detail["reason"] == "empty_reference"
 
 
 # --- runner: expected files, tolerances, benchmark_dir -----------------------------------------

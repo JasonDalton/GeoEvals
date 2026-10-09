@@ -21,3 +21,38 @@ assets:
     split: test
     known_limitations:
       - Synthetic points with invented names; the coordinates were chosen by hand and are not surveyed features.
+  - asset_id: distance_points
+    path: fixtures/distance_points.geojson
+    citation: GeoEvals contributors (2026). Synthetic distance points fixture for the GIS correctness benchmark.
+    access_date: 2026-10-09
+    license: MIT
+    attribution: GeoEvals contributors
+    redistributable: true
+    sha256: 4c06b480034b2253ba4ef7b8af7a977fd4d56bcb559fde4cfdaf316876eead7e
+    crs: OGC:CRS84
+    bbox: [-171.7518, -18.1416, 178.4419, 70.0]
+    time_range:
+      start: 2026-10-09
+      end: 2026-10-09
+    processing_steps: []
+    split: test
+    known_limitations:
+      - Synthetic points with invented names; the coordinates were chosen by hand near well-known places and are not surveyed features.
+      - The bbox does not show that the points suva and apia lie on opposite sides of the antimeridian.
+  - asset_id: buffer_sites
+    path: fixtures/buffer_sites.geojson
+    citation: GeoEvals contributors (2026). Synthetic buffer sites fixture for the GIS correctness benchmark.
+    access_date: 2026-10-09
+    license: MIT
+    attribution: GeoEvals contributors
+    redistributable: true
+    sha256: 73097c2635388be8118d072c92b26fcd5637c61dd853575b3a6d4aa68a453dba
+    crs: OGC:CRS84
+    bbox: [13.4, 52.505, 13.42, 52.52]
+    time_range:
+      start: 2026-10-09
+      end: 2026-10-09
+    processing_steps: []
+    split: test
+    known_limitations:
+      - Synthetic points with invented names; the coordinates were chosen by hand and are not surveyed features.

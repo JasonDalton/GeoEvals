@@ -1,0 +1,13 @@
+{
+  "type": "FeatureCollection",
+  "name": "distance_points",
+  "features": [
+    {"type": "Feature", "properties": {"name": "midtown"}, "geometry": {"type": "Point", "coordinates": [-73.9857, 40.7484]}},
+    {"type": "Feature", "properties": {"name": "uptown"}, "geometry": {"type": "Point", "coordinates": [-73.968, 40.7851]}},
+    {"type": "Feature", "properties": {"name": "thames"}, "geometry": {"type": "Point", "coordinates": [-0.1276, 51.5072]}},
+    {"type": "Feature", "properties": {"name": "suva"}, "geometry": {"type": "Point", "coordinates": [178.4419, -18.1416]}},
+    {"type": "Feature", "properties": {"name": "apia"}, "geometry": {"type": "Point", "coordinates": [-171.7518, -13.8333]}},
+    {"type": "Feature", "properties": {"name": "arctic_west"}, "geometry": {"type": "Point", "coordinates": [10.0, 70.0]}},
+    {"type": "Feature", "properties": {"name": "arctic_east"}, "geometry": {"type": "Point", "coordinates": [30.0, 70.0]}}
+  ]
+}

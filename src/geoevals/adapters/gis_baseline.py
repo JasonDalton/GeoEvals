@@ -120,9 +120,39 @@ def distance(inputs: Mapping[str, Any], base: Path) -> dict[str, Any]:
     return {"status": "ok", "value": meters / UNITS_IN_M[units], "units": units, "crs": crs}
 
 
+def buffer(inputs: Mapping[str, Any], base: Path) -> dict[str, Any]:
+    """Buffer ``params.geometry`` or the layer ``files.source`` (with ``dissolve: true``, the
+    buffers are dissolved into one geometry) by ``distance`` ``units`` with ``cap_style``. The
+    buffer is computed in ``crs`` when given, else in the source CRS when it is projected, else
+    in the UTM zone GeoPandas estimates; the answer is in the source CRS."""
+    import geopandas
+
+    params = inputs["params"]
+    if "geometry" in params:
+        source = params.get("source_crs", GEOJSON_CRS)
+        series = geopandas.GeoSeries([shape(params["geometry"])], crs=source)
+    elif params.get("dissolve") is True:
+        series = _read(inputs, "source", base).geometry
+    else:
+        raise ValueError("a buffer of a layer needs dissolve: true")
+    source_crs = CRS.from_user_input(series.crs)
+    if "crs" in params:
+        local = CRS.from_user_input(params["crs"])
+    else:
+        local = series.estimate_utm_crs() if source_crs.is_geographic else source_crs
+    meters = params["distance"] * UNITS_IN_M[params["units"]]
+    distance = meters / local.axis_info[0].unit_conversion_factor
+    buffers = series.to_crs(local).buffer(distance, cap_style=params.get("cap_style", "round"))
+    if len(buffers) > 1:
+        buffers = geopandas.GeoSeries([buffers.union_all()], crs=local)
+    geometry = _geojson(mapping(buffers.to_crs(source_crs).iloc[0]))
+    return {"status": "ok", "geometry": geometry, "crs": params.get("source_crs", GEOJSON_CRS)}
+
+
 OPERATIONS: dict[str, Operation] = {
     "crs_transform": crs_transform,
     "distance": distance,
+    "buffer": buffer,
 }
 """Operation name (the case ``operation``) -> its implementation."""
 
