@@ -1,0 +1,7 @@
+{"type": "FeatureCollection", "name": "join_points_utm", "crs": {"type": "name", "properties": {"name": "urn:ogc:def:crs:EPSG::32633"}}, "features": [
+    {"type": "Feature", "properties": {"point_id": "u1", "kind": "cafe"}, "geometry": {"type": "Point", "coordinates": [391390.73, 5817855.24]}},
+    {"type": "Feature", "properties": {"point_id": "u2", "kind": "school"}, "geometry": {"type": "Point", "coordinates": [394903.98, 5823342.32]}},
+    {"type": "Feature", "properties": {"point_id": "u3", "kind": "clinic"}, "geometry": {"type": "Point", "coordinates": [404858.35, 5812012.05]}},
+    {"type": "Feature", "properties": {"point_id": "u4", "kind": "farm"}, "geometry": {"type": "Point", "coordinates": [418541.85, 5817328.8]}}
+  ]
+}

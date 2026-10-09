@@ -1,0 +1,105 @@
+{
+  "crs": "OGC:CRS84",
+  "features": {
+    "features": [
+      {
+        "geometry": {
+          "coordinates": [
+            13.4,
+            52.5
+          ],
+          "type": "Point"
+        },
+        "properties": {
+          "kind": "cafe",
+          "point_id": "p1",
+          "zone_id": "z1",
+          "zone_name": "west"
+        },
+        "type": "Feature"
+      },
+      {
+        "geometry": {
+          "coordinates": [
+            13.45,
+            52.55
+          ],
+          "type": "Point"
+        },
+        "properties": {
+          "kind": "school",
+          "point_id": "p2",
+          "zone_id": "z1",
+          "zone_name": "west"
+        },
+        "type": "Feature"
+      },
+      {
+        "geometry": {
+          "coordinates": [
+            13.6,
+            52.45
+          ],
+          "type": "Point"
+        },
+        "properties": {
+          "kind": "clinic",
+          "point_id": "p3",
+          "zone_id": "z2",
+          "zone_name": "east"
+        },
+        "type": "Feature"
+      },
+      {
+        "geometry": {
+          "coordinates": [
+            13.5,
+            52.5
+          ],
+          "type": "Point"
+        },
+        "properties": {
+          "kind": "kiosk",
+          "point_id": "p4",
+          "zone_id": "z1",
+          "zone_name": "west"
+        },
+        "type": "Feature"
+      },
+      {
+        "geometry": {
+          "coordinates": [
+            13.5,
+            52.5
+          ],
+          "type": "Point"
+        },
+        "properties": {
+          "kind": "kiosk",
+          "point_id": "p4",
+          "zone_id": "z2",
+          "zone_name": "east"
+        },
+        "type": "Feature"
+      },
+      {
+        "geometry": {
+          "coordinates": [
+            13.35,
+            52.42
+          ],
+          "type": "Point"
+        },
+        "properties": {
+          "kind": "library",
+          "point_id": "p6",
+          "zone_id": "z1",
+          "zone_name": "west"
+        },
+        "type": "Feature"
+      }
+    ],
+    "type": "FeatureCollection"
+  },
+  "status": "ok"
+}

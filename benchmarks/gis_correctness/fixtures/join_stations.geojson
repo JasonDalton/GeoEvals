@@ -1,0 +1,6 @@
+{"type": "FeatureCollection", "name": "join_stations", "features": [
+    {"type": "Feature", "properties": {"station_id": "s1", "station_name": "Station One"}, "geometry": {"type": "Point", "coordinates": [13.41, 52.505]}},
+    {"type": "Feature", "properties": {"station_id": "s2", "station_name": "Station Two"}, "geometry": {"type": "Point", "coordinates": [13.62, 52.46]}},
+    {"type": "Feature", "properties": {"station_id": "s3", "station_name": "Station Three"}, "geometry": {"type": "Point", "coordinates": [13.79, 52.51]}}
+  ]
+}

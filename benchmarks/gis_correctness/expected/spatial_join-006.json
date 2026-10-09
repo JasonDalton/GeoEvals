@@ -1,0 +1,57 @@
+{
+  "crs": "EPSG:32633",
+  "features": {
+    "features": [
+      {
+        "geometry": {
+          "coordinates": [
+            391390.73,
+            5817855.24
+          ],
+          "type": "Point"
+        },
+        "properties": {
+          "kind": "cafe",
+          "point_id": "u1",
+          "zone_id": "z1",
+          "zone_name": "west"
+        },
+        "type": "Feature"
+      },
+      {
+        "geometry": {
+          "coordinates": [
+            394903.98,
+            5823342.32
+          ],
+          "type": "Point"
+        },
+        "properties": {
+          "kind": "school",
+          "point_id": "u2",
+          "zone_id": "z1",
+          "zone_name": "west"
+        },
+        "type": "Feature"
+      },
+      {
+        "geometry": {
+          "coordinates": [
+            404858.35,
+            5812012.05
+          ],
+          "type": "Point"
+        },
+        "properties": {
+          "kind": "clinic",
+          "point_id": "u3",
+          "zone_id": "z2",
+          "zone_name": "east"
+        },
+        "type": "Feature"
+      }
+    ],
+    "type": "FeatureCollection"
+  },
+  "status": "ok"
+}

@@ -34,6 +34,7 @@ A check applies to a case only when the **reference** has the field it checks:
 | `crs_match` | `crs` |
 | `geometry_match`, `validity_match` | `geometry` or `features` |
 | `attribute_match` | `features` |
+| `feature_count` | `features` (inside `task_success` only) |
 | `value_abs_error`, `value_rel_error` | a numeric `value` (not a boolean) |
 | `reason_match` | `reason` (inside `task_success` only) |
 
@@ -65,14 +66,18 @@ means an exact match. The unit is part of the param name or stated here:
 
 Other params: `measure_crs` (a projected CRS to measure distances, lengths and areas in),
 `topology` (default `true`) and `key` (the feature property that pairs predicted and reference
-features; without it features pair by position). `task_success` passes its params to every
+features, or a list of properties for a composite key, such as `["point_id", "zone_id"]` for a
+join where a point can match several zones; without it features pair by position). The key
+values must be unique among the reference features. `task_success` passes its params to every
 check.
 
 The runner builds each metric's params from three places, later ones winning: the spec's
 `tolerances` (benchmark-wide defaults), the metric's `params` in the spec, and the case's
 `tolerances`. A tolerance is written `{value, units}` in the spec or case, and only its `value`
 reaches the metric under the tolerance's name, so name it after the param (`tol_m`, `abs_tol`,
-...) and state units that match the table above.
+...) and state units that match the table above. Params that are not tolerances, such as `key`,
+go in the case's `metric_params` (name -> any JSON value) and reach every metric the same way; a
+name may not be in both `tolerances` and `metric_params`.
 
 ## Measurement frames
 
@@ -120,17 +125,23 @@ distance) is written as `null`.
 ### `task_success`
 
 - **Definition:** 1.0 when every applicable check passes, else 0.0. The checks are
-  `status_match`, `crs_match`, `geometry_match`, `validity_match`, `attribute_match`,
+  `status_match`, `crs_match`, `feature_count` (the prediction has as many features as the
+  reference, however they pair; on failure reason `feature_count_differs` or
+  `missing_features`), `geometry_match`, `validity_match`, `attribute_match`,
   `value_equal` (a non-numeric reference `value` must be equal, type included), `reason_match`
   (a reference `reason` must be equal, exact string; on failure reason `reason_differs` with
   `predicted` and `expected`) and, for a numeric `value`, `value_abs_error` (when `abs_tol` is
   given, or when neither `abs_tol` nor `rel_tol` is) and `value_rel_error` (when `rel_tol` is
   given). A trajectory or tool call never counts toward it.
-- **Version:** 1.1.0 added `reason_match`. A reference without `reason` scores as in 1.0.0.
+- **Version:** 1.1.0 added `reason_match`; 1.2.0 added `feature_count` and takes a list `key`
+  (see `geometry_match` 1.1.0). A reference without `reason` or `features` scores as in 1.0.0.
 - **Units:** fraction. Higher is better.
 - **Implementation:** `geoevals.metrics.gis.TaskSuccess`.
 - **Detail:** `checks` maps every applicable check to `{passed, detail}`; `failed` lists the
-  failed checks.
+  failed checks. For a `features` answer, `feature_count`, `geometry_match`, `attribute_match`
+  and `crs_match` are separate entries, so a right count with wrong attributes, or right
+  geometry with a wrong CRS label, shows as exactly one failed check. `feature_count` reports
+  `{predicted, expected}` counts whether it passes or not.
 - **Edge cases:** a null or non-object output fails every applicable check. A reference with no
   applicable check (no `status` either) gives a null value. An abstention reference
   (`status: invalid_request` and no answer fields) only checks the status, so answering `ok`
@@ -142,6 +153,8 @@ distance) is written as `null`.
   (unless `topology: false`), and, when given, `area_error_rel <= area_tol_rel` and
   `length_error_rel <= length_tol_rel`; else 0.0. With `features`, the feature counts must be
   equal, every feature must pair (by `key` or by position), and every pair must match.
+- **Version:** 1.1.0 accepts a list of properties as `key` (a composite key). A string `key`
+  scores as in 1.0.0. The same change bumped `attribute_match` and `validity_match` to 1.1.0.
 - **Units:** fraction; tolerances in meters and ratios. Higher is better.
 - **Frame:** the reference CRS (geodesic when geographic, planar when projected) or
   `measure_crs`. A prediction in another CRS is reprojected into the reference CRS first
@@ -150,7 +163,8 @@ distance) is written as `null`.
 - **Implementation:** `geoevals.metrics.gis.check_geometry`, `compare_geometries`.
 - **Detail:** `hausdorff_m`, `tol_m`, and when they apply `reason`, `axis_swapped`, `topology`
   (`{predicted, expected}` signatures), `area_error_rel`, `length_error_rel`; with features
-  `feature_count`, `missing`, `extra`, `duplicate` and per-feature `features`.
+  `feature_count`, `missing`, `extra`, `duplicate` and per-feature `features`, each labeled by
+  its key value (a list for a composite key) or its index.
 - **Reasons:** `missing_geometry`, `unreadable_geometry`, `unreadable_crs`, `missing_features`,
   `empty_prediction`, `empty_reference`, `axis_order_swapped` (also `axis_swapped: true`).
 - **Edge cases:** empty prediction vs. non-empty reference fails (`hausdorff_m: null`); two
@@ -174,6 +188,7 @@ distance) is written as `null`.
 - **Definition:** 1.0 when every reference feature pairs with a predicted feature and the
   properties of every pair are equal under `attributes_equal(pred, ref, float_tol)`; else 0.0.
 - **Units:** fraction; `float_tol` in each attribute's units. Higher is better.
+- **Version:** 1.1.0 accepts a list `key` (see `geometry_match`).
 - **Implementation:** `geoevals.metrics.gis.check_attributes`.
 - **Detail:** pairing problems as for `geometry_match`; `features` lists each failing pair with
   its `differences` (`{attribute, predicted, expected}`).
@@ -185,6 +200,7 @@ distance) is written as `null`.
 - **Definition:** 1.0 when the predicted geometry is OGC-valid exactly when the reference is
   (`is_valid_with_reason`); with `features`, for every pair. Else 0.0.
 - **Units:** fraction. Higher is better. Planar in the geometries' own coordinates.
+- **Version:** 1.1.0 accepts a list `key` (see `geometry_match`).
 - **Implementation:** `geoevals.metrics.gis.check_validity`.
 - **Detail:** on failure `predicted` and `expected` as `{valid, reason}`, where `reason` is the
   `explain_validity` text.

@@ -56,3 +56,143 @@ assets:
     split: test
     known_limitations:
       - Synthetic points with invented names; the coordinates were chosen by hand and are not surveyed features.
+  - asset_id: join_points
+    path: fixtures/join_points.geojson
+    citation: GeoEvals contributors (2026). Synthetic join points fixture for the GIS correctness benchmark.
+    access_date: 2026-10-09
+    license: MIT
+    attribution: GeoEvals contributors
+    redistributable: true
+    sha256: e3d66a5dc658d9100164d7f55bf44cb9f2d5c0389bbbb1696c90e1162e1be5db
+    crs: OGC:CRS84
+    bbox: [13.35, 52.42, 13.8, 52.55]
+    time_range:
+      start: 2026-10-09
+      end: 2026-10-09
+    processing_steps: []
+    split: test
+    known_limitations:
+      - Synthetic points with invented names; the coordinates were chosen by hand and are not surveyed features.
+      - The point p4 lies exactly on the boundary shared by the zones z1 and z2, on purpose.
+  - asset_id: join_zones
+    path: fixtures/join_zones.geojson
+    citation: GeoEvals contributors (2026). Synthetic join zones fixture for the GIS correctness benchmark.
+    access_date: 2026-10-09
+    license: MIT
+    attribution: GeoEvals contributors
+    redistributable: true
+    sha256: 25f7b34625fcebc4a95736122c99ec06dca38a4591df3536ca4ec2b97380c405
+    crs: OGC:CRS84
+    bbox: [13.3, 52.4, 13.7, 52.6]
+    time_range:
+      start: 2026-10-09
+      end: 2026-10-09
+    processing_steps: []
+    split: test
+    known_limitations:
+      - Synthetic rectangles with invented names; they do not follow any real boundary.
+      - The zones z1 and z2 share the edge at longitude 13.5.
+  - asset_id: join_lots
+    path: fixtures/join_lots.geojson
+    citation: GeoEvals contributors (2026). Synthetic join lots fixture for the GIS correctness benchmark.
+    access_date: 2026-10-09
+    license: MIT
+    attribution: GeoEvals contributors
+    redistributable: true
+    sha256: 750c12bcde12deedab849b8fde1f3648db6bf9aa2f80c4343e4b9862e0b1e26c
+    crs: OGC:CRS84
+    bbox: [13.32, 52.45, 13.66, 52.53]
+    time_range:
+      start: 2026-10-09
+      end: 2026-10-09
+    processing_steps: []
+    split: test
+    known_limitations:
+      - Synthetic rectangles with invented names; they are not real lots.
+  - asset_id: join_stations
+    path: fixtures/join_stations.geojson
+    citation: GeoEvals contributors (2026). Synthetic join stations fixture for the GIS correctness benchmark.
+    access_date: 2026-10-09
+    license: MIT
+    attribution: GeoEvals contributors
+    redistributable: true
+    sha256: 609198d7fb8999178459c3bb42ef86a861afc93575edf2373413c457f0eb2e37
+    crs: OGC:CRS84
+    bbox: [13.41, 52.46, 13.79, 52.51]
+    time_range:
+      start: 2026-10-09
+      end: 2026-10-09
+    processing_steps: []
+    split: test
+    known_limitations:
+      - Synthetic points with invented names; they are not real stations.
+  - asset_id: join_points_utm
+    path: fixtures/join_points_utm.geojson
+    citation: GeoEvals contributors (2026). Synthetic UTM join points fixture for the GIS correctness benchmark.
+    access_date: 2026-10-09
+    license: MIT
+    attribution: GeoEvals contributors
+    redistributable: true
+    sha256: ed2dda1cc04c6d5c36885e542e8089953a36d2f41ef7df58ac37f96c8e14aa1c
+    crs: EPSG:32633
+    bbox: [391390.73, 5812012.05, 418541.85, 5823342.32]
+    time_range:
+      start: 2026-10-09
+      end: 2026-10-09
+    processing_steps: []
+    split: test
+    known_limitations:
+      - Synthetic points with invented names, the positions of four join_points features transformed to UTM zone 33N and rounded to 1 cm.
+      - The CRS is stated in a pre-RFC 7946 GeoJSON crs member, which RFC 7946 readers may ignore.
+  - asset_id: overlay_parcels
+    path: fixtures/overlay_parcels.geojson
+    citation: GeoEvals contributors (2026). Synthetic overlay parcels fixture for the GIS correctness benchmark.
+    access_date: 2026-10-09
+    license: MIT
+    attribution: GeoEvals contributors
+    redistributable: true
+    sha256: f955eedc334611bc300e1ed215932f79de0b325c430f20d1e06cf12408947d8a
+    crs: OGC:CRS84
+    bbox: [13.4, 52.5, 13.48, 52.52]
+    time_range:
+      start: 2026-10-09
+      end: 2026-10-09
+    processing_steps: []
+    split: test
+    known_limitations:
+      - Synthetic rectangles with invented names; they are not real parcels.
+  - asset_id: overlay_flood
+    path: fixtures/overlay_flood.geojson
+    citation: GeoEvals contributors (2026). Synthetic overlay flood zones fixture for the GIS correctness benchmark.
+    access_date: 2026-10-09
+    license: MIT
+    attribution: GeoEvals contributors
+    redistributable: true
+    sha256: 38eb3b573e280b4d1018a8c1d0981b8b9da11c018f2506398aceb15169ca07f1
+    crs: OGC:CRS84
+    bbox: [13.41, 52.49, 13.49, 52.53]
+    time_range:
+      start: 2026-10-09
+      end: 2026-10-09
+    processing_steps: []
+    split: test
+    known_limitations:
+      - Synthetic rectangles with invented names; they are not real flood zones.
+  - asset_id: overlay_works
+    path: fixtures/overlay_works.geojson
+    citation: GeoEvals contributors (2026). Synthetic overlay works areas fixture for the GIS correctness benchmark.
+    access_date: 2026-10-09
+    license: MIT
+    attribution: GeoEvals contributors
+    redistributable: true
+    sha256: a94dc1404e374b04225866736a7ae60d9c7ea4030a7bf7180ec277a583f8c00e
+    crs: OGC:CRS84
+    bbox: [13.43, 52.49, 13.45, 52.52]
+    time_range:
+      start: 2026-10-09
+      end: 2026-10-09
+    processing_steps: []
+    split: test
+    known_limitations:
+      - A synthetic two-part polygon with an invented name; it is not a real works area.
+      - One part touches parcel a2 of overlay_parcels along an edge, on purpose, so their intersection holds a line.

@@ -11,6 +11,9 @@ Case files are JSONL, one case per line. Each case is a JSON object with:
 - ``tolerances`` (optional): name -> ``{value, units}``. Each value is passed to every metric as
   the param ``name``, over the metric's params in the spec, which in turn win over the spec's
   ``tolerances`` (the benchmark-wide defaults).
+- ``metric_params`` (optional): name -> any JSON value, for metric params that are not
+  tolerances (for example ``key``, the feature property that pairs features). They are passed to
+  every metric like the case ``tolerances``; a name may not be in both.
 
 ``expected`` is either the reference output itself or a string: the path, relative to the spec
 file, of a JSON file that holds it. The adapter input also gets ``benchmark_dir``, the absolute
@@ -87,6 +90,12 @@ class Case:
     expected: Any
     strata: dict[str, Any] = field(default_factory=dict)
     tolerances: dict[str, float] = field(default_factory=dict)
+    metric_params: dict[str, Any] = field(default_factory=dict)
+
+    @property
+    def params(self) -> dict[str, Any]:
+        """The case's metric params: its ``tolerances`` and ``metric_params``."""
+        return {**self.tolerances, **self.metric_params}
 
 
 def _case_paths(spec: BenchmarkSpec, spec_dir: Path) -> list[Path]:
@@ -176,6 +185,15 @@ def load_cases(spec: BenchmarkSpec, spec_dir: Path) -> list[Case]:
             if isinstance(tolerances, str):
                 problems.append(f"{where}: case {case_id!r} {tolerances}")
                 continue
+            metric_params = record.get("metric_params", {})
+            if not isinstance(metric_params, dict):
+                problems.append(f"{where}: case {case_id!r} metric_params must be an object")
+                continue
+            if both := sorted(set(metric_params) & set(tolerances)):
+                problems.append(
+                    f"{where}: case {case_id!r} names {both} in both tolerances and metric_params"
+                )
+                continue
             expected = record["expected"]
             if isinstance(expected, str):
                 expected = _load_expected(spec_dir / expected)
@@ -184,7 +202,9 @@ def load_cases(spec: BenchmarkSpec, spec_dir: Path) -> list[Case]:
                     continue
             case_input = {key: value for key, value in record.items() if key != "expected"}
             case_input["benchmark_dir"] = str(spec_dir.resolve())
-            cases[case_id] = Case(case_id, split, case_input, expected, strata, tolerances)
+            cases[case_id] = Case(
+                case_id, split, case_input, expected, strata, tolerances, metric_params
+            )
     if problems:
         raise RunError("\n".join(problems))
     return [cases[case_id] for case_id in sorted(cases)]
@@ -226,12 +246,12 @@ def _score(
     metrics: list[tuple[Metric, dict[str, Any]]],
     output: Any,
     expected: Any,
-    tolerances: dict[str, float],
+    case_params: dict[str, Any],
 ) -> dict:
     scores: dict[str, Any] = {}
     for metric, params in metrics:
         try:
-            value = metric.score(output, expected, {**params, **tolerances})
+            value = metric.score(output, expected, {**params, **case_params})
         except Exception as exc:
             logger.exception("metric %s raised while scoring", metric.id)
             detail = {"scoring_error": f"{type(exc).__name__}: {exc}"}
@@ -327,7 +347,7 @@ class _Runner:
         record["status"] = "scored"
         record["output"] = attempt.output
         start = time.perf_counter()
-        record["metrics"] = _score(self.metrics, attempt.output, case.expected, case.tolerances)
+        record["metrics"] = _score(self.metrics, attempt.output, case.expected, case.params)
         record["scoring_s"] = time.perf_counter() - start
         return record
 

@@ -1,0 +1,6 @@
+{"type": "FeatureCollection", "name": "overlay_parcels", "features": [
+    {"type": "Feature", "properties": {"parcel_id": "a1", "land_use": "residential"}, "geometry": {"type": "Polygon", "coordinates": [[[13.4, 52.5], [13.42, 52.5], [13.42, 52.52], [13.4, 52.52], [13.4, 52.5]]]}},
+    {"type": "Feature", "properties": {"parcel_id": "a2", "land_use": "commercial"}, "geometry": {"type": "Polygon", "coordinates": [[[13.42, 52.5], [13.44, 52.5], [13.44, 52.52], [13.42, 52.52], [13.42, 52.5]]]}},
+    {"type": "Feature", "properties": {"parcel_id": "a3", "land_use": "park"}, "geometry": {"type": "Polygon", "coordinates": [[[13.46, 52.5], [13.48, 52.5], [13.48, 52.52], [13.46, 52.52], [13.46, 52.5]]]}}
+  ]
+}

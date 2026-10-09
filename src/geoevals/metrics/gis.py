@@ -13,8 +13,8 @@ Tolerance params (all inclusive, default 0.0, which means exact): ``tol_m`` (met
 (absolute, in each attribute's units), ``abs_tol`` (the reference value's units) and
 ``rel_tol`` (unitless). Other params: ``measure_crs`` (a projected CRS to measure in instead of
 the reference CRS), ``topology`` (compare type, part and ring counts; default true) and ``key``
-(the feature property that pairs predicted and reference features; by default features pair
-by position). The full definitions are in ``docs/metrics.md``.
+(the feature property, or list of properties, that pairs predicted and reference features; by
+default features pair by position). The full definitions are in ``docs/metrics.md``.
 """
 
 import math
@@ -89,11 +89,21 @@ def _properties(feature: Mapping[str, Any]) -> Mapping[str, Any]:
     return properties if isinstance(properties, Mapping) else {}
 
 
+def _key_value(feature: Mapping[str, Any], key: str | list[str]) -> Any:
+    """The value of ``key`` in the feature's properties; a list of the values for a composite
+    key (a list of properties). A missing property counts as null."""
+    properties = _properties(feature)
+    if isinstance(key, list):
+        return [properties.get(name) for name in key]
+    return properties.get(key)
+
+
 def _pair_features(
-    pred: list[Mapping[str, Any]], ref: list[Mapping[str, Any]], key: str | None
+    pred: list[Mapping[str, Any]], ref: list[Mapping[str, Any]], key: str | list[str] | None
 ) -> tuple[list[tuple[Any, Mapping[str, Any], Mapping[str, Any]]], dict[str, Any]]:
-    """Pair features by ``key`` (or by position). Returns the pairs, each labeled by its key
-    value or index, and the pairing problems (empty when every feature pairs exactly once)."""
+    """Pair features by ``key`` (one property or a list of properties) or by position. Returns
+    the pairs, each labeled by its key value or index, and the pairing problems (empty when
+    every feature pairs exactly once)."""
     problems: dict[str, Any] = {}
     if len(pred) != len(ref):
         problems["feature_count"] = {"predicted": len(pred), "expected": len(ref)}
@@ -110,7 +120,7 @@ def _pair_features(
         by_key: dict[str, Any] = {}
         duplicates = []
         for feature in features:
-            value = _properties(feature).get(key)
+            value = _key_value(feature, key)
             label = repr(value)
             if label in by_key:
                 duplicates.append(value)
@@ -244,6 +254,26 @@ def check_geometry(
         pred, ref, params, lambda p, r: compare(p.get("geometry"), r.get("geometry"))
     )
     return MetricValue(result.value, result.passed, {**crs_detail, **result.detail})
+
+
+# Feature count
+
+
+def check_feature_count(
+    pred: Mapping[str, Any], ref: Mapping[str, Any], params: Mapping[str, Any]
+) -> MetricValue | None:
+    """``feature_count``: the prediction has as many features as the reference, applicable when
+    the reference has ``features``. Independent of how the features pair."""
+    ref_features = _features(ref)
+    if ref_features is None:
+        return None
+    pred_features = _features(pred)
+    if pred_features is None:
+        return _failed("missing_features", expected=len(ref_features))
+    detail = {"predicted": len(pred_features), "expected": len(ref_features)}
+    if len(pred_features) == len(ref_features):
+        return _verdict(True, detail)
+    return _failed("feature_count_differs", **detail)
 
 
 # CRS
@@ -435,7 +465,7 @@ class GeometryMatch(_CheckMetric):
     meters, with topology and, when given, relative area and length checks."""
 
     id = "geometry_match"
-    version = "1.0.0"
+    version = "1.1.0"
     units = "fraction"
     higher_is_better = True
     check = staticmethod(check_geometry)
@@ -455,7 +485,7 @@ class AttributeMatch(_CheckMetric):
     """1.0 when every paired feature has the reference properties within ``float_tol``."""
 
     id = "attribute_match"
-    version = "1.0.0"
+    version = "1.1.0"
     units = "fraction"
     higher_is_better = True
     check = staticmethod(check_attributes)
@@ -465,7 +495,7 @@ class ValidityMatch(_CheckMetric):
     """1.0 when the predicted geometry's OGC validity equals the reference's."""
 
     id = "validity_match"
-    version = "1.0.0"
+    version = "1.1.0"
     units = "fraction"
     higher_is_better = True
     check = staticmethod(check_validity)
@@ -495,6 +525,7 @@ def _task_checks(params: Mapping[str, Any]) -> list[tuple[str, Check]]:
     checks: list[tuple[str, Check]] = [
         ("status_match", check_status),
         ("crs_match", check_crs),
+        ("feature_count", check_feature_count),
         ("geometry_match", check_geometry),
         ("validity_match", check_validity),
         ("attribute_match", check_attributes),
@@ -511,17 +542,18 @@ def _task_checks(params: Mapping[str, Any]) -> list[tuple[str, Check]]:
 class TaskSuccess(Metric):
     """1.0 when every check that applies to the reference passes, else 0.0.
 
-    The checks are ``status_match``, ``crs_match``, ``geometry_match``, ``validity_match``,
-    ``attribute_match``, ``value_equal`` (non-numeric values), ``reason_match`` (a ``reason``
-    category) and, for a numeric value, ``value_abs_error`` (when ``abs_tol`` is given, or when
-    neither ``abs_tol`` nor ``rel_tol`` is) and ``value_rel_error`` (when ``rel_tol`` is given).
+    The checks are ``status_match``, ``crs_match``, ``feature_count`` (a reference with
+    ``features``), ``geometry_match``, ``validity_match``, ``attribute_match``, ``value_equal``
+    (non-numeric values), ``reason_match`` (a ``reason`` category) and, for a numeric value,
+    ``value_abs_error`` (when ``abs_tol`` is given, or when neither ``abs_tol`` nor ``rel_tol``
+    is) and ``value_rel_error`` (when ``rel_tol`` is given).
     All take this metric's params.
     ``detail.checks`` holds every applicable check's ``passed`` and ``detail``;
     ``detail.failed`` lists the failed checks.
     """
 
     id = "task_success"
-    version = "1.1.0"
+    version = "1.2.0"
     units = "fraction"
     higher_is_better = True
 

@@ -6,9 +6,9 @@ the benchmark directory, ``params``: the operation's parameters) and the benchma
 and returns an output in the benchmark's output contract. An operation that is not in
 ``OPERATIONS`` raises ``UnsupportedOperation``, which the runner records as ``adapter_error``.
 
-Fixture files are read with GeoPandas. A file without a CRS (GeoJSON) is taken to be in
-``OGC:CRS84`` unless the case states ``source_crs``. Coordinates are x = easting or longitude
-first, as everywhere in GeoEvals.
+Fixture files are read with GeoPandas. A file without a CRS (GeoJSON without a ``crs`` member)
+is taken to be in ``OGC:CRS84`` unless the case states ``source_crs``. Coordinates are
+x = easting or longitude first, as everywhere in GeoEvals.
 
 The adapter takes no config, makes no paid calls (``deterministic = True``) and keeps no state
 between cases.
@@ -17,7 +17,7 @@ between cases.
 import json
 from collections.abc import Callable, Mapping
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 
 from pyproj import CRS
 from pyproj.exceptions import CRSError
@@ -67,11 +67,18 @@ def _read(inputs: Mapping[str, Any], name: str, base: Path) -> "geopandas.GeoDat
     # every CLI command and runner worker.
     import geopandas
 
-    frame = geopandas.read_file(base / inputs["files"][name])
+    path = base / inputs["files"][name]
+    frame = geopandas.read_file(path)
     source = inputs["params"].get("source_crs")
     if source is not None:
         return frame.set_crs(source, allow_override=True)
-    return frame if frame.crs is not None else frame.set_crs(GEOJSON_CRS)
+    # GDAL labels a GeoJSON file without a ``crs`` member EPSG:4326 (latitude first), but
+    # RFC 7946 coordinates are longitude, latitude: OGC:CRS84.
+    if frame.crs is None or (
+        path.suffix == ".geojson" and "crs" not in json.loads(path.read_text(encoding="utf-8"))
+    ):
+        return frame.set_crs(GEOJSON_CRS, allow_override=True)
+    return frame
 
 
 def _geojson(value: Any) -> Any:
@@ -80,7 +87,9 @@ def _geojson(value: Any) -> Any:
 
 
 def _feature_collection(frame: "geopandas.GeoDataFrame") -> dict[str, Any]:
-    properties = frame.drop(columns=frame.geometry.name).to_dict(orient="records")
+    """The frame as a FeatureCollection; missing attribute values (NaN) become null."""
+    columns = frame.drop(columns=frame.geometry.name).astype(object)
+    properties = columns.where(columns.notna(), None).to_dict(orient="records")
     features = [
         {"type": "Feature", "properties": props, "geometry": _geojson(mapping(geometry))}
         for props, geometry in zip(properties, frame.geometry, strict=True)
@@ -203,11 +212,73 @@ def validity(inputs: Mapping[str, Any], base: Path) -> dict[str, Any]:
     }
 
 
+def _layers(
+    inputs: Mapping[str, Any], base: Path, first: str, second: str
+) -> tuple["geopandas.GeoDataFrame", "geopandas.GeoDataFrame"]:
+    """The layers ``files.<first>`` and ``files.<second>``, the second in the first's CRS."""
+    one, two = _read(inputs, first, base), _read(inputs, second, base)
+    assert one.crs is not None, "_read always sets a CRS"
+    return one, two if two.crs == one.crs else two.to_crs(one.crs)
+
+
+def _crs_name(frame: "geopandas.GeoDataFrame") -> str:
+    return CRS.from_user_input(frame.crs).to_string()
+
+
+def spatial_join(inputs: Mapping[str, Any], base: Path) -> dict[str, Any]:
+    """Join ``files.right`` to ``files.left`` with GeoPandas ``sjoin`` (``predicate``
+    intersects, within or contains) or ``sjoin_nearest`` (``predicate: nearest``, within
+    ``max_distance`` ``units`` in the projected CRS ``crs``, distance in meters as
+    ``distance_m``), ``how`` inner (default) or left. The right layer is reprojected to the left
+    layer's CRS first (``sjoin`` would only warn about a mismatch); the answer keeps the left
+    geometries and CRS."""
+    import geopandas
+
+    params = inputs["params"]
+    left, right = _layers(inputs, base, "left", "right")
+    how = params.get("how", "inner")
+    if params["predicate"] == "nearest":
+        crs = CRS.from_user_input(params["crs"])
+        unit_m = crs.axis_info[0].unit_conversion_factor
+        max_distance = params["max_distance"] * UNITS_IN_M[params["units"]] / unit_m
+        joined = geopandas.sjoin_nearest(
+            left.to_crs(crs),
+            right.to_crs(crs),
+            how=how,
+            max_distance=max_distance,
+            distance_col="distance_m",
+        )
+        joined["distance_m"] = joined["distance_m"] * unit_m
+        joined = joined.set_geometry(left.geometry.loc[joined.index].values, crs=left.crs)
+    else:
+        joined = geopandas.sjoin(left, right, how=how, predicate=params["predicate"])
+    joined = cast("geopandas.GeoDataFrame", joined.drop(columns="index_right"))
+    return {"status": "ok", "features": _feature_collection(joined), "crs": _crs_name(left)}
+
+
+def overlay(inputs: Mapping[str, Any], base: Path) -> dict[str, Any]:
+    """Overlay ``files.a`` with ``files.b`` (reprojected to the CRS of ``a``): GeoPandas
+    ``overlay`` for ``how`` intersection, union, difference or symmetric_difference, and
+    ``clip`` (``b`` is the mask) for ``how: clip``, with ``keep_geom_type`` (default true)."""
+    import geopandas
+
+    params = inputs["params"]
+    a, b = _layers(inputs, base, "a", "b")
+    keep_geom_type = params.get("keep_geom_type", True)
+    if params["how"] == "clip":
+        result = geopandas.clip(a, b, keep_geom_type=keep_geom_type)
+    else:
+        result = geopandas.overlay(a, b, how=params["how"], keep_geom_type=keep_geom_type)
+    return {"status": "ok", "features": _feature_collection(result), "crs": _crs_name(a)}
+
+
 OPERATIONS: dict[str, Operation] = {
     "crs_transform": crs_transform,
     "distance": distance,
     "buffer": buffer,
     "validity": validity,
+    "spatial_join": spatial_join,
+    "overlay": overlay,
 }
 """Operation name (the case ``operation``) -> its implementation."""
 

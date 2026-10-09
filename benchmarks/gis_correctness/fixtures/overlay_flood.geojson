@@ -1,0 +1,5 @@
+{"type": "FeatureCollection", "name": "overlay_flood", "features": [
+    {"type": "Feature", "properties": {"flood_id": "f1", "flood_class": "high"}, "geometry": {"type": "Polygon", "coordinates": [[[13.41, 52.49], [13.43, 52.49], [13.43, 52.51], [13.41, 52.51], [13.41, 52.49]]]}},
+    {"type": "Feature", "properties": {"flood_id": "f2", "flood_class": "low"}, "geometry": {"type": "Polygon", "coordinates": [[[13.475, 52.515], [13.49, 52.515], [13.49, 52.53], [13.475, 52.53], [13.475, 52.515]]]}}
+  ]
+}

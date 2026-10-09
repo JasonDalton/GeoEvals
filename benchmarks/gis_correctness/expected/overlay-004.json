@@ -1,0 +1,225 @@
+{
+  "crs": "OGC:CRS84",
+  "features": {
+    "features": [
+      {
+        "geometry": {
+          "coordinates": [
+            [
+              [
+                13.4,
+                52.5
+              ],
+              [
+                13.4,
+                52.52
+              ],
+              [
+                13.42,
+                52.52
+              ],
+              [
+                13.42,
+                52.51
+              ],
+              [
+                13.41,
+                52.51
+              ],
+              [
+                13.41,
+                52.5
+              ],
+              [
+                13.4,
+                52.5
+              ]
+            ]
+          ],
+          "type": "Polygon"
+        },
+        "properties": {
+          "flood_class": null,
+          "flood_id": null,
+          "land_use": "residential",
+          "parcel_id": "a1"
+        },
+        "type": "Feature"
+      },
+      {
+        "geometry": {
+          "coordinates": [
+            [
+              [
+                13.42,
+                52.52
+              ],
+              [
+                13.44,
+                52.52
+              ],
+              [
+                13.44,
+                52.5
+              ],
+              [
+                13.43,
+                52.5
+              ],
+              [
+                13.43,
+                52.51
+              ],
+              [
+                13.42,
+                52.51
+              ],
+              [
+                13.42,
+                52.52
+              ]
+            ]
+          ],
+          "type": "Polygon"
+        },
+        "properties": {
+          "flood_class": null,
+          "flood_id": null,
+          "land_use": "commercial",
+          "parcel_id": "a2"
+        },
+        "type": "Feature"
+      },
+      {
+        "geometry": {
+          "coordinates": [
+            [
+              [
+                13.48,
+                52.5
+              ],
+              [
+                13.46,
+                52.5
+              ],
+              [
+                13.46,
+                52.52
+              ],
+              [
+                13.475,
+                52.52
+              ],
+              [
+                13.475,
+                52.515
+              ],
+              [
+                13.48,
+                52.515
+              ],
+              [
+                13.48,
+                52.5
+              ]
+            ]
+          ],
+          "type": "Polygon"
+        },
+        "properties": {
+          "flood_class": null,
+          "flood_id": null,
+          "land_use": "park",
+          "parcel_id": "a3"
+        },
+        "type": "Feature"
+      },
+      {
+        "geometry": {
+          "coordinates": [
+            [
+              [
+                13.43,
+                52.49
+              ],
+              [
+                13.41,
+                52.49
+              ],
+              [
+                13.41,
+                52.5
+              ],
+              [
+                13.42,
+                52.5
+              ],
+              [
+                13.43,
+                52.5
+              ],
+              [
+                13.43,
+                52.49
+              ]
+            ]
+          ],
+          "type": "Polygon"
+        },
+        "properties": {
+          "flood_class": "high",
+          "flood_id": "f1",
+          "land_use": null,
+          "parcel_id": null
+        },
+        "type": "Feature"
+      },
+      {
+        "geometry": {
+          "coordinates": [
+            [
+              [
+                13.475,
+                52.53
+              ],
+              [
+                13.49,
+                52.53
+              ],
+              [
+                13.49,
+                52.515
+              ],
+              [
+                13.48,
+                52.515
+              ],
+              [
+                13.48,
+                52.52
+              ],
+              [
+                13.475,
+                52.52
+              ],
+              [
+                13.475,
+                52.53
+              ]
+            ]
+          ],
+          "type": "Polygon"
+        },
+        "properties": {
+          "flood_class": "low",
+          "flood_id": "f2",
+          "land_use": null,
+          "parcel_id": null
+        },
+        "type": "Feature"
+      }
+    ],
+    "type": "FeatureCollection"
+  },
+  "status": "ok"
+}

@@ -317,6 +317,71 @@ def test_missing_and_extra_features_fail():
     assert result.detail["extra"] == [9]
 
 
+def test_features_are_paired_by_a_composite_key():
+    # A one-to-many join: point 1 is in two zones, so no single property is unique.
+    reference = {
+        "crs": UTM,
+        "features": _collection(
+            (Point(0, 0), {"point": 1, "zone": "a"}),
+            (Point(0, 0), {"point": 1, "zone": "b"}),
+            (Point(5, 0), {"point": 2, "zone": "a"}),
+        ),
+    }
+    prediction = {
+        "crs": UTM,
+        "features": _collection(
+            (Point(5, 0), {"point": 2, "zone": "a"}),
+            (Point(0, 0), {"point": 1, "zone": "b"}),
+            (Point(0, 0), {"point": 1, "zone": "c"}),
+        ),
+    }
+    params = {"key": ["point", "zone"]}
+    result = get_metric("geometry_match").score(prediction, reference, params)
+    assert result.passed is False
+    assert (result.detail["missing"], result.detail["extra"]) == ([[1, "a"]], [[1, "c"]])
+    assert get_metric("attribute_match").score(reference, reference, params).passed is True
+    with pytest.raises(ValueError, match="repeat key 'point'"):
+        get_metric("geometry_match").score(reference, reference, {"key": "point"})
+
+
+def test_task_success_checks_the_feature_count_on_its_own():
+    reference = {
+        "status": "ok",
+        "crs": UTM,
+        "features": _collection((Point(0, 0), {"id": 1}), (Point(5, 0), {"id": 2})),
+    }
+    metric = get_metric("task_success")
+    passed = metric.score(reference, reference, {"key": "id"})
+    assert passed.detail["checks"]["feature_count"] == {
+        "passed": True,
+        "detail": {"predicted": 2, "expected": 2},
+    }
+    # Same count, wrong pairing: only the pairing checks fail.
+    relabeled = {
+        **reference,
+        "features": _collection((Point(0, 0), {"id": 1}), (Point(5, 0), {"id": 3})),
+    }
+    result = metric.score(relabeled, reference, {"key": "id"})
+    assert result.detail["failed"] == ["geometry_match", "validity_match", "attribute_match"]
+    short = {**reference, "features": _collection((Point(0, 0), {"id": 1}))}
+    result = metric.score(short, reference, {"key": "id"})
+    assert result.detail["checks"]["feature_count"]["detail"] == {
+        "reason": "feature_count_differs",
+        "predicted": 1,
+        "expected": 2,
+    }
+    assert "feature_count" in result.detail["failed"]
+    missing = metric.score({"status": "ok", "crs": UTM}, reference, {})
+    assert missing.detail["checks"]["feature_count"]["detail"] == {
+        "reason": "missing_features",
+        "expected": 2,
+    }
+    assert (
+        "feature_count"
+        not in metric.score(answer(Point(0, 0)), answer(Point(0, 0)), {}).detail["checks"]
+    )
+
+
 def test_mixed_geometry_types_compare_as_collections():
     collection = {
         "type": "GeometryCollection",

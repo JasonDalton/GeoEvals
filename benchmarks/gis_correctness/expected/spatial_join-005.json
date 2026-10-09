@@ -1,0 +1,111 @@
+{
+  "crs": "OGC:CRS84",
+  "features": {
+    "features": [
+      {
+        "geometry": {
+          "coordinates": [
+            13.4,
+            52.5
+          ],
+          "type": "Point"
+        },
+        "properties": {
+          "distance_m": 877.665383020037,
+          "kind": "cafe",
+          "point_id": "p1",
+          "station_id": "s1",
+          "station_name": "Station One"
+        },
+        "type": "Feature"
+      },
+      {
+        "geometry": {
+          "coordinates": [
+            13.45,
+            52.55
+          ],
+          "type": "Point"
+        },
+        "properties": {
+          "distance_m": null,
+          "kind": "school",
+          "point_id": "p2",
+          "station_id": null,
+          "station_name": null
+        },
+        "type": "Feature"
+      },
+      {
+        "geometry": {
+          "coordinates": [
+            13.6,
+            52.45
+          ],
+          "type": "Point"
+        },
+        "properties": {
+          "distance_m": 1756.39656652057,
+          "kind": "clinic",
+          "point_id": "p3",
+          "station_id": "s2",
+          "station_name": "Station Two"
+        },
+        "type": "Feature"
+      },
+      {
+        "geometry": {
+          "coordinates": [
+            13.5,
+            52.5
+          ],
+          "type": "Point"
+        },
+        "properties": {
+          "distance_m": null,
+          "kind": "kiosk",
+          "point_id": "p4",
+          "station_id": null,
+          "station_name": null
+        },
+        "type": "Feature"
+      },
+      {
+        "geometry": {
+          "coordinates": [
+            13.8,
+            52.5
+          ],
+          "type": "Point"
+        },
+        "properties": {
+          "distance_m": 1303.16943201168,
+          "kind": "farm",
+          "point_id": "p5",
+          "station_id": "s3",
+          "station_name": "Station Three"
+        },
+        "type": "Feature"
+      },
+      {
+        "geometry": {
+          "coordinates": [
+            13.35,
+            52.42
+          ],
+          "type": "Point"
+        },
+        "properties": {
+          "distance_m": null,
+          "kind": "library",
+          "point_id": "p6",
+          "station_id": null,
+          "station_name": null
+        },
+        "type": "Feature"
+      }
+    ],
+    "type": "FeatureCollection"
+  },
+  "status": "ok"
+}

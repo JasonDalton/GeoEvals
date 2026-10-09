@@ -1,0 +1,5 @@
+{"type": "FeatureCollection", "name": "join_zones", "features": [
+    {"type": "Feature", "properties": {"zone_id": "z1", "zone_name": "west"}, "geometry": {"type": "Polygon", "coordinates": [[[13.3, 52.4], [13.5, 52.4], [13.5, 52.6], [13.3, 52.6], [13.3, 52.4]]]}},
+    {"type": "Feature", "properties": {"zone_id": "z2", "zone_name": "east"}, "geometry": {"type": "Polygon", "coordinates": [[[13.5, 52.4], [13.7, 52.4], [13.7, 52.6], [13.5, 52.6], [13.5, 52.4]]]}}
+  ]
+}

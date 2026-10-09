@@ -1,0 +1,153 @@
+{
+  "crs": "OGC:CRS84",
+  "features": {
+    "features": [
+      {
+        "geometry": {
+          "coordinates": [
+            [
+              [
+                13.3,
+                52.4
+              ],
+              [
+                13.5,
+                52.4
+              ],
+              [
+                13.5,
+                52.6
+              ],
+              [
+                13.3,
+                52.6
+              ],
+              [
+                13.3,
+                52.4
+              ]
+            ]
+          ],
+          "type": "Polygon"
+        },
+        "properties": {
+          "kind": "cafe",
+          "point_id": "p1",
+          "zone_id": "z1",
+          "zone_name": "west"
+        },
+        "type": "Feature"
+      },
+      {
+        "geometry": {
+          "coordinates": [
+            [
+              [
+                13.3,
+                52.4
+              ],
+              [
+                13.5,
+                52.4
+              ],
+              [
+                13.5,
+                52.6
+              ],
+              [
+                13.3,
+                52.6
+              ],
+              [
+                13.3,
+                52.4
+              ]
+            ]
+          ],
+          "type": "Polygon"
+        },
+        "properties": {
+          "kind": "school",
+          "point_id": "p2",
+          "zone_id": "z1",
+          "zone_name": "west"
+        },
+        "type": "Feature"
+      },
+      {
+        "geometry": {
+          "coordinates": [
+            [
+              [
+                13.3,
+                52.4
+              ],
+              [
+                13.5,
+                52.4
+              ],
+              [
+                13.5,
+                52.6
+              ],
+              [
+                13.3,
+                52.6
+              ],
+              [
+                13.3,
+                52.4
+              ]
+            ]
+          ],
+          "type": "Polygon"
+        },
+        "properties": {
+          "kind": "library",
+          "point_id": "p6",
+          "zone_id": "z1",
+          "zone_name": "west"
+        },
+        "type": "Feature"
+      },
+      {
+        "geometry": {
+          "coordinates": [
+            [
+              [
+                13.5,
+                52.4
+              ],
+              [
+                13.7,
+                52.4
+              ],
+              [
+                13.7,
+                52.6
+              ],
+              [
+                13.5,
+                52.6
+              ],
+              [
+                13.5,
+                52.4
+              ]
+            ]
+          ],
+          "type": "Polygon"
+        },
+        "properties": {
+          "kind": "clinic",
+          "point_id": "p3",
+          "zone_id": "z2",
+          "zone_name": "east"
+        },
+        "type": "Feature"
+      }
+    ],
+    "type": "FeatureCollection"
+  },
+  "status": "ok"
+}

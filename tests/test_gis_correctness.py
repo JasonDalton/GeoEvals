@@ -6,7 +6,7 @@ from typing import Any, cast
 import pytest
 from jsonschema import Draft202012Validator
 from pyproj import Transformer
-from shapely.geometry import MultiPolygon, Point, Polygon, mapping, shape
+from shapely.geometry import GeometryCollection, MultiPolygon, Point, Polygon, mapping, shape
 from shapely.geometry.base import BaseGeometry
 
 from geoevals.adapters import (
@@ -315,7 +315,7 @@ def _loaded_case(case_id: str) -> Any:
 def _task_success(output: dict[str, Any], case_id: str) -> dict[str, Any]:
     case = _loaded_case(case_id)
     metrics = _resolve_metrics(load_benchmark_spec(SPEC))
-    return _score(metrics, output, case.expected, case.tolerances)["task_success"]
+    return _score(metrics, output, case.expected, case.params)["task_success"]
 
 
 def _layer_points(path: str) -> dict[str, tuple[float, float]]:
@@ -597,6 +597,186 @@ def test_repair_that_drops_a_lobe_fails() -> None:
     assert "validity_match" in result["detail"]["failed"]
 
 
+# --- spatial join and overlay cases ------------------------------------------------------------
+
+JOIN_KINDS = {
+    "points_in_polygons",
+    "intersects_vs_within",
+    "nearest_max_distance",
+    "shared_boundary",
+    "crs_mismatch",
+    "one_to_many",
+}
+OVERLAY_KINDS = {
+    "intersection",
+    "union",
+    "difference",
+    "symmetric_difference",
+    "clip",
+    "mixed_types",
+}
+FEATURE_CHECKS = {"feature_count", "geometry_match", "attribute_match", "crs_match"}
+
+
+def _join_case(kind: str, predicate: str | None = None) -> Any:
+    [case] = [
+        case
+        for case in _cases_of("spatial_join")
+        if case["strata"]["join"] == kind and predicate in (None, case["strata"]["predicate"])
+    ]
+    return _loaded_case(case["case_id"])
+
+
+def _overlay_case(kind: str) -> Any:
+    [case] = [case for case in _cases_of("overlay") if case["strata"]["overlay"] == kind]
+    return _loaded_case(case["case_id"])
+
+
+def _features_of(output: dict[str, Any]) -> list[dict[str, Any]]:
+    return output["features"]["features"]
+
+
+def _with_features(case: Any, features: list[dict[str, Any]], **fields: Any) -> dict[str, Any]:
+    output = json.loads(json.dumps(case.expected))
+    output["features"]["features"] = json.loads(json.dumps(features))
+    return {**output, **fields}
+
+
+def test_join_and_overlay_cases_cover_the_kinds() -> None:
+    joins, overlays = _cases_of("spatial_join"), _cases_of("overlay")
+    assert len(joins) >= 6 and len(overlays) >= 6
+    assert {case["strata"]["join"] for case in joins} == JOIN_KINDS
+    assert {case["strata"]["overlay"] for case in overlays} == OVERLAY_KINDS
+    assert {"intersects", "within"} <= {
+        case["strata"]["predicate"]
+        for case in joins
+        if case["strata"]["join"] == "intersects_vs_within"
+    }
+    for case in joins + overlays:
+        assert case["tolerances"]["tol_m"]["units"] == "m", case["case_id"]
+        assert case["metric_params"]["key"], "features are matched by a stated key"
+        assert isinstance(case["strata"]["trap"], bool), case["case_id"]
+        assert _features_of(_loaded_case(case["case_id"]).expected), case["case_id"]
+    nearest = _join_case("nearest_max_distance").input["inputs"]["params"]
+    assert (nearest["predicate"], nearest["max_distance"], nearest["units"]) == (
+        "nearest",
+        2000,
+        "m",
+    )
+
+
+def test_boundary_point_semantics() -> None:
+    """A point on the edge two zones share intersects both of them and is within neither."""
+    on_edge = "p4"
+    within = _join_case("points_in_polygons").expected
+    assert on_edge not in [f["properties"]["point_id"] for f in _features_of(within)]
+    intersects = _join_case("shared_boundary").expected
+    zones = [f["properties"]["zone_id"] for f in _features_of(intersects)
+             if f["properties"]["point_id"] == on_edge]  # fmt: skip
+    assert zones == ["z1", "z2"]
+
+
+def test_mixed_type_overlay_holds_a_polygon_and_a_line() -> None:
+    [feature] = _features_of(_overlay_case("mixed_types").expected)
+    geometry = shape(feature["geometry"])
+    assert isinstance(geometry, GeometryCollection)
+    assert sorted(part.geom_type for part in geometry.geoms) == ["LineString", "Polygon"]
+
+
+def test_gis_baseline_passes_every_join_and_overlay_case() -> None:
+    result = run_benchmark(SPEC, "gis_baseline", RunConfig(split="test"))
+    cases = [c for c in result["cases"] if c["case_id"].startswith(("spatial_join-", "overlay-"))]
+    assert len(cases) == len(_cases_of("spatial_join")) + len(_cases_of("overlay"))
+    for case in cases:
+        task_success = case["metrics"]["task_success"]
+        assert task_success["value"] == 1.0, case["case_id"]
+        assert set(task_success["detail"]["checks"]) >= FEATURE_CHECKS, case["case_id"]
+        for metric in ("geometry_match", "attribute_match", "crs_match"):
+            assert case["metrics"][metric]["passed"] is True, (case["case_id"], metric)
+
+
+def test_within_instead_of_intersects_misses_the_boundary_point() -> None:
+    case = _join_case("shared_boundary")
+    within = _features_of(_join_case("points_in_polygons").expected)
+    result = _task_success(_with_features(case, within), case.case_id)
+    assert result["detail"]["failed"] == [
+        "feature_count",
+        "geometry_match",
+        "validity_match",
+        "attribute_match",
+    ]
+    count = result["detail"]["checks"]["feature_count"]["detail"]
+    assert (count["predicted"], count["expected"]) == (4, 6)
+    geometry = result["detail"]["checks"]["geometry_match"]["detail"]
+    assert geometry["missing"] == [["p4", "z1"], ["p4", "z2"]]
+
+
+def test_one_to_many_join_collapsed_to_one_match_fails_the_count() -> None:
+    case = _join_case("one_to_many")
+    first_only = {f["properties"]["zone_id"]: f for f in reversed(_features_of(case.expected))}
+    result = _task_success(_with_features(case, list(first_only.values())), case.case_id)
+    assert result["detail"]["failed"] == [
+        "feature_count",
+        "geometry_match",
+        "validity_match",
+        "attribute_match",
+    ]
+
+
+def test_join_without_reprojecting_finds_no_match() -> None:
+    case = _join_case("crs_mismatch")
+    result = _task_success(_with_features(case, []), case.case_id)
+    assert "feature_count" in result["detail"]["failed"]
+    assert "crs_match" not in result["detail"]["failed"]
+
+
+def test_wrong_attribute_fails_only_attribute_match() -> None:
+    case = _join_case("intersects_vs_within", "intersects")
+    features = _features_of(case.expected)
+    features[0]["properties"]["zone_name"] = "east"
+    result = _task_success(_with_features(case, features), case.case_id)
+    assert result["detail"]["failed"] == ["attribute_match"]
+    detail = result["detail"]["checks"]["attribute_match"]["detail"]
+    [failure] = detail["features"]
+    assert failure["differences"] == [
+        {"attribute": "zone_name", "predicted": "east", "expected": "west"}
+    ]
+
+
+def test_wrong_crs_label_fails_only_crs_match() -> None:
+    case = _overlay_case("intersection")
+    result = _task_success({**case.expected, "crs": "EPSG:4326"}, case.case_id)
+    assert result["detail"]["failed"] == ["crs_match"]
+
+
+def test_nearest_join_without_the_max_distance_fails_attributes() -> None:
+    case = _join_case("nearest_max_distance")
+    features = _features_of(case.expected)
+    unmatched = [f for f in features if f["properties"]["station_id"] is None]
+    assert unmatched
+    for feature in unmatched:
+        feature["properties"].update(station_id="s1", station_name="Station One", distance_m=6000.0)
+    result = _task_success(_with_features(case, features), case.case_id)
+    assert result["detail"]["failed"] == ["attribute_match"]
+
+
+def test_overlay_that_drops_the_line_fails_geometry() -> None:
+    case = _overlay_case("mixed_types")
+    [feature] = _features_of(case.expected)
+    polygon = next(g for g in feature["geometry"]["geometries"] if g["type"] == "Polygon")
+    result = _task_success(_with_features(case, [{**feature, "geometry": polygon}]), case.case_id)
+    assert result["detail"]["failed"] == ["geometry_match"]
+    assert "topology" in result["detail"]["checks"]["geometry_match"]["detail"]["features"][0]
+
+
+def test_union_without_the_outside_pieces_fails_the_count() -> None:
+    case = _overlay_case("union")
+    both = [f for f in _features_of(case.expected) if None not in f["properties"].values()]
+    result = _task_success(_with_features(case, both), case.case_id)
+    count = result["detail"]["checks"]["feature_count"]["detail"]
+    assert (count["predicted"], count["expected"]) == (3, 8)
+
+
 # --- runner: expected files, tolerances, benchmark_dir -----------------------------------------
 
 
@@ -640,6 +820,27 @@ def test_load_cases_rejects_bad_expected_and_tolerances(
     _write_cases(tmp_path, case)
     with pytest.raises(RunError, match=message):
         load_cases(load_benchmark_spec(SMOKE_SPEC), tmp_path)
+
+
+def test_load_cases_reads_metric_params(tmp_path: Path) -> None:
+    tolerances = {"tol_m": {"value": 0.5, "units": "m"}}
+    params = {"key": ["a", "b"]}
+    _write_cases(
+        tmp_path,
+        {"case_id": "a", "expected": {}, "tolerances": tolerances, "metric_params": params},
+        {"case_id": "b", "expected": {}, "metric_params": {"tol_m": 1}, "tolerances": tolerances},
+        {"case_id": "c", "expected": {}, "metric_params": []},
+    )
+    with pytest.raises(RunError) as error:
+        load_cases(load_benchmark_spec(SMOKE_SPEC), tmp_path)
+    assert "case 'b' names ['tol_m'] in both tolerances and metric_params" in str(error.value)
+    assert "case 'c' metric_params must be an object" in str(error.value)
+    _write_cases(
+        tmp_path,
+        {"case_id": "a", "expected": {}, "tolerances": tolerances, "metric_params": params},
+    )
+    [case] = load_cases(load_benchmark_spec(SMOKE_SPEC), tmp_path)
+    assert case.params == {"tol_m": 0.5, "key": ["a", "b"]}
 
 
 def test_tolerances_reach_metric_params() -> None:

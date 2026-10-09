@@ -1,0 +1,6 @@
+{"type": "FeatureCollection", "name": "join_lots", "features": [
+    {"type": "Feature", "properties": {"lot_id": "l1", "lot_type": "housing"}, "geometry": {"type": "Polygon", "coordinates": [[[13.32, 52.45], [13.36, 52.45], [13.36, 52.48], [13.32, 52.48], [13.32, 52.45]]]}},
+    {"type": "Feature", "properties": {"lot_id": "l2", "lot_type": "retail"}, "geometry": {"type": "Polygon", "coordinates": [[[13.48, 52.51], [13.52, 52.51], [13.52, 52.53], [13.48, 52.53], [13.48, 52.51]]]}},
+    {"type": "Feature", "properties": {"lot_id": "l3", "lot_type": "depot"}, "geometry": {"type": "Polygon", "coordinates": [[[13.62, 52.5], [13.66, 52.5], [13.66, 52.53], [13.62, 52.53], [13.62, 52.5]]]}}
+  ]
+}

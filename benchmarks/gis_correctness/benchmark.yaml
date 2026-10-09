@@ -36,6 +36,11 @@ input_schema:
           type: object
           additionalProperties: {type: string, minLength: 1}
         params: {type: object}
+    metric_params:
+      description: >-
+        Metric params that are not tolerances, for example key (the feature property, or list
+        of properties, that pairs predicted and reference features).
+      type: object
     tolerances:
       description: Tolerance name (a metric param) -> value with explicit units.
       type: object
@@ -124,12 +129,14 @@ cases:
   - cases/distance.jsonl
   - cases/buffer.jsonl
   - cases/validity.jsonl
+  - cases/spatial_join.jsonl
+  - cases/overlay.jsonl
 splits:
   test:
     description: Every case.
 metrics:
   - id: task_success
-    version: 1.1.0
+    version: 1.2.0
     params: {}
   - id: status_match
     version: 1.0.0
@@ -138,13 +145,13 @@ metrics:
     version: 1.0.0
     params: {}
   - id: geometry_match
-    version: 1.0.0
+    version: 1.1.0
     params: {}
   - id: validity_match
-    version: 1.0.0
+    version: 1.1.0
     params: {}
   - id: attribute_match
-    version: 1.0.0
+    version: 1.1.0
     params: {}
   - id: value_abs_error
     version: 1.0.0
