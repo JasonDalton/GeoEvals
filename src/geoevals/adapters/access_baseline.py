@@ -13,6 +13,10 @@ states ``speed_mps``.
 directory) and ``params``. A request that should not be answered raises ``Abstain`` inside the
 operation, and ``predict`` answers ``{"status": <status>}``.
 
+``open_amenities`` evaluates each POI's ``opening_hours`` with the pure-Python
+``geoevals.opening_hours``: hours that are missing or cannot be parsed put the POI in
+``unknown_ids`` (missing data); they never make the adapter fail.
+
 Requires the optional extra ``geoevals[network]`` (scipy). The adapter takes no config, makes
 no paid calls (``deterministic = True``) and keeps no state between cases.
 """
@@ -26,6 +30,7 @@ from typing import Any
 import numpy as np
 from pyproj import Geod
 
+from geoevals import opening_hours
 from geoevals.adapters.base import AdapterResponse
 
 WALK_SPEED_MPS = 1.33
@@ -119,9 +124,12 @@ def _positive(params: Mapping[str, Any], name: str, default: float | None = None
     return float(value)
 
 
-def _times(inputs: Mapping[str, Any], base: Path, speed: float) -> dict[str, float]:
+def _times(
+    inputs: Mapping[str, Any], base: Path, speed: float, hours: dict[str, Any] | None = None
+) -> dict[str, float]:
     """POI ID -> walking time in seconds from the origin, for the reachable POIs of
-    ``params.category``."""
+    ``params.category``. When ``hours`` is given, it is filled with POI ID ->
+    ``opening_hours`` value for the POIs of the category."""
     params = inputs["params"]
     category = params.get("category")
     if category is None:
@@ -130,6 +138,8 @@ def _times(inputs: Mapping[str, Any], base: Path, speed: float) -> dict[str, flo
     of_category = pois[pois["amenity_category"] == category]
     if of_category.empty:
         raise Abstain("insufficient_data", f"no POIs of category {category!r}")
+    if hours is not None:
+        hours.update(zip(of_category["poi_id"], of_category["opening_hours"], strict=True))
     destinations = {}
     for poi_id, geometry in zip(of_category["poi_id"], of_category.geometry, strict=True):
         try:
@@ -165,6 +175,37 @@ def amenity_count(inputs: Mapping[str, Any], base: Path) -> dict[str, Any]:
     return {"status": "ok", "value": len(ids), "units": "count", "ids": ids}
 
 
+def _instant(params: Mapping[str, Any]) -> tuple[Any, frozenset[Any]]:
+    """The case's local instant (date, time, time zone) and its public holidays."""
+    for name in ("date", "time", "timezone"):
+        if params.get(name) is None:
+            raise Abstain("needs_clarification", f"no {name}")
+    try:
+        when = opening_hours.local_instant(params["date"], params["time"], params["timezone"])
+        holidays = opening_hours.holiday_dates(params.get("public_holidays", []))
+    except ValueError as error:
+        raise Abstain("invalid_request", str(error)) from error
+    return when, holidays
+
+
+def open_amenities(inputs: Mapping[str, Any], base: Path) -> dict[str, Any]:
+    """Number (and IDs) of POIs of ``category`` within ``minutes`` of walking that are open at
+    the case's local instant; POIs with unknown hours go to ``unknown_ids``."""
+    params = inputs["params"]
+    limit_s = _positive(params, "minutes") * 60
+    speed = _positive(params, "speed_mps", WALK_SPEED_MPS)
+    when, holidays = _instant(params)
+    hours: dict[str, Any] = {}
+    times = _times(inputs, base, speed, hours)
+    within = [poi_id for poi_id, seconds in times.items() if seconds <= limit_s]
+    states = {poi_id: opening_hours.open_state(hours[poi_id], when, holidays) for poi_id in within}
+    if states and all(state is None for state in states.values()):
+        raise Abstain("insufficient_data", "every POI within reach has unknown opening hours")
+    ids = sorted(poi_id for poi_id, state in states.items() if state is True)
+    unknown = sorted(poi_id for poi_id, state in states.items() if state is None)
+    return {"status": "ok", "value": len(ids), "units": "count", "ids": ids, "unknown_ids": unknown}
+
+
 def network_detour(inputs: Mapping[str, Any], base: Path) -> dict[str, Any]:
     """Network distance between the snapped nodes / geodesic distance between the points."""
     params = inputs["params"]
@@ -191,6 +232,7 @@ OPERATIONS: dict[str, Operation] = {
     "nearest_amenity": nearest_amenity,
     "amenity_count": amenity_count,
     "network_detour": network_detour,
+    "open_amenities": open_amenities,
     "abstention": abstention,
 }
 """Operation name (the case ``operation``) -> its implementation."""

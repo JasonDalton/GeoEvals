@@ -5,7 +5,7 @@
 | Benchmark ID | `human_context_access` (directory `benchmarks/human_context/`) |
 | Version | 0.1.0 (`benchmark.yaml`) |
 | Pillar | `human_context` |
-| Cases | 32, one split (`test`) |
+| Cases | 51, one split (`test`) |
 | License | MIT (spec, cases, generator and fixtures) |
 | Reference workflow | [`reference.py`](reference.py) (networkx Dijkstra via `geoevals.metrics.network`) |
 | Second implementation | `access_baseline` adapter (`scipy.sparse.csgraph`, GeoPandas) |
@@ -14,9 +14,10 @@
 
 `human_context_access` checks whether a system computes walking access correctly on a stated
 street network: travel time to the nearest amenity, the number of amenities within 10 or 15
-minutes, and how much longer the network route is than a straight line. It also checks whether
-the system declines requests that the data cannot answer. The concepts (snapping, walking speed,
-inclusive thresholds, the detour ratio) are defined in
+minutes, how much longer the network route is than a straight line, and which amenities within
+a walking threshold are open at a stated local date and time. It also checks whether the system
+declines requests that the data cannot answer. The concepts (snapping, walking speed, inclusive
+thresholds, the detour ratio, opening hours at an instant) are defined in
 [`docs/human-context.md`](../../docs/human-context.md); every value is a `proxy`.
 
 It runs in CI on a synthetic town, so it needs no licensed data.
@@ -51,18 +52,44 @@ to the generator, or a pyarrow upgrade (pyarrow writes its version into each fil
 | `nearest_amenity` | 8 | Walking time in seconds to the nearest POI of a category, and its ID (all tied IDs when several are equally near) |
 | `amenity_count` | 9 | Number and IDs of POIs of a category within 10 or 15 minutes, boundary inclusive |
 | `network_detour` | 6 | Network distance / geodesic distance between two points (`ratio`) |
-| `abstention` | 9 | Requests to decline: an origin or destination off the network, no path (the hamlet), a category not in the data (`insufficient_data`); a negative threshold, coincident points (`invalid_request`); no category or no threshold (`needs_clarification`) |
-| **Total** | **32** | |
+| `open_amenities` | 15 | Number and IDs of POIs of a category within 10 or 15 minutes that are open at a local date, time and time zone, plus `unknown_ids` for POIs with missing hours |
+| `abstention` | 13 | Requests to decline: an origin or destination off the network, no path (the hamlet), a category not in the data, every POI within reach with unknown hours (`insufficient_data`); a negative threshold, coincident points, an unknown time zone, a date that does not exist (`invalid_request`); no category, no threshold or no time (`needs_clarification`) |
+| **Total** | **51** | |
 
 Strata: `operation`, `neighborhood_type` (of the origin; `outside_network` when it does not
-snap), `amenity_category` (`none` for detour questions), plus `threshold_min` for counts and
-`abstention`/`expected_status` for abstentions.
+snap), `amenity_category` (`none` for detour questions), `time_of_day` (`night` 00:00-05:59,
+`morning` 06:00-11:59, `afternoon` 12:00-17:59, `evening` 18:00-23:59, `none` without a time),
+plus `threshold_min` for counts, `day_type` (`weekday`, `weekend`, `public_holiday`) and
+`hours_feature` (`regular`, `overnight`, `public_holiday`, `24_7`, `boundary`,
+`missing_hours`) for opening-hours questions, and `abstention`/`expected_status` for
+abstentions.
+
+## Time-specific availability
+
+Each `open_amenities` case states an ISO date, a `HH:MM` local time, an IANA time zone
+(`Africa/Abidjan`, the zone of longitude 0 on the equator) and, optionally, the dates that are
+public holidays. The cases cover hours that cross midnight (transit stops open
+`Mo-Fr 05:00-01:00; Sa,Su 06:00-00:30`, asked at 00:15, 00:45 and 05:30), `PH off` rules on a
+listed holiday (and a holiday Monday on which a weekday-only rule still applies), `24/7`
+POIs at night, span boundaries (open at the start minute, closed at the end minute) and a POI
+with missing hours (`poi-036`), which goes to `unknown_ids`. When every POI within reach has
+unknown hours, the expected status is `insufficient_data`.
+
+Opening hours are evaluated by `geoevals.opening_hours`, pure Python with no network access, on
+the OpenStreetMap subset documented in
+[`docs/human-context.md`](../../docs/human-context.md#time-specific-poi-availability). A value
+that is missing or outside the subset makes the POI unknown (missing data); it never makes the
+reference or the adapter fail. The reference workflow and the `access_baseline` adapter share
+this module (the shortest paths stay independent), so it is tested on its own against
+hand-worked expectations in `tests/test_opening_hours.py`. Travel time is not added to the
+instant: a POI counts when it is open at the stated time.
 
 ## Metrics and tolerances
 
 The headline metric is `task_success` (status, then the value within `abs_tol`). The access
 metrics `travel_time_abs_error_s`, `reachable_count_error`, `reachable_set_jaccard` and
-`route_stretch_abs_error` report the error per kind of answer; see
+`route_stretch_abs_error` report the error per kind of answer, and `unknown_set_jaccard` checks
+the unknown bucket (`unknown_ids`) of opening-hours answers; see
 [`docs/metrics.md`](../../docs/metrics.md).
 
 | Tolerance | Units | Values |
@@ -90,7 +117,7 @@ uv run geoevals run --benchmark benchmarks/human_context/benchmark.yaml \
   --adapter access_baseline --config benchmarks/human_context/run_config.yaml --out runs/access
 ```
 
-It scores `task_success = 1.0` on all 32 cases.
+It scores `task_success = 1.0` on all 51 cases.
 
 ## Limitations
 
@@ -98,4 +125,5 @@ It scores `task_success = 1.0` on all 32 cases.
   quality.
 - Walking is a constant speed on mapped street lengths. Crossings, slope, signals and personal
   mobility are not modeled.
-- Opening hours are in the data but no case uses them yet.
+- Opening hours use one time zone and a subset of the OpenStreetMap syntax (no months, week
+  numbers, school holidays or sunrise/sunset); values outside it count as unknown.

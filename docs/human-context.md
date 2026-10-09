@@ -153,6 +153,29 @@ A point of interest with no `opening_hours`, or with a value that cannot be pars
 **unknown**, not closed. Unknown hours are reported as data missingness, and a case that needs
 them expects `insufficient_data` or an explicit unknown bucket.
 
+In `human_context_access` (operation `open_amenities`), the answer counts the points of interest
+within the threshold that are open at the instant (`value`, `ids`) and lists those with unknown
+hours in `unknown_ids`, the explicit unknown bucket. When every point of interest within the
+threshold has unknown hours, the data cannot answer, and the expected status is
+`insufficient_data`.
+
+Opening hours are evaluated by `geoevals.opening_hours`, pure Python with no network access. It
+supports this subset of the OpenStreetMap syntax; any other value counts as unparseable
+(unknown):
+
+- `24/7`;
+- rules separated by `;`, each an optional selector followed by `off`, `closed` or
+  comma-separated `HH:MM-HH:MM` spans;
+- a selector is a comma-separated list of weekdays (`Mo` to `Su`), weekday ranges (`Mo-Fr`,
+  wrapping ranges such as `Fr-Mo` allowed) and `PH`. A rule without a selector applies every
+  day.
+
+For each date, the **last** rule whose selector matches it applies. Weekday selectors match
+public holidays too, and `PH` matches only the holidays the case lists, so
+`Mo-Su 08:00-22:00; PH off` is closed on a listed holiday. A span is open from its start
+(inclusive) to its end (exclusive); an end earlier than the start crosses midnight, and the
+part after midnight belongs to the day the span started on.
+
 ## What the benchmark does not claim
 
 The benchmark makes **no claims about social relationships inferred from co-location,

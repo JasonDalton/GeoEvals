@@ -7,7 +7,8 @@ An answer is ``{status, value, units}``; a reachable-set answer also has ``ids``
 reachable point-of-interest IDs. A metric applies to a case only when the reference has what it
 checks: ``travel_time_abs_error_s`` a numeric ``value`` in ``units: s``,
 ``reachable_count_error`` in ``units: count``, ``route_stretch_abs_error`` in ``units: ratio``
-and ``reachable_set_jaccard`` an ``ids`` list. Tolerance params (inclusive): ``time_tol_s``
+``reachable_set_jaccard`` an ``ids`` list and ``unknown_set_jaccard`` an ``unknown_ids`` list
+(POIs whose opening hours are unknown). Tolerance params (inclusive): ``time_tol_s``
 (seconds), ``count_tol`` (count), ``stretch_tol`` (unitless), all default 0.0, and
 ``min_jaccard`` (default 1.0). The full definitions are in ``docs/metrics.md``.
 """
@@ -88,6 +89,33 @@ def _sorted_ids(ids: set[Any]) -> list[Any]:
     return sorted(ids, key=lambda value: (isinstance(value, str), value))
 
 
+def _set_jaccard(
+    pred: Mapping[str, Any], ref: Mapping[str, Any], key: str, minimum: float
+) -> MetricValue:
+    """Jaccard index of the ID lists ``pred[key]`` and ``ref[key]``, passed when >= ``minimum``;
+    not applicable when the reference has no ``key`` list."""
+    expected_ids = ref.get(key)
+    if not isinstance(expected_ids, list):
+        return NOT_APPLICABLE
+    predicted_ids = pred.get(key)
+    if not isinstance(predicted_ids, list) or not all(_is_id(i) for i in predicted_ids):
+        return MetricValue(None, False, {"reason": f"missing_{key}", "predicted": predicted_ids})
+    predicted, expected = set(predicted_ids), set(expected_ids)
+    union = predicted | expected
+    jaccard = len(predicted & expected) / len(union) if union else 1.0
+    passed = jaccard >= minimum
+    detail: dict[str, Any] = {}
+    if missing := expected - predicted:
+        detail["missing"] = _sorted_ids(missing)
+    if extra := predicted - expected:
+        detail["extra"] = _sorted_ids(extra)
+    if len(predicted_ids) != len(predicted):
+        detail["duplicates"] = True
+    if not passed:
+        detail["min_jaccard"] = minimum
+    return MetricValue(jaccard, passed, detail)
+
+
 class ReachableSetJaccard(Metric):
     """Jaccard index of the predicted and reference reachable ID sets, passed when
     >= ``min_jaccard``."""
@@ -98,28 +126,22 @@ class ReachableSetJaccard(Metric):
     higher_is_better = True
 
     def score(self, prediction: Any, reference: Any, params: Mapping[str, Any]) -> MetricValue:
-        pred, ref = _document(prediction), _document(reference)
-        expected_ids = ref.get("ids")
-        if not isinstance(expected_ids, list):
-            return NOT_APPLICABLE
-        predicted_ids = pred.get("ids")
-        if not isinstance(predicted_ids, list) or not all(_is_id(i) for i in predicted_ids):
-            return MetricValue(None, False, {"reason": "missing_ids", "predicted": predicted_ids})
-        predicted, expected = set(predicted_ids), set(expected_ids)
-        union = predicted | expected
-        jaccard = len(predicted & expected) / len(union) if union else 1.0
         minimum = float(params.get("min_jaccard", 1.0))
-        passed = jaccard >= minimum
-        detail: dict[str, Any] = {}
-        if missing := expected - predicted:
-            detail["missing"] = _sorted_ids(missing)
-        if extra := predicted - expected:
-            detail["extra"] = _sorted_ids(extra)
-        if len(predicted_ids) != len(predicted):
-            detail["duplicates"] = True
-        if not passed:
-            detail["min_jaccard"] = minimum
-        return MetricValue(jaccard, passed, detail)
+        return _set_jaccard(_document(prediction), _document(reference), "ids", minimum)
+
+
+class UnknownSetJaccard(Metric):
+    """Jaccard index of the predicted and reference ``unknown_ids`` (POIs whose opening hours
+    are missing or unparseable), passed when >= ``min_jaccard``."""
+
+    id = "unknown_set_jaccard"
+    version = "1.0.0"
+    units = "fraction"
+    higher_is_better = True
+
+    def score(self, prediction: Any, reference: Any, params: Mapping[str, Any]) -> MetricValue:
+        minimum = float(params.get("min_jaccard", 1.0))
+        return _set_jaccard(_document(prediction), _document(reference), "unknown_ids", minimum)
 
 
 ACCESS_METRICS: tuple[Metric, ...] = (
@@ -127,5 +149,6 @@ ACCESS_METRICS: tuple[Metric, ...] = (
     ReachableCountError(),
     ReachableSetJaccard(),
     RouteStretchAbsError(),
+    UnknownSetJaccard(),
 )
 """The network access metrics registered in ``geoevals.metrics``."""

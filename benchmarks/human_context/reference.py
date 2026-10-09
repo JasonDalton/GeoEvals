@@ -23,6 +23,12 @@ Operations (``inputs.params``):
   of POIs of the category within ``minutes`` of walking (inclusive), with their ``ids``.
 - ``network_detour``: ``origin``, ``destination``. Network distance between the snapped nodes
   divided by the geodesic distance between the points.
+- ``open_amenities``: ``origin``, ``category``, ``minutes``, a local instant (``date``
+  ``YYYY-MM-DD``, ``time`` ``HH:MM``, IANA ``timezone``), optional ``public_holidays`` (ISO
+  dates) and ``speed_mps``. Of the POIs of the category within ``minutes`` of walking, the
+  number open at the instant according to their ``opening_hours`` (``geoevals.opening_hours``),
+  their ``ids``, and the POIs whose hours are missing or cannot be parsed in ``unknown_ids``.
+  When every POI within reach has unknown hours, the data cannot answer: ``insufficient_data``.
 - ``abstention``: a request to ``params.operation`` that should not be answered.
 """
 
@@ -34,6 +40,7 @@ from typing import Any
 import pyarrow.parquet as pq
 import shapely
 
+from geoevals import opening_hours
 from geoevals.metrics import network
 
 
@@ -155,6 +162,39 @@ def network_detour(inputs: Mapping[str, Any], benchmark_dir: Path) -> dict[str, 
     return {"status": "ok", "value": stretch, "units": "ratio"}
 
 
+def _instant(params: Mapping[str, Any]) -> tuple[Any, frozenset[Any]]:
+    """The case's local instant and public holidays."""
+    for name in ("date", "time", "timezone"):
+        if params.get(name) is None:
+            raise Abstain("needs_clarification", f"no {name}")
+    try:
+        when = opening_hours.local_instant(params["date"], params["time"], params["timezone"])
+        holidays = opening_hours.holiday_dates(params.get("public_holidays", []))
+    except ValueError as error:
+        raise Abstain("invalid_request", str(error)) from error
+    return when, holidays
+
+
+def open_amenities(inputs: Mapping[str, Any], benchmark_dir: Path) -> dict[str, Any]:
+    params = inputs["params"]
+    minutes = _positive(params, "minutes")
+    speed = _positive(params, "speed_mps", network.DEFAULT_WALK_SPEED_MPS)
+    when, holidays = _instant(params)
+    graph, pois = _town(inputs, benchmark_dir)
+    destinations = _destinations(graph, pois, params)
+    origin = _snap(graph, _point(params, "origin"))
+    reachable = network.reachable_within(graph, origin, destinations, minutes, speed)
+    hours = {poi["poi_id"]: poi["opening_hours"] for poi in pois}
+    states = {
+        poi_id: opening_hours.open_state(hours[poi_id], when, holidays) for poi_id in reachable
+    }
+    if states and all(state is None for state in states.values()):
+        raise Abstain("insufficient_data", "every POI within reach has unknown opening hours")
+    ids = sorted(poi_id for poi_id, state in states.items() if state is True)
+    unknown = sorted(poi_id for poi_id, state in states.items() if state is None)
+    return {"status": "ok", "value": len(ids), "units": "count", "ids": ids, "unknown_ids": unknown}
+
+
 def abstention(inputs: Mapping[str, Any], benchmark_dir: Path) -> dict[str, Any]:
     """A request to the operation ``params.operation`` (with the other params) that should not
     be answered. The operation itself raises ``Abstain``; this only dispatches."""
@@ -167,6 +207,7 @@ OPERATIONS: dict[str, Callable[[Mapping[str, Any], Path], dict[str, Any]]] = {
     "nearest_amenity": nearest_amenity,
     "amenity_count": amenity_count,
     "network_detour": network_detour,
+    "open_amenities": open_amenities,
     "abstention": abstention,
 }
 

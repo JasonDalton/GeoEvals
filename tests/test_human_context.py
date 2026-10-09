@@ -30,6 +30,7 @@ from geoevals.data.verify import verify_manifest
 from geoevals.metrics.network import DEFAULT_WALK_SPEED_MPS, WEIGHT
 from geoevals.regenerate import expected_outputs, find_benchmark_dir
 from geoevals.reporting.compare import Tolerance, diff_values
+from geoevals.reporting.report import report_context
 from geoevals.runner.config import RunConfig
 from geoevals.runner.run import _resolve_metrics, _score, load_cases, run_benchmark
 from geoevals.validation import load_benchmark_spec, load_dataset_manifest, validate_file
@@ -117,7 +118,13 @@ def test_cases_cover_the_story() -> None:
     cases = _cases()
     assert len(cases) >= 20
     operations = Counter(case["operation"] for case in cases)
-    assert set(operations) == {"nearest_amenity", "amenity_count", "network_detour", "abstention"}
+    assert set(operations) == {
+        "nearest_amenity",
+        "amenity_count",
+        "network_detour",
+        "open_amenities",
+        "abstention",
+    }
     thresholds = {
         c["inputs"]["params"]["minutes"] for c in cases if c["operation"] == "amenity_count"
     }
@@ -128,6 +135,46 @@ def test_cases_cover_the_story() -> None:
     assert statuses == {"insufficient_data", "invalid_request", "needs_clarification"}
     answered = [c for c in cases if c["operation"] != "abstention"]
     assert all(c["expected"]["status"] == "ok" for c in answered)
+
+
+def _timed(case: dict[str, Any]) -> bool:
+    return "open_amenities" in (case["operation"], case["inputs"]["params"].get("operation"))
+
+
+def test_time_specific_cases_cover_the_story() -> None:
+    timed = [case for case in _cases() if _timed(case)]
+    answered = [case for case in timed if case["operation"] == "open_amenities"]
+    assert len(answered) >= 10
+    for case in timed:
+        params = case["inputs"]["params"]
+        assert isinstance(params["timezone"], str), case["case_id"]
+        assert re.fullmatch(r"\d{4}-\d{2}-\d{2}", params["date"]), case["case_id"]
+        assert params["date"] in case["prompt"] and params["timezone"] in case["prompt"]
+    for case in answered:
+        assert case["inputs"]["params"]["timezone"] == "Africa/Abidjan"
+        assert re.fullmatch(r"\d\d:\d\d", case["inputs"]["params"]["time"])
+        assert "unknown_ids" in case["expected"]
+    features = Counter(case["strata"]["hours_feature"] for case in answered)
+    assert {"overnight", "public_holiday", "missing_hours", "24_7"} <= set(features)
+    # Missing hours: an explicit unknown bucket, and insufficient_data when nothing else is known.
+    assert any(case["expected"]["unknown_ids"] for case in answered)
+    missing = [c for c in timed if c["strata"].get("abstention") == "hours_missing"]
+    assert [c["expected"]["status"] for c in missing] == ["insufficient_data"]
+    times_of_day = {case["strata"]["time_of_day"] for case in answered}
+    assert times_of_day == {"night", "morning", "afternoon", "evening"}
+    holidays = [c for c in answered if c["strata"]["hours_feature"] == "public_holiday"]
+    assert all(c["inputs"]["params"]["public_holidays"] for c in holidays)
+
+
+def test_time_of_day_stratum_matches_the_case_time() -> None:
+    buckets = {range(0, 6): "night", range(6, 12): "morning", range(12, 18): "afternoon"}
+    for case in _cases():
+        clock = case["inputs"]["params"].get("time")
+        expected = "none"
+        if clock is not None:
+            hour = int(clock[:2])
+            expected = next((name for hours, name in buckets.items() if hour in hours), "evening")
+        assert case["strata"]["time_of_day"] == expected, case["case_id"]
 
 
 def test_strata_include_neighborhood_type_and_amenity_category() -> None:
@@ -306,7 +353,10 @@ def test_access_baseline_scores_full_task_success() -> None:
     assert result["summary_metrics"]["task_success"]["n"] == len(_case_lines())
     assert result["efficiency"]["cost_usd_total"] == 0.0
     strata = {key for case in result["cases"] for key in case["strata"]}
-    assert {"neighborhood_type", "amenity_category"} <= strata
+    assert {"neighborhood_type", "amenity_category", "time_of_day"} <= strata
+    breakdowns = {item["key"]: item for item in report_context(result, "test")["strata"]}
+    rows = [row["value"] for row in breakdowns["time_of_day"]["rows"]]
+    assert sorted(rows) == ["afternoon", "evening", "morning", "night", "none"]
 
 
 # --- wrong answers fail -----------------------------------------------------------------------
@@ -317,6 +367,48 @@ def _task_success(case_id: str, output: dict[str, Any]) -> float | None:
     [case] = [case for case in load_cases(spec, BENCH) if case.case_id == case_id]
     metrics = _score(_resolve_metrics(spec), output, case.expected, case.params)
     return metrics["task_success"]["value"]
+
+
+def _with_pois(tmp_path: Path, hours: dict[str, Any]) -> Path:
+    """A copy of the benchmark whose POIs have the given ``opening_hours`` values."""
+    copy = tmp_path / "human_context"
+    shutil.copytree(BENCH, copy, ignore=shutil.ignore_patterns("__pycache__"))
+    pois = geopandas.read_parquet(copy / FILES["pois"])
+    for poi_id, value in hours.items():
+        pois.loc[pois["poi_id"] == poi_id, "opening_hours"] = value
+    pois.to_parquet(copy / FILES["pois"])
+    return copy
+
+
+def test_unparseable_hours_are_missing_data_not_adapter_errors(
+    reference: ModuleType, tmp_path: Path
+) -> None:
+    """open_amenities-001 (pharmacies, Sunday 21:30): poi-004 is open; with unparseable hours it
+    moves to the unknown bucket in both implementations, and neither raises."""
+    copy = _with_pois(tmp_path, {"poi-004": "sunrise-sunset", "poi-005": "Mo-Fr 9-17"})
+    [case] = [case for case in _cases() if case["case_id"] == "open_amenities-001"]
+    case_input = {key: value for key, value in case.items() if key != "expected"}
+    expected = {
+        "status": "ok",
+        "value": 0,
+        "units": "count",
+        "ids": [],
+        "unknown_ids": ["poi-004", "poi-005"],
+    }
+    assert reference.reference_output(case_input, copy) == expected
+    response = AccessBaselineAdapter().predict({**case_input, "benchmark_dir": str(copy)})
+    assert response.output == expected
+
+
+def test_every_poi_within_reach_unknown_is_insufficient_data(
+    reference: ModuleType, tmp_path: Path
+) -> None:
+    copy = _with_pois(tmp_path, {poi: "Mo-Fr 9-17" for poi in ("poi-001", "poi-002", "poi-003")})
+    [case] = [case for case in _cases() if case["case_id"] == "open_amenities-014"]
+    case_input = {key: value for key, value in case.items() if key != "expected"}
+    assert reference.reference_output(case_input, copy) == {"status": "insufficient_data"}
+    response = AccessBaselineAdapter().predict({**case_input, "benchmark_dir": str(copy)})
+    assert response.output == {"status": "insufficient_data"}
 
 
 def test_wrong_answers_fail() -> None:
@@ -331,3 +423,22 @@ def test_wrong_answers_fail() -> None:
     assert _task_success("network_detour-003", {**detour, "value": 1.0}) == 0.0
     assert _task_success("abstention-002", {"status": "ok", "value": 1.0, "units": "ratio"}) == 0.0
     assert _task_success("abstention-006", {"status": "insufficient_data"}) == 0.0
+    # Ignoring opening hours counts every pharmacy within reach (4 instead of 1).
+    sunday = cases["open_amenities-001"]
+    assert _task_success("open_amenities-001", sunday) == 1.0
+    assert _task_success("open_amenities-001", {**sunday, "value": 4}) == 0.0
+    # Ignoring the public-holiday rule.
+    assert _task_success("open_amenities-002", {**sunday}) == 0.0
+    # Treating missing hours as open.
+    missing = cases["open_amenities-014"]
+    assert _task_success("open_amenities-014", {**missing, "value": 4}) == 0.0
+    assert _task_success("abstention-013", {"status": "ok", "value": 0, "units": "count"}) == 0.0
+
+
+def test_unknown_bucket_is_scored() -> None:
+    spec = load_benchmark_spec(SPEC)
+    [case] = [case for case in load_cases(spec, BENCH) if case.case_id == "open_amenities-014"]
+    closed = {**case.expected, "unknown_ids": []}
+    metrics = _score(_resolve_metrics(spec), closed, case.expected, case.params)
+    assert metrics["unknown_set_jaccard"]["passed"] is False
+    assert metrics["unknown_set_jaccard"]["detail"]["missing"] == ["poi-036"]

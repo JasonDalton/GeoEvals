@@ -6,14 +6,16 @@ pillar: human_context
 task_statement: >-
   On the street network of a small synthetic town, answer a walking-access question: the travel
   time from an origin to the nearest amenity of a category, the number of amenities of a
-  category within 10 or 15 minutes, or the network detour ratio between two points. Return the
-  answer in the output contract: a status and, for an answer, a value with units and, for
-  amenity questions, the IDs of the points of interest. Requests that cannot be answered must
-  get the matching status.
+  category within 10 or 15 minutes, the network detour ratio between two points, or which
+  amenities within a walking threshold are open at a stated local date, time and time zone.
+  Return the answer in the output contract: a status and, for an answer, a value with units and,
+  for amenity questions, the IDs of the points of interest (and, for opening-hours questions,
+  the IDs whose hours are unknown). Requests that cannot be answered must get the matching
+  status.
 intended_use: >-
   Check whether a system, classical or model-based, computes walking access on a stated network
   correctly (shortest paths on stated edge lengths, snapping, inclusive thresholds, the stated
-  walking speed) and abstains when the data cannot answer. The concepts are defined in
+  walking speed, opening hours at a local instant) and abstains when the data cannot answer. The concepts are defined in
   docs/human-context.md and the metrics in docs/metrics.md. The values are proxies: they say
   nothing about whether a particular person can or does make a trip.
 input_schema:
@@ -30,7 +32,7 @@ input_schema:
     case_id: {type: string, minLength: 1}
     operation:
       description: The access operation; it is also the name of the case file.
-      enum: [nearest_amenity, amenity_count, network_detour, abstention]
+      enum: [nearest_amenity, amenity_count, network_detour, open_amenities, abstention]
     prompt:
       description: The request in natural language, for model-based adapters.
       type: string
@@ -60,6 +62,21 @@ input_schema:
             category: {type: string, minLength: 1}
             minutes: {type: number}
             speed_mps: {type: number}
+            date:
+              description: Local date (ISO 8601, YYYY-MM-DD) of an opening-hours question.
+              type: string
+            time:
+              description: Local wall-clock time (HH:MM, 24-hour) of an opening-hours question.
+              type: string
+            timezone:
+              description: IANA time zone of the local date and time.
+              type: string
+            public_holidays:
+              description: >-
+                Dates (YYYY-MM-DD) that are public holidays; opening-hours PH rules apply only
+                to these.
+              type: array
+              items: {type: string}
     tolerances:
       description: Tolerance name (a metric param) -> value with explicit units.
       type: object
@@ -72,7 +89,7 @@ input_schema:
           units: {type: string, minLength: 1}
     strata:
       type: object
-      required: [operation, neighborhood_type, amenity_category]
+      required: [operation, neighborhood_type, amenity_category, time_of_day]
       properties:
         operation: {type: string}
         neighborhood_type:
@@ -81,6 +98,11 @@ input_schema:
         amenity_category:
           description: The requested amenity category, or none for a detour question.
           type: string
+        time_of_day:
+          description: >-
+            Local time bucket of an opening-hours question: night (00:00-05:59), morning
+            (06:00-11:59), afternoon (12:00-17:59), evening (18:00-23:59); none without a time.
+          enum: [night, morning, afternoon, evening, none]
     split: {type: string}
 output_schema:
   type: object
@@ -103,6 +125,13 @@ output_schema:
       type: array
       items: {type: string}
       evidence_type: proxy
+    unknown_ids:
+      description: >-
+        For an opening-hours question, the POIs within the threshold whose opening hours are
+        missing or cannot be parsed (the unknown bucket; neither open nor closed).
+      type: array
+      items: {type: string}
+      evidence_type: proxy
   if:
     properties:
       status: {const: ok}
@@ -112,6 +141,7 @@ cases:
   - cases/nearest_amenity.jsonl
   - cases/amenity_count.jsonl
   - cases/network_detour.jsonl
+  - cases/open_amenities.jsonl
   - cases/abstention.jsonl
 splits:
   test:
@@ -135,6 +165,9 @@ metrics:
   - id: route_stretch_abs_error
     version: 1.0.0
     params: {}
+  - id: unknown_set_jaccard
+    version: 1.0.0
+    params: {}
 tolerances: {}
 dataset_manifest: manifest.yaml
 license: MIT
@@ -150,5 +183,5 @@ provenance:
 limitations:
   - One small synthetic town; it tests access computations, not scale or real-world data quality.
   - Walking is modeled as a constant speed on mapped street lengths; crossings, slope, signals and personal mobility are not modeled.
-  - Opening hours are in the data but not used by these cases (time-specific availability comes in a later version).
+  - Opening hours are evaluated with a documented subset of the OpenStreetMap syntax (docs/human-context.md); values outside it count as unknown. Travel time is not added to the instant.
   - Tolerances are tight because the network, lengths and speed are all given; they absorb only floating-point summation order.

@@ -323,6 +323,17 @@ reason `units_mismatch` (no conversion is done). Tolerances are inclusive.
 - **Implementation:** `geoevals.metrics.access.RouteStretchAbsError`.
 - **Detail:** as `travel_time_abs_error_s`.
 
+### `unknown_set_jaccard`
+
+- **Definition:** as `reachable_set_jaccard`, over the `unknown_ids` lists: the points of
+  interest whose opening hours are missing or cannot be parsed (the explicit unknown bucket of a
+  time-specific availability answer, see `docs/human-context.md`). Passed when `>= min_jaccard`
+  (default 1.0).
+- **Applies when:** the reference has an `unknown_ids` list.
+- **Units:** fraction. Higher is better.
+- **Implementation:** `geoevals.metrics.access.UnknownSetJaccard`.
+- **Detail:** as `reachable_set_jaccard`; the missing-list reason is `missing_unknown_ids`.
+
 ## Agent trajectories
 
 An agent adapter may return a trajectory: its steps for the case, in order. Each step records

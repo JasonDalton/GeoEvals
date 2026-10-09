@@ -181,6 +181,7 @@ def test_access_metrics_are_registered():
         "reachable_count_error",
         "reachable_set_jaccard",
         "route_stretch_abs_error",
+        "unknown_set_jaccard",
     }
     assert ids <= registered_metric_ids()
     assert get_metric("travel_time_abs_error_s").units == "s"
@@ -246,6 +247,22 @@ def test_reachable_set_jaccard():
     assert (missing.value, missing.passed, missing.detail["reason"]) == (None, False, "missing_ids")
     assert metric.score(answer(4, "count", ids=[True]), reference, {}).passed is False
     assert metric.score(answer(4, "count"), answer(4, "count"), {}).passed is None
+
+
+def test_unknown_set_jaccard():
+    metric = get_metric("unknown_set_jaccard")
+    reference = answer(1, "count", ids=["p_a"], unknown_ids=["p_b", "p_c"])
+    exact = metric.score(answer(1, "count", ids=["p_a"], unknown_ids=["p_c", "p_b"]), reference, {})
+    assert (exact.value, exact.passed, exact.detail) == (1.0, True, {})
+    # Unknown hours counted as closed: half of the unknown bucket is missing.
+    closed = metric.score(answer(1, "count", ids=["p_a"], unknown_ids=["p_b"]), reference, {})
+    assert (closed.value, closed.passed) == (0.5, False)
+    assert closed.detail == {"missing": ["p_c"], "min_jaccard": 1.0}
+    missing = metric.score(answer(1, "count", ids=["p_a"]), reference, {})
+    assert (missing.value, missing.passed) == (None, False)
+    assert missing.detail["reason"] == "missing_unknown_ids"
+    # Not applicable without an unknown bucket in the reference.
+    assert metric.score(reference, answer(1, "count", ids=["p_a"]), {}).passed is None
 
 
 def test_metrics_score_answers_on_the_hand_built_graph(graph):
