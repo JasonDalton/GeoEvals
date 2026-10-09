@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GeoEvals report: {{ title }}</title>
+<style>
+body { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; color: #1f2328; margin: 2rem auto; max-width: 72rem; padding: 0 1rem; line-height: 1.45; }
+h1 { font-size: 1.6rem; }
+h2 { font-size: 1.25rem; border-bottom: 1px solid #d0d7de; padding-bottom: 0.25rem; margin-top: 2rem; }
+h3 { font-size: 1.05rem; }
+table { border-collapse: collapse; margin: 0.5rem 0 1rem; }
+th, td { border: 1px solid #d0d7de; padding: 0.3rem 0.6rem; text-align: left; vertical-align: top; }
+th { background: #f6f8fa; }
+td.num { text-align: right; font-variant-numeric: tabular-nums; }
+code, td.mono { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 0.9em; overflow-wrap: anywhere; }
+.note { background: #fff8c5; border: 1px solid #d4a72c; padding: 0.5rem 0.75rem; }
+</style>
+</head>
+<body>
+<h1>GeoEvals report: {{ title }}</h1>
+
+<h2>1. Summary</h2>
+<table>
+<tr><th>Field</th><th>Value</th></tr>
+{% for label, value in summary %}
+<tr><th scope="row">{{ label }}</th><td class="mono">{{ value }}</td></tr>
+{% endfor %}
+</table>
+<p class="note">{{ comparability_note }}</p>
+
+<h2>2. Summary metrics</h2>
+{% if metrics %}
+<table>
+<tr><th>Metric</th><th>Version</th><th>Mean</th><th>Median</th><th>95% CI</th><th>n</th><th>n failed</th></tr>
+{% for m in metrics %}
+<tr><td>{{ m.id }}</td><td>{{ m.version }}</td><td class="num">{{ m.mean }}</td><td class="num">{{ m.median }}</td><td class="num">{{ m.ci }}</td><td class="num">{{ m.n }}</td><td class="num">{{ m.n_failed }}</td></tr>
+{% endfor %}
+</table>
+<p>The 95% CI is a bootstrap percentile interval of the mean. n counts the cases with a metric value.</p>
+{% else %}
+<p>No metrics were recorded.</p>
+{% endif %}
+
+<h2>3. Breakdown by strata</h2>
+{% for stratum in strata %}
+<h3>{{ stratum.key }}</h3>
+<table>
+<tr><th>{{ stratum.key }}</th><th>Cases</th><th>Scored</th>{% for id in metric_ids %}<th>{{ id }} mean</th><th>{{ id }} n</th><th>{{ id }} failed</th>{% endfor %}</tr>
+{% for row in stratum.rows %}
+<tr><td>{{ row.value }}</td><td class="num">{{ row.cases }}</td><td class="num">{{ row.scored }}</td>{% for s in row.metrics %}<td class="num">{{ s.mean }}</td><td class="num">{{ s.n }}</td><td class="num">{{ s.failed }}</td>{% endfor %}</tr>
+{% endfor %}
+</table>
+{% else %}
+<p>No case has strata.</p>
+{% endfor %}
+
+<h2>4. Efficiency</h2>
+<table>
+<tr><th>Measure</th><th>Value</th></tr>
+{% for label, value in efficiency %}
+<tr><th scope="row">{{ label }}</th><td class="num">{{ value }}</td></tr>
+{% endfor %}
+</table>
+
+<h2>5. Failures</h2>
+{% if failures %}
+<table>
+<tr><th>Case</th><th>Status</th><th>Metric</th><th>Error or detail</th></tr>
+{% for f in failures %}
+<tr><td>{{ f.case_id }}</td><td>{{ f.status }}</td><td>{{ f.metric or "-" }}</td><td class="mono">{{ f.detail }}</td></tr>
+{% endfor %}
+</table>
+{% else %}
+<p>Every case was scored and no metric failed.</p>
+{% endif %}
+
+<h2>6. Environment</h2>
+{% if environment %}
+<table>
+<tr><th>Key</th><th>Value</th></tr>
+{% for key, value in environment %}
+<tr><th scope="row">{{ key }}</th><td class="mono">{{ value }}</td></tr>
+{% endfor %}
+</table>
+{% else %}
+<p>No environment was recorded.</p>
+{% endif %}
+
+<h2>7. Provenance and dataset licenses</h2>
+{% if provenance %}
+<table>
+<tr><th>Field</th><th>Value</th></tr>
+{% for label, value in provenance.rows %}
+<tr><th scope="row">{{ label }}</th><td>{{ value }}</td></tr>
+{% endfor %}
+</table>
+{% if provenance.assets %}
+<table>
+<tr><th>Asset</th><th>License</th><th>Attribution</th><th>Redistributable</th><th>Source</th></tr>
+{% for a in provenance.assets %}
+<tr><td>{{ a.asset_id }}</td><td>{{ a.license }}</td><td>{{ a.attribution }}</td><td>{{ a.redistributable }}</td><td class="mono">{{ a.source }}</td></tr>
+{% endfor %}
+</table>
+{% else %}
+<p>The dataset manifest lists no assets.</p>
+{% endif %}
+{% else %}
+<p>This run result does not record provenance or dataset licenses. See the benchmark spec and its dataset manifest (manifest hash above).</p>
+{% endif %}
+
+<h2>8. Limitations</h2>
+{% if limitations %}
+<ul>
+{% for item in limitations %}
+<li>{{ item }}</li>
+{% endfor %}
+</ul>
+{% else %}
+<p>The benchmark spec lists no limitations.</p>
+{% endif %}
+</body>
+</html>

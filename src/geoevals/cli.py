@@ -12,6 +12,7 @@ from geoevals import __version__
 from geoevals.adapters import create_adapter, registered_adapter_names
 from geoevals.data.verify import verify_manifest
 from geoevals.reporting.compare import compare_runs, load_run
+from geoevals.reporting.report import write_report
 from geoevals.runner.config import RunConfigError, load_run_config
 from geoevals.runner.cost import PriceTable, PriceTableError, load_price_table
 from geoevals.runner.layout import CONFIG_FILE, LOG_FILE, RESULT_FILE, write_config, write_run_dir
@@ -100,6 +101,13 @@ def build_parser() -> argparse.ArgumentParser:
     )
     compare.add_argument("run_a", type=Path, help="Run directory or its result.json.")
     compare.add_argument("run_b", type=Path, help="Run directory or its result.json.")
+
+    report = subparsers.add_parser(
+        "report",
+        help="Write report.md and report.html into a run directory (exit 2: the run could not "
+        "be read).",
+    )
+    report.add_argument("run_dir", type=Path, help="Run directory or its result.json.")
     return parser
 
 
@@ -257,6 +265,17 @@ def _compare(path_a: Path, path_b: Path) -> int:
     return 1
 
 
+def _report(path: Path) -> int:
+    try:
+        written = write_report(path)
+    except SpecValidationError as exc:
+        _print_issues(exc.path, exc.issues)
+        return 2
+    for written_path in written:
+        print(written_path)
+    return 0
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
@@ -276,5 +295,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         )
     if args.command == "compare":
         return _compare(args.run_a, args.run_b)
+    if args.command == "report":
+        return _report(args.run_dir)
     parser.print_help()
     return 0

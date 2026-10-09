@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GeoEvals report: example_distance 1.0.0 / mock</title>
+<style>
+body { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; color: #1f2328; margin: 2rem auto; max-width: 72rem; padding: 0 1rem; line-height: 1.45; }
+h1 { font-size: 1.6rem; }
+h2 { font-size: 1.25rem; border-bottom: 1px solid #d0d7de; padding-bottom: 0.25rem; margin-top: 2rem; }
+h3 { font-size: 1.05rem; }
+table { border-collapse: collapse; margin: 0.5rem 0 1rem; }
+th, td { border: 1px solid #d0d7de; padding: 0.3rem 0.6rem; text-align: left; vertical-align: top; }
+th { background: #f6f8fa; }
+td.num { text-align: right; font-variant-numeric: tabular-nums; }
+code, td.mono { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 0.9em; overflow-wrap: anywhere; }
+.note { background: #fff8c5; border: 1px solid #d4a72c; padding: 0.5rem 0.75rem; }
+</style>
+</head>
+<body>
+<h1>GeoEvals report: example_distance 1.0.0 / mock</h1>
+
+<h2>1. Summary</h2>
+<table>
+<tr><th>Field</th><th>Value</th></tr>
+<tr><th scope="row">Run ID</th><td class="mono">example_distance-mock-20261009T120000Z-be3fe555</td></tr>
+<tr><th scope="row">Benchmark</th><td class="mono">example_distance 1.0.0</td></tr>
+<tr><th scope="row">Split</th><td class="mono">test</td></tr>
+<tr><th scope="row">Adapter</th><td class="mono">mock 0.1.0</td></tr>
+<tr><th scope="row">Adapter config</th><td class="mono">{&#34;behavior&#34;: &#34;reference&#34;, &#34;seed&#34;: 7}</td></tr>
+<tr><th scope="row">Metric versions</th><td class="mono">value_abs_error 1.0.0</td></tr>
+<tr><th scope="row">Config hash</th><td class="mono">be3fe5552cda5245e16d3639bb82740851ec6a941b9c2f2d532a79c80565a61e</td></tr>
+<tr><th scope="row">Dataset manifest hash</th><td class="mono">89333bc71f02c647533ab52e592ad22c609728f12eabff6fda0920109db40401</td></tr>
+<tr><th scope="row">Run result schema</th><td class="mono">1.0.0</td></tr>
+<tr><th scope="row">Started</th><td class="mono">2026-10-09T12:00:00Z</td></tr>
+<tr><th scope="row">Finished</th><td class="mono">2026-10-09T12:00:01.250000Z</td></tr>
+<tr><th scope="row">Cases</th><td class="mono">4 (2 scored, 2 not scored)</td></tr>
+</table>
+<p class="note">Comparisons are valid only between runs with the same benchmark version, metric versions, split, and dataset manifest hash.</p>
+
+<h2>2. Summary metrics</h2>
+<table>
+<tr><th>Metric</th><th>Version</th><th>Mean</th><th>Median</th><th>95% CI</th><th>n</th><th>n failed</th></tr>
+<tr><td>value_abs_error</td><td>1.0.0</td><td class="num">2510.65</td><td class="num">2510.65</td><td class="num">[0, 5021.3]</td><td class="num">2</td><td class="num">1</td></tr>
+</table>
+<p>The 95% CI is a bootstrap percentile interval of the mean. n counts the cases with a metric value.</p>
+
+<h2>3. Breakdown by strata</h2>
+<h3>crs_family</h3>
+<table>
+<tr><th>crs_family</th><th>Cases</th><th>Scored</th><th>value_abs_error mean</th><th>value_abs_error n</th><th>value_abs_error failed</th></tr>
+<tr><td>geographic</td><td class="num">1</td><td class="num">1</td><td class="num">5021.3</td><td class="num">1</td><td class="num">1</td></tr>
+<tr><td>projected</td><td class="num">3</td><td class="num">1</td><td class="num">0</td><td class="num">1</td><td class="num">0</td></tr>
+</table>
+<h3>operation</h3>
+<table>
+<tr><th>operation</th><th>Cases</th><th>Scored</th><th>value_abs_error mean</th><th>value_abs_error n</th><th>value_abs_error failed</th></tr>
+<tr><td>distance</td><td class="num">4</td><td class="num">2</td><td class="num">2510.65</td><td class="num">2</td><td class="num">1</td></tr>
+</table>
+<h3>region</h3>
+<table>
+<tr><th>region</th><th>Cases</th><th>Scored</th><th>value_abs_error mean</th><th>value_abs_error n</th><th>value_abs_error failed</th></tr>
+<tr><td>africa</td><td class="num">1</td><td class="num">1</td><td class="num">5021.3</td><td class="num">1</td><td class="num">1</td></tr>
+<tr><td>asia</td><td class="num">2</td><td class="num">0</td><td class="num">n/a</td><td class="num">0</td><td class="num">0</td></tr>
+<tr><td>europe</td><td class="num">1</td><td class="num">1</td><td class="num">0</td><td class="num">1</td><td class="num">0</td></tr>
+</table>
+<h3>trap</h3>
+<table>
+<tr><th>trap</th><th>Cases</th><th>Scored</th><th>value_abs_error mean</th><th>value_abs_error n</th><th>value_abs_error failed</th></tr>
+<tr><td>true</td><td class="num">1</td><td class="num">0</td><td class="num">n/a</td><td class="num">0</td><td class="num">0</td></tr>
+<tr><td>(not set)</td><td class="num">3</td><td class="num">2</td><td class="num">2510.65</td><td class="num">2</td><td class="num">1</td></tr>
+</table>
+
+<h2>4. Efficiency</h2>
+<table>
+<tr><th>Measure</th><th>Value</th></tr>
+<tr><th scope="row">Wall clock (s)</th><td class="num">1.25</td></tr>
+<tr><th scope="row">Cases</th><td class="num">4</td></tr>
+<tr><th scope="row">Throughput (cases/s)</th><td class="num">3.2</td></tr>
+<tr><th scope="row">Latency p50 (s)</th><td class="num">0.0105</td></tr>
+<tr><th scope="row">Latency p90 (s)</th><td class="num">0.6996</td></tr>
+<tr><th scope="row">Latency p99 (s)</th><td class="num">0.97</td></tr>
+<tr><th scope="row">Latency max (s)</th><td class="num">1</td></tr>
+<tr><th scope="row">Timeout rate</th><td class="num">0.25</td></tr>
+<tr><th scope="row">Failure rate</th><td class="num">0.5</td></tr>
+<tr><th scope="row">Retries</th><td class="num">2</td></tr>
+<tr><th scope="row">Peak RSS (bytes)</th><td class="num">104857600</td></tr>
+<tr><th scope="row">Input tokens</th><td class="num">120</td></tr>
+<tr><th scope="row">Output tokens</th><td class="num">15</td></tr>
+<tr><th scope="row">Cost, total (USD)</th><td class="num">0</td></tr>
+<tr><th scope="row">Cost per case (USD)</th><td class="num">0</td></tr>
+<tr><th scope="row">Price table hash</th><td class="num">n/a</td></tr>
+</table>
+
+<h2>5. Failures</h2>
+<table>
+<tr><th>Case</th><th>Status</th><th>Metric</th><th>Error or detail</th></tr>
+<tr><td>dist_002</td><td>scored</td><td>value_abs_error</td><td class="mono">value 5021.3; detail {&#34;reason&#34;: &#34;axis_swap&#34;, &#34;units&#34;: &#34;m&#34;}</td></tr>
+<tr><td>dist_003</td><td>adapter_error</td><td>-</td><td class="mono">RuntimeError: mock adapter raised on request</td></tr>
+<tr><td>dist_004</td><td>timeout</td><td>-</td><td class="mono">TimeoutError: case exceeded timeout_s=1</td></tr>
+</table>
+
+<h2>6. Environment</h2>
+<table>
+<tr><th>Key</th><th>Value</th></tr>
+<tr><th scope="row">git_commit</th><td class="mono">0123456789abcdef0123456789abcdef01234567</td></tr>
+<tr><th scope="row">git_dirty</th><td class="mono">false</td></tr>
+<tr><th scope="row">os</th><td class="mono">Darwin</td></tr>
+<tr><th scope="row">python</th><td class="mono">3.11.9</td></tr>
+<tr><th scope="row">uv_lock_sha256</th><td class="mono">n/a</td></tr>
+</table>
+
+<h2>7. Provenance and dataset licenses</h2>
+<table>
+<tr><th>Field</th><th>Value</th></tr>
+<tr><th scope="row">Benchmark license</th><td>MIT</td></tr>
+<tr><th scope="row">Authors</th><td>GeoEvals contributors</td></tr>
+<tr><th scope="row">Created</th><td>2026-10-09</td></tr>
+<tr><th scope="row">Notes</th><td>Hand-written fixture for the report golden test.</td></tr>
+<tr><th scope="row">Dataset</th><td>example_points</td></tr>
+</table>
+<table>
+<tr><th>Asset</th><th>License</th><th>Attribution</th><th>Redistributable</th><th>Source</th></tr>
+<tr><td>points</td><td>MIT</td><td>GeoEvals contributors</td><td>true</td><td class="mono">GeoEvals contributors (2026). Synthetic test points.</td></tr>
+<tr><td>roads</td><td>ODbL-1.0</td><td>OpenStreetMap contributors</td><td>false</td><td class="mono">https://www.openstreetmap.org/</td></tr>
+</table>
+
+<h2>8. Limitations</h2>
+<ul>
+<li>Hand-written example run result for tests; the numbers are not measured.</li>
+<li>Pipe | and &lt;tag&gt; characters stay readable.</li>
+</ul>
+</body>
+</html>

@@ -8,7 +8,13 @@ from typing import Annotated, Any, Literal, Self
 
 from pydantic import Field, model_validator
 
-from geoevals.validation.benchmark import Identifier, NonEmptyStr, SemVer, _SchemaModel
+from geoevals.validation.benchmark import (
+    DATE_PATTERN,
+    Identifier,
+    NonEmptyStr,
+    SemVer,
+    _SchemaModel,
+)
 from geoevals.validation.manifest import SHA256_PATTERN
 
 RUN_RESULT_SCHEMA_VERSION = "1.0.0"
@@ -112,6 +118,33 @@ class CaseRecord(_SchemaModel):
         return self
 
 
+class BenchmarkProvenance(_SchemaModel):
+    license: NonEmptyStr
+    authors: Annotated[list[NonEmptyStr], Field(min_length=1)]
+    created: Annotated[str, Field(pattern=DATE_PATTERN)]
+    reference_workflow: NonEmptyStr | None = None
+    notes: NonEmptyStr | None = None
+
+
+class AssetLicense(_SchemaModel):
+    asset_id: Identifier
+    license: NonEmptyStr
+    attribution: NonEmptyStr
+    redistributable: bool
+    source_url: NonEmptyStr | None = None
+    citation: NonEmptyStr | None = None
+
+
+class DatasetProvenance(_SchemaModel):
+    dataset_id: Identifier
+    assets: list[AssetLicense]
+
+
+class RunProvenance(_SchemaModel):
+    benchmark: BenchmarkProvenance
+    dataset: DatasetProvenance
+
+
 class RunResult(_SchemaModel):
     run_id: NonEmptyStr
     schema_version: Literal["1.0.0"]
@@ -126,4 +159,5 @@ class RunResult(_SchemaModel):
     efficiency: Efficiency
     failures: list[Failure]
     limitations: list[NonEmptyStr]
+    provenance: RunProvenance | None = None
     cases: list[CaseRecord]

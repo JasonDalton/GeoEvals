@@ -1,0 +1,107 @@
+# GeoEvals report: {{ title }}
+
+## 1. Summary
+
+| Field | Value |
+| --- | --- |
+{% for label, value in summary %}
+| {{ label }} | {{ value | cell }} |
+{% endfor %}
+
+{{ comparability_note }}
+
+## 2. Summary metrics
+
+{% if metrics %}
+| Metric | Version | Mean | Median | 95% CI | n | n failed |
+| --- | --- | --- | --- | --- | --- | --- |
+{% for m in metrics %}
+| {{ m.id }} | {{ m.version }} | {{ m.mean }} | {{ m.median }} | {{ m.ci }} | {{ m.n }} | {{ m.n_failed }} |
+{% endfor %}
+
+The 95% CI is a bootstrap percentile interval of the mean. n counts the cases with a metric value.
+{% else %}
+No metrics were recorded.
+{% endif %}
+
+## 3. Breakdown by strata
+
+{% for stratum in strata %}
+### {{ stratum.key }}
+
+| {{ stratum.key | cell }} | Cases | Scored |{% for id in metric_ids %} {{ id }} mean | {{ id }} n | {{ id }} failed |{% endfor %}
+
+| --- | --- | --- |{% for id in metric_ids %} --- | --- | --- |{% endfor %}
+
+{% for row in stratum.rows %}
+| {{ row.value | cell }} | {{ row.cases }} | {{ row.scored }} |{% for s in row.metrics %} {{ s.mean }} | {{ s.n }} | {{ s.failed }} |{% endfor %}
+
+{% endfor %}
+
+{% else %}
+No case has strata.
+
+{% endfor %}
+## 4. Efficiency
+
+| Measure | Value |
+| --- | --- |
+{% for label, value in efficiency %}
+| {{ label }} | {{ value | cell }} |
+{% endfor %}
+
+## 5. Failures
+
+{% if failures %}
+| Case | Status | Metric | Error or detail |
+| --- | --- | --- | --- |
+{% for f in failures %}
+| {{ f.case_id | cell }} | {{ f.status }} | {{ f.metric or "-" }} | {{ f.detail | cell }} |
+{% endfor %}
+{% else %}
+Every case was scored and no metric failed.
+{% endif %}
+
+## 6. Environment
+
+{% if environment %}
+| Key | Value |
+| --- | --- |
+{% for key, value in environment %}
+| {{ key | cell }} | {{ value | cell }} |
+{% endfor %}
+{% else %}
+No environment was recorded.
+{% endif %}
+
+## 7. Provenance and dataset licenses
+
+{% if provenance %}
+| Field | Value |
+| --- | --- |
+{% for label, value in provenance.rows %}
+| {{ label }} | {{ value | cell }} |
+{% endfor %}
+
+{% if provenance.assets %}
+| Asset | License | Attribution | Redistributable | Source |
+| --- | --- | --- | --- | --- |
+{% for a in provenance.assets %}
+| {{ a.asset_id }} | {{ a.license | cell }} | {{ a.attribution | cell }} | {{ a.redistributable }} | {{ a.source | cell }} |
+{% endfor %}
+{% else %}
+The dataset manifest lists no assets.
+{% endif %}
+{% else %}
+This run result does not record provenance or dataset licenses. See the benchmark spec and its dataset manifest (manifest hash above).
+{% endif %}
+
+## 8. Limitations
+
+{% if limitations %}
+{% for item in limitations %}
+- {{ item }}
+{% endfor %}
+{% else %}
+The benchmark spec lists no limitations.
+{% endif %}

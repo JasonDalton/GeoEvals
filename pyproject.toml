@@ -9,6 +9,7 @@ authors = [{ name = "GeoEvals contributors" }]
 requires-python = ">=3.11"
 dependencies = [
     "geopandas>=1",
+    "jinja2>=3.1.6",
     "jsonschema>=4.26.0",
     "psutil>=7.2.2",
     "pyarrow>=26.0.0",

@@ -1,0 +1,231 @@
+{
+  "adapter": {
+    "config": {
+      "behavior": "reference",
+      "seed": 7
+    },
+    "name": "mock",
+    "version": "0.1.0"
+  },
+  "benchmark": {
+    "id": "example_distance",
+    "version": "1.0.0"
+  },
+  "cases": [
+    {
+      "case_id": "dist_001",
+      "cost_usd": 0.0,
+      "error": null,
+      "latency_s": 0.012,
+      "metrics": {
+        "value_abs_error": {
+          "detail": {
+            "units": "m"
+          },
+          "passed": true,
+          "value": 0.0
+        }
+      },
+      "output": {
+        "distance_m": 1234.5
+      },
+      "peak_memory_bytes": 20480,
+      "retries": 0,
+      "scoring_s": 0.0004,
+      "split": "test",
+      "status": "scored",
+      "strata": {
+        "crs_family": "projected",
+        "operation": "distance",
+        "region": "europe"
+      },
+      "tokens": {
+        "input": 120,
+        "output": 15
+      }
+    },
+    {
+      "case_id": "dist_002",
+      "cost_usd": 0.0,
+      "error": null,
+      "latency_s": 0.009,
+      "metrics": {
+        "value_abs_error": {
+          "detail": {
+            "reason": "axis_swap",
+            "units": "m"
+          },
+          "passed": false,
+          "value": 5021.3
+        }
+      },
+      "output": {
+        "distance_m": 6255.8
+      },
+      "peak_memory_bytes": 18432,
+      "retries": 0,
+      "scoring_s": 0.0005,
+      "split": "test",
+      "status": "scored",
+      "strata": {
+        "crs_family": "geographic",
+        "operation": "distance",
+        "region": "africa"
+      },
+      "tokens": null,
+      "trajectory": [
+        {
+          "args": {
+            "crs": "EPSG:4326"
+          },
+          "duration_s": 0.004,
+          "error_message": null,
+          "status": "ok",
+          "step": 0,
+          "tokens": null,
+          "tool": "transform"
+        }
+      ]
+    },
+    {
+      "case_id": "dist_003",
+      "cost_usd": null,
+      "error": {
+        "message": "mock adapter raised on request",
+        "type": "RuntimeError"
+      },
+      "latency_s": 0.001,
+      "memory_note": "adapter raised before memory was sampled",
+      "metrics": {},
+      "output": null,
+      "peak_memory_bytes": null,
+      "retries": 2,
+      "scoring_s": null,
+      "split": "test",
+      "status": "adapter_error",
+      "strata": {
+        "crs_family": "projected",
+        "operation": "distance",
+        "region": "asia"
+      },
+      "tokens": null
+    },
+    {
+      "case_id": "dist_004",
+      "cost_usd": null,
+      "error": {
+        "message": "case exceeded timeout_s=1",
+        "type": "TimeoutError"
+      },
+      "latency_s": 1.0,
+      "memory_note": "per-case memory unavailable after a timeout",
+      "metrics": {},
+      "output": null,
+      "peak_memory_bytes": null,
+      "retries": 0,
+      "scoring_s": null,
+      "split": "test",
+      "status": "timeout",
+      "strata": {
+        "crs_family": "projected",
+        "operation": "distance",
+        "region": "asia",
+        "trap": true
+      },
+      "tokens": null
+    }
+  ],
+  "config_hash": "be3fe5552cda5245e16d3639bb82740851ec6a941b9c2f2d532a79c80565a61e",
+  "dataset_manifest_hash": "89333bc71f02c647533ab52e592ad22c609728f12eabff6fda0920109db40401",
+  "efficiency": {
+    "cases_per_s": 3.2,
+    "cases_total": 4,
+    "cost_usd_per_case": 0.0,
+    "cost_usd_total": 0.0,
+    "failure_rate": 0.5,
+    "latency_max_s": 1.0,
+    "latency_p50_s": 0.0105,
+    "latency_p90_s": 0.6996,
+    "latency_p99_s": 0.97,
+    "peak_rss_bytes": 104857600,
+    "price_table_hash": null,
+    "retries_total": 2,
+    "timeout_rate": 0.25,
+    "tokens_input_total": 120,
+    "tokens_output_total": 15,
+    "wall_clock_s": 1.25
+  },
+  "environment": {
+    "git_commit": "0123456789abcdef0123456789abcdef01234567",
+    "git_dirty": false,
+    "os": "Darwin",
+    "python": "3.11.9",
+    "uv_lock_sha256": null
+  },
+  "failures": [
+    {
+      "case_id": "dist_003",
+      "error": {
+        "message": "mock adapter raised on request",
+        "type": "RuntimeError"
+      },
+      "status": "adapter_error"
+    },
+    {
+      "case_id": "dist_004",
+      "error": {
+        "message": "case exceeded timeout_s=1",
+        "type": "TimeoutError"
+      },
+      "status": "timeout"
+    }
+  ],
+  "finished_at": "2026-10-09T12:00:01.250000Z",
+  "limitations": [
+    "Hand-written example run result for tests; the numbers are not measured.",
+    "Pipe | and <tag> characters stay readable."
+  ],
+  "provenance": {
+    "benchmark": {
+      "authors": [
+        "GeoEvals contributors"
+      ],
+      "created": "2026-10-09",
+      "license": "MIT",
+      "notes": "Hand-written fixture for the report golden test."
+    },
+    "dataset": {
+      "assets": [
+        {
+          "asset_id": "points",
+          "attribution": "GeoEvals contributors",
+          "citation": "GeoEvals contributors (2026). Synthetic test points.",
+          "license": "MIT",
+          "redistributable": true
+        },
+        {
+          "asset_id": "roads",
+          "attribution": "OpenStreetMap contributors",
+          "license": "ODbL-1.0",
+          "redistributable": false,
+          "source_url": "https://www.openstreetmap.org/"
+        }
+      ],
+      "dataset_id": "example_points"
+    }
+  },
+  "run_id": "example_distance-mock-20261009T120000Z-be3fe555",
+  "schema_version": "1.0.0",
+  "started_at": "2026-10-09T12:00:00Z",
+  "summary_metrics": {
+    "value_abs_error": {
+      "ci_high": 5021.3,
+      "ci_low": 0.0,
+      "mean": 2510.65,
+      "median": 2510.65,
+      "n": 2,
+      "n_failed": 1,
+      "version": "1.0.0"
+    }
+  }
+}

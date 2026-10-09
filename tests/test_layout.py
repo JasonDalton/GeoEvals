@@ -293,3 +293,35 @@ def test_compare_unreadable_run(tmp_path: Path, capsys: pytest.CaptureFixture[st
     (bad / "result.json").write_text("{}", encoding="utf-8")
     assert main(["compare", str(bad), str(bad)]) == 2
     assert "invalid" in capsys.readouterr().err
+
+
+# --- report -----------------------------------------------------------------------------------
+
+
+def test_run_records_provenance_and_reports(run_dir: Path, tmp_path: Path) -> None:
+    result = json.loads((run_dir / "result.json").read_text(encoding="utf-8"))
+    assert result["provenance"] == {
+        "benchmark": {
+            "license": "MIT",
+            "authors": ["GeoEvals contributors"],
+            "created": "2026-10-09",
+        },
+        "dataset": {
+            "dataset_id": "example_points",
+            "assets": [
+                {
+                    "asset_id": "points",
+                    "license": "MIT",
+                    "attribution": "GeoEvals contributors",
+                    "redistributable": True,
+                    "citation": "GeoEvals contributors (2026). Synthetic test points.",
+                }
+            ],
+        },
+    }
+    copy = tmp_path / run_dir.name
+    shutil.copytree(run_dir, copy)
+    assert main(["report", str(copy)]) == 0
+    md = (copy / "report.md").read_text(encoding="utf-8")
+    assert "| points | MIT | GeoEvals contributors | true |" in md
+    assert "- Synthetic cases for run directory tests only." in md

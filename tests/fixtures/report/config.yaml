@@ -1,0 +1,6 @@
+split: test
+timeout_s: 1
+max_retries: 2
+adapter:
+  behavior: reference
+  seed: 7

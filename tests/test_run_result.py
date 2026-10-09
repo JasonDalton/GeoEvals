@@ -217,6 +217,22 @@ def _delete(*path: str | int) -> Callable[[Doc], None]:
     return mutate
 
 
+PROVENANCE: dict[str, Any] = {
+    "benchmark": {"license": "MIT", "authors": ["A"], "created": "2026-10-09"},
+    "dataset": {
+        "dataset_id": "points",
+        "assets": [
+            {
+                "asset_id": "points",
+                "license": "CC-BY-4.0",
+                "attribution": "B",
+                "redistributable": False,
+                "source_url": "https://example.org/points",
+            }
+        ],
+    },
+}
+
 AGREEMENT_CASES: dict[str, Callable[[Doc], None]] = {
     # documents both must accept
     "valid": lambda d: None,
@@ -244,6 +260,10 @@ AGREEMENT_CASES: dict[str, Callable[[Doc], None]] = {
             "ci_low": None,
             "ci_high": None,
         },
+    ),
+    "provenance": _set("provenance", value=PROVENANCE),
+    "provenance_no_assets": _set(
+        "provenance", value={**PROVENANCE, "dataset": {"dataset_id": "points", "assets": []}}
     ),
     # documents both must reject
     "missing_run_id": _delete("run_id"),
@@ -285,6 +305,18 @@ AGREEMENT_CASES: dict[str, Callable[[Doc], None]] = {
     "missing_error": _delete("cases", 0, "error"),
     "case_extra_field": _set("cases", 0, "unexpected", value=1),
     "not_a_mapping": lambda d: d.clear(),
+    "provenance_missing_dataset": _set("provenance", value={"benchmark": PROVENANCE["benchmark"]}),
+    "provenance_no_authors": _set(
+        "provenance", value={**PROVENANCE, "benchmark": {**PROVENANCE["benchmark"], "authors": []}}
+    ),
+    "provenance_bad_created": _set(
+        "provenance",
+        value={**PROVENANCE, "benchmark": {**PROVENANCE["benchmark"], "created": "Oct 2026"}},
+    ),
+    "provenance_asset_missing_license": _set(
+        "provenance",
+        value={**PROVENANCE, "dataset": {"dataset_id": "points", "assets": [{"asset_id": "a"}]}},
+    ),
 }
 
 EXPECTED_VALID = {
@@ -302,6 +334,8 @@ EXPECTED_VALID = {
     "numeric_stratum",
     "null_metric_value",
     "empty_summary_stats",
+    "provenance",
+    "provenance_no_assets",
 }
 
 

@@ -53,6 +53,7 @@ from geoevals.runner.worker import Attempt, Worker, WorkerSetupError
 from geoevals.validation import (
     RUN_RESULT_SCHEMA_VERSION,
     BenchmarkSpec,
+    DatasetManifest,
     ValidationIssue,
     load_benchmark_spec,
     load_dataset_manifest,
@@ -327,6 +328,31 @@ def _efficiency(
     }
 
 
+def _provenance(spec: BenchmarkSpec, manifest: DatasetManifest) -> dict[str, Any]:
+    """The spec's license and provenance, and each manifest asset's license and source."""
+    asset_fields = {
+        "asset_id",
+        "license",
+        "attribution",
+        "redistributable",
+        "source_url",
+        "citation",
+    }
+    return {
+        "benchmark": {
+            "license": spec.license,
+            **spec.provenance.model_dump(exclude_none=True),
+        },
+        "dataset": {
+            "dataset_id": manifest.dataset_id,
+            "assets": [
+                asset.model_dump(include=asset_fields, exclude_none=True)
+                for asset in manifest.assets
+            ],
+        },
+    }
+
+
 def _timestamp(moment: datetime) -> str:
     return moment.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
 
@@ -359,7 +385,7 @@ def run_benchmark(
         known = ", ".join(sorted(spec.splits))
         raise RunError(f"split {config.split!r} is not a split of {spec.id} ({known})")
     manifest_path = spec_path.parent / spec.dataset_manifest
-    load_dataset_manifest(manifest_path)
+    manifest = load_dataset_manifest(manifest_path)
     manifest_hash = hashlib.sha256(manifest_path.read_bytes()).hexdigest()
     logger.info("benchmark %s %s and manifest %s are valid", spec.id, spec.version, manifest_path)
 
@@ -450,6 +476,7 @@ def run_benchmark(
         ),
         "failures": failures,
         "limitations": list(spec.limitations),
+        "provenance": _provenance(spec, manifest),
         "cases": records,
     }
     issues = validate_run_result_document(result)
