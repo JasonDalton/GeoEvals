@@ -20,6 +20,8 @@ from geoevals.data.fetch import (
     manifest_path,
     parse_bbox,
 )
+from geoevals.data.inventory import DEFAULT_README, InventoryError, update_inventory
+from geoevals.data.licenses import DEFAULT_REPORT, render_report, runtime_dependencies
 from geoevals.data.verify import verify_manifest
 from geoevals.regenerate import RegenerateError, find_benchmark_dir, regenerate
 from geoevals.reporting.compare import Tolerance, compare_runs, load_run
@@ -123,6 +125,36 @@ def build_parser() -> argparse.ArgumentParser:
         type=Path,
         help="Directory to write into; must be gitignored (default: the directory of the "
         "manifest asset's path).",
+    )
+
+    inventory = data_commands.add_parser(
+        "inventory",
+        help="Regenerate the license inventory table in datasets/README.md from every "
+        "manifest under benchmarks/ and datasets/manifests/.",
+    )
+    inventory.add_argument(
+        "--root", type=Path, default=Path("."), help="Repository root (default: .)."
+    )
+    inventory.add_argument(
+        "--readme",
+        type=Path,
+        help=f"README holding the table (default: <root>/{DEFAULT_README}).",
+    )
+    inventory.add_argument(
+        "--check",
+        action="store_true",
+        help="Do not write; exit 1 if the committed table is out of date.",
+    )
+    licenses = data_commands.add_parser(
+        "licenses",
+        help="Write the license report of the installed runtime dependencies; exit 1 on a GPL "
+        "or AGPL dependency.",
+    )
+    licenses.add_argument(
+        "--out",
+        type=Path,
+        default=DEFAULT_REPORT,
+        help=f"Markdown report to write (default: {DEFAULT_REPORT}).",
     )
 
     adapters = subparsers.add_parser("adapters", help="Adapter tools.")
@@ -305,6 +337,43 @@ def _data_verify(manifest: Path) -> int:
         print(f"{manifest}: {summary}", file=sys.stderr)
         return 1
     return 0
+
+
+def _data_inventory(root: Path, readme: Path | None, check: bool) -> int:
+    readme = readme or root / DEFAULT_README
+    try:
+        stale = update_inventory(root, readme, write=not check)
+    except SpecValidationError as exc:
+        _print_issues(exc.path, exc.issues)
+        return 1
+    except (InventoryError, FileNotFoundError) as exc:
+        print(f"{readme}: {exc}", file=sys.stderr)
+        return 1
+    if not stale:
+        print(f"{readme}: license inventory is up to date")
+        return 0
+    if check:
+        print(
+            f"{readme}: license inventory is out of date; run `geoevals data inventory`",
+            file=sys.stderr,
+        )
+        return 1
+    print(f"{readme}: license inventory written")
+    return 0
+
+
+def _data_licenses(out: Path) -> int:
+    dependencies = runtime_dependencies()
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text(render_report(dependencies), encoding="utf-8")
+    print(f"{out}: {len(dependencies)} runtime dependencies")
+    copyleft = [dep for dep in dependencies if dep.copyleft]
+    for dep in copyleft:
+        print(
+            f"{dep.name} {dep.version}: {dep.license} is not compatible with the MIT license",
+            file=sys.stderr,
+        )
+    return 1 if copyleft else 0
 
 
 def _data_fetch(
@@ -565,6 +634,10 @@ def main(argv: Sequence[str] | None = None) -> int:
         return _data_verify(args.manifest)
     if args.command == "data" and args.data_command == "fetch":
         return _data_fetch(args.dataset_id, args.manifests, args.bbox, args.date, args.out)
+    if args.command == "data" and args.data_command == "inventory":
+        return _data_inventory(args.root, args.readme, args.check)
+    if args.command == "data" and args.data_command == "licenses":
+        return _data_licenses(args.out)
     if args.command == "adapters" and args.adapters_command == "list":
         for name in sorted(registered_adapter_names()):
             print(name)

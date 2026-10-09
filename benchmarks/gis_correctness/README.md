@@ -40,6 +40,18 @@ The expected status is `ok` for 47 cases. For the other 9, the system must decli
 abstention cases and `crs_transform-003` (invalid CRS). The output contract is the
 `output_schema` in [`benchmark.yaml`](benchmark.yaml).
 
+## Schema
+
+Each case is one JSON line in `cases/<operation>.jsonl` with `case_id`, `operation`, `split`,
+`prompt` (the request in natural language), `inputs` (`files`: fixture paths relative to the
+spec, and `params`), `expected` (inline, or a path to a JSON file in `expected/`),
+`tolerances` (name -> `{value, units}`) and `strata`. The input and output contracts are the
+`input_schema` and `output_schema` in [`benchmark.yaml`](benchmark.yaml). An answer has a
+`status` and, for `ok`, one of a GeoJSON `geometry`, a GeoJSON `feature_collection` or a
+`value` with `units`, plus the `crs` of the answer (and a `reason` category for detection
+answers). The fixtures are GeoJSON (RFC 7946, `OGC:CRS84`, except two files in UTM zone 33N
+that test CRS handling); [`manifest.yaml`](manifest.yaml) lists each one's CRS and bounding box.
+
 ## Metrics and tolerances
 
 The headline metric is `task_success`. A case passes only if every check that applies passes.
@@ -62,7 +74,7 @@ or more segments per quarter and any suitable local projection. For example, on 
 the reference (local azimuthal equidistant) and the baseline (estimated UTM zone) differ by
 0.55 m, and the tolerance is 5 m.
 
-## Data provenance
+## Collection process
 
 All 13 fixtures in [`fixtures/`](fixtures/) are synthetic. The GeoEvals contributors wrote them
 by hand, and they contain no real-world source data. Together they take about 52 KB on disk. Each
@@ -78,6 +90,28 @@ uv run geoevals bench regenerate gis_correctness
 PROJ_NETWORK=OFF uv run geoevals bench regenerate gis_correctness --check
 ```
 
+## Geography
+
+The fixtures are invented features placed near real places so that the coordinates look
+familiar: most of them in and around Berlin (buffers, joins, overlays), places in Berlin,
+Paris and London, two zones near Paris (an area outside the data extent, on purpose), and
+distance points in New York, London, the Arctic at 70° N and the South Pacific, two of
+them on opposite sides of the antimeridian (Suva and Apia). The CRS cases carry their
+own coordinates and cover the southern hemisphere, polar regions, the continental US (State
+Plane, NAD27) and the antimeridian. No fixture describes a surveyed real-world feature.
+
+## Time range
+
+None. The fixtures have no time dimension; each manifest asset records its creation date,
+2026-10-09, as its `time_range`. The answers do not depend on any date, except through the
+PROJ and GEOS versions that compute them (see Limitations).
+
+## License
+
+MIT, like the rest of the repository: the spec, the cases, the expected outputs and the
+fixtures (attribution "GeoEvals contributors", `redistributable: true`). The license of every
+asset is listed in the [license inventory](../../datasets/README.md#license-inventory).
+
 ## Limitations
 
 - The fixtures are small and synthetic. They test operation correctness, not scale or the
@@ -92,6 +126,23 @@ PROJ_NETWORK=OFF uv run geoevals bench regenerate gis_correctness --check
 - The cases avoid CRS pairs that need a PROJ grid (for example NAD27 in the continental US). Thus
   the results do not depend on network access or on installed grids. Because of this, the
   benchmark does not test grid-based datum transforms.
+
+## Intended uses
+
+- Check whether a GIS system, classical or model-based, returns correct geometry, CRS,
+  attributes and values within stated tolerances, and abstains when it should.
+- Compare systems or versions of one system on the same cases, with the run config and the
+  benchmark version reported next to the scores.
+- Find which operations and traps (stratum `trap`) a system gets wrong.
+
+## Prohibited uses
+
+- Do not report a score as a measure of general geospatial ability or of performance on real
+  data: the cases are small, synthetic and one per variant.
+- Do not train or tune a system on the cases or the expected outputs and then report its score
+  on them as a held-out result.
+- Do not compare scores across benchmark versions, or from runs with different tolerances,
+  without saying so (see [`docs/reproducibility.md`](../../docs/reproducibility.md)).
 
 ## Reproduce the published baseline
 

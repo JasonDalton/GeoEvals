@@ -25,8 +25,9 @@ It runs in CI on a synthetic town, so it needs no licensed data. A real-geograph
 (`human_context_pilot`, [below](#real-geography-pilot)) runs the same operations on an
 OpenStreetMap extract that each user downloads; it is a manual path, outside CI.
 
-## The synthetic town
+## Collection process
 
+No data is collected: the benchmark runs on a synthetic town.
 [`make_fixture.py`](make_fixture.py) generates the town (seed 20261009) into `fixtures/`: four
 GeoParquet 1.1.0 files in `OGC:CRS84`, together about 18 KB.
 
@@ -47,6 +48,41 @@ locked package versions. `manifest.yaml` records each file's SHA-256, and
 `test_regenerated_fixture_matches_the_manifest` regenerates the town and compares. After a change
 to the generator, or a pyarrow upgrade (pyarrow writes its version into each file), run
 `uv run python benchmarks/human_context/make_fixture.py` and update the manifest checksums.
+
+## Geography
+
+An invented town of about 3.0 km by 2.0 km (neighborhood outlines). It is placed on the equator near longitude 0
+(bounding box `[-0.0004492, -0.0040697, 0.0260511, 0.0135655]` in `OGC:CRS84`) so that plane
+meters and geodesic meters agree closely; the location has no meaning and is in the sea. The
+four neighborhood types stand for street patterns, not for any real place. Real geography is
+only in the [pilot](#real-geography-pilot), which is not part of this benchmark's committed
+data.
+
+## Time range
+
+The street network and the POIs have no date; each manifest asset records its creation date,
+2026-10-09, as its `time_range`. The `open_amenities` cases ask about local instants
+between 2026-10-08 and 2026-12-25 (stated in each case, with the time zone `Africa/Abidjan`),
+and the answers depend only on the stated instant and the opening hours in the fixture.
+
+## Schema
+
+The four fixture files and their columns are listed under [Collection process](#collection-process).
+Each case is one JSON line in `cases/<operation>.jsonl` with `case_id`, `operation`, `split`,
+`prompt`, `inputs` (`files`: the fixture paths; `params`: `origin`, and `destination`,
+`category`, `minutes`, an optional `speed_mps`, and `date`, `time`, `timezone` and
+`public_holidays` where the question needs them), `expected`, `tolerances` and `strata`. The input and output contracts are the
+`input_schema` and `output_schema` in [`benchmark.yaml`](benchmark.yaml): an answer has a
+`status` and, for `ok`, a `value` with `units` (`s`, `count` or `ratio`), the `ids` it refers
+to, and `unknown_ids` for opening-hours questions. Every output field declares its
+`evidence_type`; all values are `proxy`.
+
+## License
+
+MIT, like the rest of the repository: the spec, the cases, the generator and the fixtures
+(attribution "GeoEvals contributors", `redistributable: true`). The pilot's OpenStreetMap data
+is `ODbL-1.0` and is never committed (see [Licenses](#licenses)). The license of every asset is
+listed in the [license inventory](../../datasets/README.md#license-inventory).
 
 ## Operations and case counts
 
@@ -130,6 +166,23 @@ It scores `task_success = 1.0` on all 51 cases.
   mobility are not modeled.
 - Opening hours use one time zone and a subset of the OpenStreetMap syntax (no months, week
   numbers, school holidays or sunrise/sunset); values outside it count as unknown.
+
+## Intended uses
+
+- Check whether a system, classical or model-based, computes walking access on a stated
+  network correctly and abstains when the data cannot answer.
+- Compare systems or versions of one system on the same cases, per operation and stratum.
+- Test an access pipeline end to end before running it on real data (the pilot).
+
+## Prohibited uses
+
+- Do not read the values as measures of access, quality of life or opportunity in any real
+  place: the town is invented and the values are proxies.
+- Do not train or tune a system on the cases or the expected outputs and then report its score
+  on them as a held-out result.
+- Do not use the benchmark, or tools tuned on it, to rank or make decisions about real
+  neighborhoods or their residents. The pilot's own prohibited uses are
+  [below](#prohibited-uses-1).
 
 ## Real-geography pilot
 
