@@ -1,0 +1,21 @@
+schema_version: "1.0.0"
+dataset_id: smoke
+description: Hand-written synthetic cases of the smoke benchmark.
+assets:
+  - asset_id: smoke_cases
+    path: cases.jsonl
+    citation: GeoEvals contributors (2026). Synthetic smoke benchmark cases.
+    access_date: 2026-10-09
+    license: MIT
+    attribution: GeoEvals contributors
+    redistributable: true
+    sha256: 051a130d258374d5587d7b6cd8f78d5e3a86fa0cffb5012500e9f0c71f63159f
+    crs: EPSG:3857
+    bbox: [0.0, 0.0, 1.0, 1.0]
+    time_range:
+      start: 2026-10-09
+      end: 2026-10-09
+    processing_steps: []
+    split: test
+    known_limitations:
+      - Synthetic cases; they describe no real place.

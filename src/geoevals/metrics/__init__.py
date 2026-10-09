@@ -10,12 +10,16 @@ from geoevals.metrics.base import (
     percentile,
 )
 from geoevals.metrics.registry import get_metric, register_metric, registered_metric_ids
+from geoevals.metrics.status import StatusMatch
+
+register_metric(StatusMatch())
 
 __all__ = [
     "BOOTSTRAP_SEED",
     "AggregateValue",
     "Metric",
     "MetricValue",
+    "StatusMatch",
     "aggregate_values",
     "bootstrap_ci",
     "get_metric",

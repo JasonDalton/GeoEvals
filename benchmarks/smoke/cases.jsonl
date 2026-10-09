@@ -1,0 +1,5 @@
+{"case_id": "smoke-01-area", "prompt": "Area of the unit square in EPSG:3857, in square meters.", "expected": {"status": "ok", "value": 1.0, "units": "m^2"}, "strata": {"kind": "value"}}
+{"case_id": "smoke-02-point", "prompt": "Centroid of the unit square in EPSG:3857.", "expected": {"status": "ok", "geometry": {"type": "Point", "coordinates": [0.5, 0.5]}, "crs": "EPSG:3857"}, "strata": {"kind": "geometry"}}
+{"case_id": "smoke-03-clarify", "prompt": "Buffer the river.", "expected": {"status": "needs_clarification"}, "strata": {"kind": "abstention"}}
+{"case_id": "smoke-04-wrong", "prompt": "Length of the unit square's boundary in EPSG:3857, in meters.", "expected": {"status": "ok", "value": 4.0, "units": "m"}, "strata": {"kind": "value"}}
+{"case_id": "smoke-05-malformed", "prompt": "Number of vertices of the unit square.", "expected": {"status": "ok", "value": 4, "units": "count"}, "strata": {"kind": "value"}}

@@ -1,0 +1,15 @@
+# Smoke run: `geoevals run --benchmark benchmarks/smoke/benchmark.yaml --adapter mock
+#   --config benchmarks/smoke/run_config.yaml --out runs/smoke`
+# The mock adapter answers every case with its reference, except one wrong answer and one
+# malformed output, so the report's failure sections are exercised too.
+split: test
+seed: 0
+timeout_s: 30
+max_retries: 0
+workers: 1
+adapter:
+  seed: 0
+  tokens: {input: 20, output: 5}
+  cases:
+    smoke-04-wrong: {behavior: wrong, output: {status: needs_clarification}}
+    smoke-05-malformed: {behavior: malformed}

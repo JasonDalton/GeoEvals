@@ -1,0 +1,35 @@
+schema_version: "1.0.0"
+id: smoke
+version: 0.1.0
+title: Smoke benchmark
+pillar: spatial_reasoning
+task_statement: Answer a simple question about the unit square with a status and a result.
+intended_use: >-
+  CI check that specs, the runner, metrics and reports work end to end with the mock adapter.
+  The scores say nothing about any real system.
+input_schema:
+  type: object
+  required: [case_id, prompt]
+output_schema:
+  type: object
+  required: [status]
+  properties:
+    status: {enum: [ok, needs_clarification, insufficient_data, invalid_request]}
+cases: cases.jsonl
+splits:
+  test:
+    description: All 5 smoke cases.
+metrics:
+  - id: status_match
+    version: 1.0.0
+    params: {}
+tolerances: {}
+dataset_manifest: manifest.yaml
+license: MIT
+provenance:
+  authors: [GeoEvals contributors]
+  created: 2026-10-09
+  notes: Synthetic cases written by hand for CI.
+limitations:
+  - Five synthetic cases; only the task status is scored.
+  - The mock adapter returns the reference outputs, so a score measures the framework, not a model.
