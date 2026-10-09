@@ -1,6 +1,6 @@
 [project]
 name = "geoevals"
-version = "0.1.0.dev0"
+version = "0.1.0"
 description = "Reproducible evaluation framework for geospatial AI systems"
 readme = "README.md"
 license = "MIT"

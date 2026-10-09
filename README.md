@@ -153,6 +153,7 @@ See [`docs/data-governance.md`](docs/data-governance.md).
 | [`docs/benchmark-authoring.md`](docs/benchmark-authoring.md) | How to add a benchmark, case, metric, adapter or manifest; definition of done |
 | [`docs/reproducibility.md`](docs/reproducibility.md) | Versions, comparability, run determinism, reproduction |
 | [`docs/human-context.md`](docs/human-context.md) | Human-context concepts and evidence types |
+| [`docs/release-checklist.md`](docs/release-checklist.md) | The release acceptance checklist: what CI verifies and what needs human sign-off |
 
 ## Contributing
 
@@ -196,6 +197,9 @@ v0.1:
 - agentic GIS tasks with real agents, executable reference trajectories and output validation
 - more place-context cases, and temporal and geographic transfer evaluations
 - a leaderboard, only after comparability and verification rules are defined
+
+[`ROADMAP.md`](ROADMAP.md) describes each item, and [`CHANGELOG.md`](CHANGELOG.md) lists what
+each release contains.
 
 ## Maintainers
 

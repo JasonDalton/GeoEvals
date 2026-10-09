@@ -123,6 +123,53 @@ jobs:
           done
           exit $status
 
+  # Builds the release artifacts and installs the wheel, not the source tree, into a fresh venv.
+  # Nothing is uploaded or published: tagging and publishing are left to the maintainer.
+  package:
+    name: Build and install the wheel (fresh venv)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      UV_PYTHON: "3.11"
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: "3.11"
+
+      # uv build makes the sdist, then the wheel from the sdist, so both must be complete.
+      - name: Build the sdist and wheel
+        run: |
+          uv build
+          ls dist/geoevals-*.tar.gz dist/geoevals-*-py3-none-any.whl
+
+      # The runtime dependencies are pinned to uv.lock; the wheel itself is the project.
+      - name: Install the wheel into a fresh venv
+        run: |
+          venv="$RUNNER_TEMP/wheel-venv"
+          uv export --frozen --no-dev --no-emit-project --no-hashes -o "$RUNNER_TEMP/constraints.txt"
+          uv venv "$venv"
+          uv pip install --python "$venv/bin/python" --constraint "$RUNNER_TEMP/constraints.txt" \
+            dist/geoevals-*-py3-none-any.whl
+          echo "$venv/bin" >> "$GITHUB_PATH"
+
+      - name: geoevals --version
+        run: |
+          version=$(geoevals --version)
+          expected=$(sed -n 's/^version = "\(.*\)"$/\1/p' pyproject.toml)
+          echo "geoevals $version (pyproject.toml: $expected)"
+          test "$version" = "$expected"
+          case "$(command -v geoevals)" in "$RUNNER_TEMP"/*) ;; *) exit 1 ;; esac
+
+      - name: Smoke run with the installed wheel
+        run: |
+          geoevals run --benchmark benchmarks/smoke/benchmark.yaml --adapter mock \
+            --config benchmarks/smoke/run_config.yaml --out "$RUNNER_TEMP/runs"
+          run_dir=$(find "$RUNNER_TEMP/runs" -mindepth 1 -maxdepth 1 -type d)
+          geoevals validate "$run_dir/result.json"
+          geoevals report "$run_dir"
+
   secrets:
     name: Secrets scan (gitleaks, full history)
     runs-on: ubuntu-latest

@@ -4,6 +4,7 @@ import os
 import re
 import shutil
 import subprocess
+import tomllib
 from pathlib import Path
 
 import pytest
@@ -20,6 +21,7 @@ REQUIRED_DOCS = [
     "benchmark-authoring.md",
     "reproducibility.md",
     "human-context.md",
+    "release-checklist.md",
 ]
 
 GOVERNANCE_FILES = [
@@ -32,6 +34,13 @@ GOVERNANCE_FILES = [
     ".github/ISSUE_TEMPLATE/new_adapter.md",
     ".github/pull_request_template.md",
 ]
+
+RELEASE_FILES = ["CHANGELOG.md", "ROADMAP.md"]
+
+RELEASE_CHECKLIST_ITEMS = 12
+"""Section 10 of the kickoff plan has 12 items."""
+
+HUMAN_REVIEWS = {"license compatibility review", "privacy review", "final scope approval"}
 
 MAX_QUICKSTART_COMMANDS = 3
 
@@ -51,6 +60,7 @@ BRITISH_SPELLINGS = re.compile(
 
 def _markdown_files() -> list[Path]:
     files = [README, *(REPO / name for name in GOVERNANCE_FILES if name.endswith(".md"))]
+    files += [REPO / name for name in RELEASE_FILES]
     files += sorted((REPO / ".github").glob("**/*.md"))
     files += sorted((REPO / "docs").glob("*.md"))
     files += sorted((REPO / "benchmarks").glob("*/README.md"))
@@ -104,6 +114,91 @@ def test_citation_version_is_0_1_0() -> None:
     assert citation["cff-version"] == "1.2.0"
     assert citation["version"] == "0.1.0"
     assert citation["license"] == "MIT"
+
+
+def test_release_version_is_consistent() -> None:
+    project = tomllib.loads((REPO / "pyproject.toml").read_text(encoding="utf-8"))["project"]
+    citation = yaml.safe_load((REPO / "CITATION.cff").read_text(encoding="utf-8"))
+    changelog = (REPO / "CHANGELOG.md").read_text(encoding="utf-8")
+    releases = re.findall(r"^## \[?(\d+\.\d+\.\d+)\]? - \d{4}-\d{2}-\d{2}$", changelog, re.M)
+    assert project["version"] == citation["version"] == releases[0] == "0.1.0"
+    assert "Keep a Changelog" in changelog
+    assert (REPO / "ROADMAP.md").is_file()
+
+
+def _changelog_entry(version: str) -> str:
+    changelog = (REPO / "CHANGELOG.md").read_text(encoding="utf-8")
+    return re.split(rf"^## \[?{re.escape(version)}\]? .*$", changelog, flags=re.M)[1].split(
+        "\n## ", 1
+    )[0]
+
+
+def test_changelog_lists_benchmarks_schemas_metrics_and_adapters() -> None:
+    from geoevals.adapters.registry import registered_adapter_names
+    from geoevals.metrics.registry import get_metric, registered_metric_ids
+
+    entry = _changelog_entry("0.1.0")
+    for heading in ["Benchmarks", "Schemas", "Metrics", "Adapters"]:
+        assert f"#### {heading}" in entry, heading
+    for spec in sorted((REPO / "benchmarks").glob("*/benchmark.yaml")):
+        benchmark = yaml.safe_load(spec.read_text(encoding="utf-8"))
+        assert f"`{benchmark['id']}` {benchmark['version']}" in entry, benchmark["id"]
+    for schema in sorted((REPO / "schemas").glob("*.schema.json")):
+        assert f"`schemas/{schema.name}`" in entry, schema.name
+    for metric_id in registered_metric_ids():
+        assert f"`{metric_id}` {get_metric(metric_id).version}" in entry, metric_id
+    for name in registered_adapter_names():
+        assert f"`{name}` 0.1.0" in entry, name
+
+
+def test_roadmap_lists_the_phase_5_items() -> None:
+    headings = re.findall(r"^### (.+)$", (REPO / "ROADMAP.md").read_text(encoding="utf-8"), re.M)
+    for item in [
+        "Imagery extraction benchmark with geographic holdout",
+        "LLM and hosted-API adapters",
+        "Agentic GIS tasks with real agents",
+        "Expanded place-context cases",
+        "Leaderboard policy",
+    ]:
+        assert item in headings, item
+
+
+def test_readme_has_citation_contributing_and_roadmap() -> None:
+    headings = re.findall(r"^## (.+)$", README.read_text(encoding="utf-8"), re.M)
+    for heading in ["Quickstart", "Contributing", "Citation", "Roadmap"]:
+        assert heading in headings, heading
+
+
+def test_every_registered_metric_is_documented() -> None:
+    from geoevals.metrics.registry import registered_metric_ids
+
+    headings = re.findall(r"^### `(.+)`$", (REPO / "docs" / "metrics.md").read_text("utf-8"), re.M)
+    assert sorted(set(registered_metric_ids()) - set(headings)) == []
+
+
+def _release_checklist() -> list[list[str]]:
+    """The rows of the checklist table: number, item, status, verified by, evidence."""
+    text = (REPO / "docs" / "release-checklist.md").read_text(encoding="utf-8")
+    section = text.split("## Checklist", 1)[1].split("\n## ", 1)[0]
+    rows = re.findall(r"^\| (\d+) \| (.+)\|$", section, flags=re.M)
+    return [[number, *(cell.strip() for cell in rest.split(" | "))] for number, rest in rows]
+
+
+def test_release_checklist_marks_every_item() -> None:
+    workflow = yaml.safe_load((REPO / ".github" / "workflows" / "ci.yml").read_text("utf-8"))
+    jobs = set(workflow["jobs"])
+    rows = _release_checklist()
+    assert [int(row[0]) for row in rows] == list(range(1, RELEASE_CHECKLIST_ITEMS + 1))
+    for number, _item, status, verified_by, _evidence in rows:
+        if status == "automated":
+            named = re.findall(r"`([a-z_-]+)`", verified_by)
+            assert named, f"item {number} names no CI job"
+            assert set(named) <= jobs, f"item {number}: {set(named) - jobs} not in ci.yml"
+        else:
+            assert status == "human sign-off required", f"item {number}: {status}"
+            assert verified_by in HUMAN_REVIEWS, f"item {number}: {verified_by}"
+    reviews = {row[3] for row in rows if row[2] == "human sign-off required"}
+    assert reviews == HUMAN_REVIEWS
 
 
 def _definition_of_done() -> list[str]:
