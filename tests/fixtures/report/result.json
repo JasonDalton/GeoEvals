@@ -13,6 +13,12 @@
   },
   "cases": [
     {
+      "agent": {
+        "agent_runtime_s": null,
+        "agent_steps": 4,
+        "tool_calls": 3,
+        "tool_errors": 1
+      },
       "case_id": "dist_001",
       "cost_usd": 0.0,
       "error": null,
@@ -42,9 +48,63 @@
       "tokens": {
         "input": 120,
         "output": 15
-      }
+      },
+      "trajectory": [
+        {
+          "args": {
+            "crs": "EPSG:4326"
+          },
+          "duration_s": 0.003,
+          "error_message": null,
+          "status": "ok",
+          "step": 0,
+          "tokens": {
+            "input": 40,
+            "output": 8
+          },
+          "tool": "transform"
+        },
+        {
+          "args": {
+            "method": "geodesic"
+          },
+          "duration_s": null,
+          "error_message": "unknown method 'geodesic'",
+          "status": "error",
+          "step": 1,
+          "tokens": null,
+          "tool": "distance"
+        },
+        {
+          "args": {
+            "method": "geodesic",
+            "units": "m"
+          },
+          "duration_s": 0.002,
+          "error_message": null,
+          "status": "ok",
+          "step": 2,
+          "tokens": null,
+          "tool": "distance"
+        },
+        {
+          "args": {},
+          "duration_s": 0.001,
+          "error_message": null,
+          "status": "ok",
+          "step": 3,
+          "tokens": null,
+          "tool": null
+        }
+      ]
     },
     {
+      "agent": {
+        "agent_runtime_s": 0.005,
+        "agent_steps": 2,
+        "tool_calls": 1,
+        "tool_errors": 0
+      },
       "case_id": "dist_002",
       "cost_usd": 0.0,
       "error": null,
@@ -84,6 +144,15 @@
           "step": 0,
           "tokens": null,
           "tool": "transform"
+        },
+        {
+          "args": {},
+          "duration_s": 0.001,
+          "error_message": null,
+          "status": "ok",
+          "step": 1,
+          "tokens": null,
+          "tool": null
         }
       ]
     },
@@ -147,12 +216,14 @@
     "latency_p50_s": 0.0105,
     "latency_p90_s": 0.6996,
     "latency_p99_s": 0.97,
+    "mean_steps": 3.0,
     "peak_rss_bytes": 104857600,
     "price_table_hash": null,
     "retries_total": 2,
     "timeout_rate": 0.25,
     "tokens_input_total": 120,
     "tokens_output_total": 15,
+    "tool_error_rate": 0.25,
     "wall_clock_s": 1.25
   },
   "environment": {

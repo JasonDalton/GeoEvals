@@ -77,6 +77,8 @@ The 95% CI is a bootstrap percentile interval of the mean. n counts the cases wi
 | Cost, total (USD) | 0 |
 | Cost per case (USD) | 0 |
 | Price table hash | n/a |
+| Tool error rate | 0.25 |
+| Mean agent steps | 3 |
 
 ## 5. Failures
 
@@ -86,7 +88,23 @@ The 95% CI is a bootstrap percentile interval of the mean. n counts the cases wi
 | dist_003 | adapter_error | - | RuntimeError: mock adapter raised on request |
 | dist_004 | timeout | - | TimeoutError: case exceeded timeout_s=1 |
 
-## 6. Environment
+## 6. Agent trajectories
+
+| Case | Status | Result | Tool calls | Tool errors | Agent steps | Agent runtime (s) |
+| --- | --- | --- | --- | --- | --- | --- |
+| dist_001 | scored | passed | 3 | 1 | 4 | n/a |
+| dist_002 | scored | failed | 1 | 0 | 2 | 0.005 |
+
+The result comes from the metrics on the output alone. The trajectory is not scored, so tool calls that succeed do not make a case pass.
+
+### Trajectory of dist_002 (failed)
+
+| Step | Tool | Args | Status | Error | Duration (s) | Tokens |
+| --- | --- | --- | --- | --- | --- | --- |
+| 0 | transform | {"crs": "EPSG:4326"} | ok | - | 0.004 | n/a |
+| 1 | (no tool) | {} | ok | - | 0.001 | n/a |
+
+## 7. Environment
 
 | Key | Value |
 | --- | --- |
@@ -96,7 +114,7 @@ The 95% CI is a bootstrap percentile interval of the mean. n counts the cases wi
 | python | 3.11.9 |
 | uv_lock_sha256 | n/a |
 
-## 7. Provenance and dataset licenses
+## 8. Provenance and dataset licenses
 
 | Field | Value |
 | --- | --- |
@@ -111,7 +129,7 @@ The 95% CI is a bootstrap percentile interval of the mean. n counts the cases wi
 | points | MIT | GeoEvals contributors | true | GeoEvals contributors (2026). Synthetic test points. |
 | roads | ODbL-1.0 | OpenStreetMap contributors | false | https://www.openstreetmap.org/ |
 
-## 8. Limitations
+## 9. Limitations
 
 - Hand-written example run result for tests; the numbers are not measured.
 - Pipe | and <tag> characters stay readable.

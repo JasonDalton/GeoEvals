@@ -233,6 +233,16 @@ PROVENANCE: dict[str, Any] = {
     },
 }
 
+ERROR_STEP: dict[str, Any] = {
+    "step": 0,
+    "tool": "transform",
+    "args": {"crs": "EPSG:4326"},
+    "status": "error",
+    "error_message": "unknown CRS",
+    "duration_s": None,
+    "tokens": None,
+}
+
 AGREEMENT_CASES: dict[str, Callable[[Doc], None]] = {
     # documents both must accept
     "valid": lambda d: None,
@@ -262,6 +272,12 @@ AGREEMENT_CASES: dict[str, Callable[[Doc], None]] = {
         },
     ),
     "provenance": _set("provenance", value=PROVENANCE),
+    "trajectory_error_step": _set("cases", 1, "trajectory", 0, value=ERROR_STEP),
+    "trajectory_null_tool": _set("cases", 1, "trajectory", 0, "tool", value=None),
+    "trajectory_step_tokens": _set(
+        "cases", 1, "trajectory", 0, "tokens", value={"input": 1, "output": 2}
+    ),
+    "efficiency_agent": _set("efficiency", value={"tool_error_rate": 0.5, "mean_steps": 2}),
     "provenance_no_assets": _set(
         "provenance", value={**PROVENANCE, "dataset": {"dataset_id": "points", "assets": []}}
     ),
@@ -300,6 +316,20 @@ AGREEMENT_CASES: dict[str, Callable[[Doc], None]] = {
     "memory_null_without_note": _set("cases", 0, "peak_memory_bytes", value=None),
     "memory_float": _set("cases", 0, "peak_memory_bytes", value=1.5),
     "trajectory_not_list": _set("cases", 1, "trajectory", value={}),
+    "trajectory_without_agent": _delete("cases", 1, "agent"),
+    "agent_without_trajectory": _delete("cases", 1, "trajectory"),
+    "trajectory_bad_status": _set("cases", 1, "trajectory", 0, "status", value="failed"),
+    "trajectory_error_without_message": _set(
+        "cases", 1, "trajectory", 0, value={**ERROR_STEP, "error_message": None}
+    ),
+    "trajectory_ok_with_message": _set("cases", 1, "trajectory", 0, "error_message", value="x"),
+    "trajectory_missing_args": _delete("cases", 1, "trajectory", 0, "args"),
+    "trajectory_args_list": _set("cases", 1, "trajectory", 0, "args", value=[]),
+    "trajectory_empty_tool": _set("cases", 1, "trajectory", 0, "tool", value=""),
+    "trajectory_negative_duration": _set("cases", 1, "trajectory", 0, "duration_s", value=-1),
+    "trajectory_extra_field": _set("cases", 1, "trajectory", 0, "retry", value=1),
+    "agent_missing_steps": _delete("cases", 1, "agent", "agent_steps"),
+    "efficiency_negative_mean_steps": _set("efficiency", "mean_steps", value=-1),
     "error_missing_message": _delete("cases", 2, "error", "message"),
     "error_string": _set("cases", 2, "error", value="boom"),
     "missing_error": _delete("cases", 0, "error"),
@@ -336,6 +366,10 @@ EXPECTED_VALID = {
     "empty_summary_stats",
     "provenance",
     "provenance_no_assets",
+    "trajectory_error_step",
+    "trajectory_null_tool",
+    "trajectory_step_tokens",
+    "efficiency_agent",
 }
 
 

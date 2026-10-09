@@ -25,9 +25,10 @@ SECTIONS = [
     "3. Breakdown by strata",
     "4. Efficiency",
     "5. Failures",
-    "6. Environment",
-    "7. Provenance and dataset licenses",
-    "8. Limitations",
+    "6. Agent trajectories",
+    "7. Environment",
+    "8. Provenance and dataset licenses",
+    "9. Limitations",
 ]
 
 UPDATE_SNAPSHOTS = os.environ.get("GEOEVALS_UPDATE_SNAPSHOTS") == "1"

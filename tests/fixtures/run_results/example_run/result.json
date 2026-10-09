@@ -46,7 +46,8 @@
       "trajectory": [
         {"args": {"crs": "EPSG:4326"}, "duration_s": 0.004, "error_message": null,
          "status": "ok", "step": 0, "tokens": null, "tool": "transform"}
-      ]
+      ],
+      "agent": {"tool_calls": 1, "tool_errors": 0, "agent_steps": 1, "agent_runtime_s": 0.004}
     },
     {
       "case_id": "dist_003",

@@ -241,3 +241,27 @@ distance) is written as `null`.
 - **Implementation:** `geoevals.metrics.gis.check_value_rel`.
 - **Edge cases:** as `value_abs_error`; a reference of 0 gives 0.0 when the prediction is also
   0, else value null, failed, reason `zero_reference`.
+
+## Agent trajectories
+
+An agent adapter may return a trajectory: its steps for the case, in order. Each step records
+`step` (from 0), `tool` (null for a step that calls no tool, such as the final answer or a loop
+guard), `args` (a JSON object), `status` (`ok` or `error`), `error_message` (set exactly when
+`status` is `error`), `duration_s` and `tokens`. The schema is `$defs/trajectoryStep` in
+`schemas/run-result.schema.json`.
+
+Trajectories are recorded, not scored. No metric reads them, so a case whose tool calls all
+succeed and whose answer is wrong has `task_success` 0. From each trajectory the runner derives
+the case's `agent` block:
+
+| Field | Meaning |
+| --- | --- |
+| `tool_calls` | steps with a tool |
+| `tool_errors` | steps with a tool and `status: error` |
+| `agent_steps` | all steps |
+| `agent_runtime_s` | sum of the step durations; null when any step has none |
+
+The run's `efficiency` adds `tool_error_rate` (all tool errors over all tool calls) and
+`mean_steps` (mean `agent_steps`), over the cases with a trajectory; both are null without one.
+These are efficiency figures, not metrics, and are not versioned. Implementation:
+`geoevals.trajectory`. The mock adapter's `mode: mock_agent` emits scripted trajectories.

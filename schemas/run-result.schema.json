@@ -233,6 +233,14 @@
         "cost_usd_per_case": { "$ref": "#/$defs/nonNegativeNumberOrNull" },
         "price_table_hash": {
           "anyOf": [{ "$ref": "#/$defs/sha256" }, { "type": "null" }]
+        },
+        "tool_error_rate": {
+          "description": "Tool errors over tool calls, summed over the cases with a trajectory; null when there are no tool calls.",
+          "$ref": "#/$defs/nonNegativeNumberOrNull"
+        },
+        "mean_steps": {
+          "description": "Mean agent_steps over the cases with a trajectory; null when no case has one.",
+          "$ref": "#/$defs/nonNegativeNumberOrNull"
         }
       }
     },
@@ -275,6 +283,61 @@
         "output": { "$ref": "#/$defs/nonNegativeInteger" }
       }
     },
+    "trajectoryStep": {
+      "description": "One step of an agent trajectory: a tool call, or (with `tool` null) a step without one, such as the final answer or a loop guard stopping the agent.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["step", "tool", "args", "status", "error_message", "duration_s", "tokens"],
+      "allOf": [
+        {
+          "description": "error_message is a non-empty string when status is error, else null",
+          "if": {
+            "required": ["status"],
+            "properties": { "status": { "const": "error" } }
+          },
+          "then": { "properties": { "error_message": { "$ref": "#/$defs/nonEmptyString" } } },
+          "else": { "properties": { "error_message": { "type": "null" } } }
+        }
+      ],
+      "properties": {
+        "step": {
+          "description": "Position of the step in the trajectory, from 0.",
+          "$ref": "#/$defs/nonNegativeInteger"
+        },
+        "tool": {
+          "description": "Name of the tool called; null for a step that calls no tool.",
+          "anyOf": [{ "$ref": "#/$defs/nonEmptyString" }, { "type": "null" }]
+        },
+        "args": {
+          "description": "Arguments of the tool call as a JSON object (empty when there are none).",
+          "type": "object"
+        },
+        "status": {
+          "description": "Whether the step succeeded. Says nothing about whether the final answer is right.",
+          "enum": ["ok", "error"]
+        },
+        "error_message": { "type": ["string", "null"] },
+        "duration_s": {
+          "description": "Wall-clock time of the step in seconds; null when not measured.",
+          "$ref": "#/$defs/nonNegativeNumberOrNull"
+        },
+        "tokens": {
+          "anyOf": [{ "$ref": "#/$defs/tokens" }, { "type": "null" }]
+        }
+      }
+    },
+    "agentSummary": {
+      "description": "Per-case trajectory counts. tool_calls counts steps with a tool, tool_errors those with status error, agent_steps every step; agent_runtime_s sums the step durations (null when any is null).",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["tool_calls", "tool_errors", "agent_steps", "agent_runtime_s"],
+      "properties": {
+        "tool_calls": { "$ref": "#/$defs/nonNegativeInteger" },
+        "tool_errors": { "$ref": "#/$defs/nonNegativeInteger" },
+        "agent_steps": { "$ref": "#/$defs/nonNegativeInteger" },
+        "agent_runtime_s": { "$ref": "#/$defs/nonNegativeNumberOrNull" }
+      }
+    },
     "stratumValue": {
       "type": ["string", "number", "boolean"]
     },
@@ -297,6 +360,10 @@
         "peak_memory_bytes",
         "error"
       ],
+      "dependentRequired": {
+        "trajectory": ["agent"],
+        "agent": ["trajectory"]
+      },
       "allOf": [
         {
           "description": "memory_note is required when peak_memory_bytes is null",
@@ -353,9 +420,13 @@
           "$ref": "#/$defs/nonEmptyString"
         },
         "trajectory": {
-          "description": "Ordered tool-call records of an agent adapter.",
+          "description": "Ordered step records of an agent adapter, numbered from 0. Recorded for information only: no metric reads it, so tool calls that succeed never count toward task success.",
           "type": "array",
-          "items": { "type": "object" }
+          "items": { "$ref": "#/$defs/trajectoryStep" }
+        },
+        "agent": {
+          "description": "Counts derived from `trajectory`; present exactly when `trajectory` is.",
+          "$ref": "#/$defs/agentSummary"
         },
         "error": {
           "anyOf": [{ "$ref": "#/$defs/error" }, { "type": "null" }]

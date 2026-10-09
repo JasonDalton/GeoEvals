@@ -85,7 +85,29 @@ code, td.mono { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-siz
 <p>Every case was scored and no metric failed.</p>
 {% endif %}
 
-<h2>6. Environment</h2>
+<h2>6. Agent trajectories</h2>
+{% if trajectories %}
+<table>
+<tr><th>Case</th><th>Status</th><th>Result</th><th>Tool calls</th><th>Tool errors</th><th>Agent steps</th><th>Agent runtime (s)</th></tr>
+{% for t in trajectories.summary %}
+<tr><td>{{ t.case_id }}</td><td>{{ t.status }}</td><td>{{ t.outcome }}</td><td class="num">{{ t.tool_calls }}</td><td class="num">{{ t.tool_errors }}</td><td class="num">{{ t.agent_steps }}</td><td class="num">{{ t.agent_runtime_s }}</td></tr>
+{% endfor %}
+</table>
+<p>The result comes from the metrics on the output alone. The trajectory is not scored, so tool calls that succeed do not make a case pass.</p>
+{% for case in trajectories.failed %}
+<h3>Trajectory of {{ case.case_id }} ({{ case.outcome }})</h3>
+<table>
+<tr><th>Step</th><th>Tool</th><th>Args</th><th>Status</th><th>Error</th><th>Duration (s)</th><th>Tokens</th></tr>
+{% for s in case.steps %}
+<tr><td class="num">{{ s.step }}</td><td>{{ s.tool }}</td><td class="mono">{{ s.args }}</td><td>{{ s.status }}</td><td class="mono">{{ s.error }}</td><td class="num">{{ s.duration }}</td><td class="mono">{{ s.tokens }}</td></tr>
+{% endfor %}
+</table>
+{% endfor %}
+{% else %}
+<p>No case recorded an agent trajectory.</p>
+{% endif %}
+
+<h2>7. Environment</h2>
 {% if environment %}
 <table>
 <tr><th>Key</th><th>Value</th></tr>
@@ -97,7 +119,7 @@ code, td.mono { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-siz
 <p>No environment was recorded.</p>
 {% endif %}
 
-<h2>7. Provenance and dataset licenses</h2>
+<h2>8. Provenance and dataset licenses</h2>
 {% if provenance %}
 <table>
 <tr><th>Field</th><th>Value</th></tr>
@@ -119,7 +141,7 @@ code, td.mono { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-siz
 <p>This run result does not record provenance or dataset licenses. See the benchmark spec and its dataset manifest (manifest hash above).</p>
 {% endif %}
 
-<h2>8. Limitations</h2>
+<h2>9. Limitations</h2>
 {% if limitations %}
 <ul>
 {% for item in limitations %}

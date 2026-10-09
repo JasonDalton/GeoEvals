@@ -74,7 +74,32 @@ No case has strata.
 Every case was scored and no metric failed.
 {% endif %}
 
-## 6. Environment
+## 6. Agent trajectories
+
+{% if trajectories %}
+| Case | Status | Result | Tool calls | Tool errors | Agent steps | Agent runtime (s) |
+| --- | --- | --- | --- | --- | --- | --- |
+{% for t in trajectories.summary %}
+| {{ t.case_id | cell }} | {{ t.status }} | {{ t.outcome }} | {{ t.tool_calls }} | {{ t.tool_errors }} | {{ t.agent_steps }} | {{ t.agent_runtime_s }} |
+{% endfor %}
+
+The result comes from the metrics on the output alone. The trajectory is not scored, so tool calls that succeed do not make a case pass.
+
+{% for case in trajectories.failed %}
+### Trajectory of {{ case.case_id }} ({{ case.outcome }})
+
+| Step | Tool | Args | Status | Error | Duration (s) | Tokens |
+| --- | --- | --- | --- | --- | --- | --- |
+{% for s in case.steps %}
+| {{ s.step }} | {{ s.tool | cell }} | {{ s.args | cell }} | {{ s.status }} | {{ s.error | cell }} | {{ s.duration }} | {{ s.tokens | cell }} |
+{% endfor %}
+
+{% endfor %}
+{% else %}
+No case recorded an agent trajectory.
+
+{% endif %}
+## 7. Environment
 
 {% if environment %}
 | Key | Value |
@@ -86,7 +111,7 @@ Every case was scored and no metric failed.
 No environment was recorded.
 {% endif %}
 
-## 7. Provenance and dataset licenses
+## 8. Provenance and dataset licenses
 
 {% if provenance %}
 | Field | Value |
@@ -108,7 +133,7 @@ The dataset manifest lists no assets.
 This run result does not record provenance or dataset licenses. See the benchmark spec and its dataset manifest (manifest hash above).
 {% endif %}
 
-## 8. Limitations
+## 9. Limitations
 
 {% if limitations %}
 {% for item in limitations %}

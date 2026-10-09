@@ -81,6 +81,8 @@ class Efficiency(_SchemaModel):
     cost_usd_total: NonNegativeFloat | None = None
     cost_usd_per_case: NonNegativeFloat | None = None
     price_table_hash: Sha256 | None = None
+    tool_error_rate: NonNegativeFloat | None = None
+    mean_steps: NonNegativeFloat | None = None
 
 
 class Failure(_SchemaModel):
@@ -92,6 +94,31 @@ class Failure(_SchemaModel):
 class Tokens(_SchemaModel):
     input: NonNegativeInt
     output: NonNegativeInt
+
+
+class TrajectoryStep(_SchemaModel):
+    step: NonNegativeInt
+    tool: NonEmptyStr | None
+    args: dict[str, Any]
+    status: Literal["ok", "error"]
+    error_message: str | None
+    duration_s: NonNegativeFloat | None
+    tokens: Tokens | None
+
+    @model_validator(mode="after")
+    def _error_message_matches_status(self) -> Self:
+        if self.status == "error" and not self.error_message:
+            raise ValueError("error_message must be a non-empty string when status is error")
+        if self.status == "ok" and self.error_message is not None:
+            raise ValueError("error_message must be null when status is ok")
+        return self
+
+
+class AgentSummary(_SchemaModel):
+    tool_calls: NonNegativeInt
+    tool_errors: NonNegativeInt
+    agent_steps: NonNegativeInt
+    agent_runtime_s: NonNegativeFloat | None
 
 
 class CaseRecord(_SchemaModel):
@@ -108,13 +135,16 @@ class CaseRecord(_SchemaModel):
     cost_usd: NonNegativeFloat | None
     peak_memory_bytes: NonNegativeInt | None
     memory_note: NonEmptyStr | None = None
-    trajectory: list[dict[str, Any]] | None = None
+    trajectory: list[TrajectoryStep] | None = None
+    agent: AgentSummary | None = None
     error: CaseError | None
 
     @model_validator(mode="after")
     def _memory_note_explains_null(self) -> Self:
         if self.peak_memory_bytes is None and self.memory_note is None:
             raise ValueError("memory_note is required when peak_memory_bytes is null")
+        if (self.trajectory is None) != (self.agent is None):
+            raise ValueError("trajectory and agent must be given together")
         return self
 
 

@@ -34,6 +34,13 @@ peak RSS of the runner and its workers (sampled with ``psutil``).
 Cost: each case's ``cost_usd`` comes from the price table (see ``runner.cost``), and the run's
 ``efficiency`` adds token and cost totals plus the price table hash. ``environment`` is the
 fingerprint from ``runner.environment``.
+
+Agents: an adapter may return a ``trajectory`` (see ``geoevals.trajectory``). The runner checks
+it (a bad one makes the case ``invalid_output`` with error type ``InvalidTrajectory``), records it
+with its ``agent`` counts (``tool_calls``, ``tool_errors``, ``agent_steps``, ``agent_runtime_s``),
+and adds ``tool_error_rate`` and ``mean_steps`` to ``efficiency``. Metrics never see it: the
+case is scored on its output alone, so a trajectory whose tool calls all succeed earns nothing
+by itself.
 """
 
 import hashlib
@@ -62,6 +69,7 @@ from geoevals.runner.environment import environment_fingerprint
 from geoevals.runner.layout import make_run_id
 from geoevals.runner.memory import RssSampler
 from geoevals.runner.worker import Attempt, Worker, WorkerSetupError
+from geoevals.trajectory import run_aggregates, summarize_trajectory, trajectory_problem
 from geoevals.validation import (
     RUN_RESULT_SCHEMA_VERSION,
     BenchmarkSpec,
@@ -335,9 +343,17 @@ class _Runner:
             return record
         if attempt.tokens is not None:
             record["tokens"] = {"input": attempt.tokens[0], "output": attempt.tokens[1]}
-        if attempt.trajectory is not None:
-            record["trajectory"] = attempt.trajectory
         problem, recordable = _output_problem(self.output_validator, attempt.output)
+        if attempt.trajectory is not None:
+            trajectory_issue = trajectory_problem(attempt.trajectory)
+            if trajectory_issue is not None:
+                record["status"] = "invalid_output"
+                record["error"] = _error("InvalidTrajectory", trajectory_issue)
+                if recordable:
+                    record["output"] = attempt.output
+                return record
+            record["trajectory"] = attempt.trajectory
+            record["agent"] = summarize_trajectory(attempt.trajectory)
         if problem is not None:
             record["status"] = "invalid_output"
             record["error"] = _error("InvalidOutput", problem)
@@ -381,6 +397,7 @@ def _efficiency(
 
     Token totals sum the cases that reported tokens. The cost total is null when the adapter is
     not ``priced`` or any case cost is null, so a total never leaves out an unknown cost.
+    ``tool_error_rate`` and ``mean_steps`` cover the cases with a trajectory.
     """
     total = len(records)
     latencies = sorted(r["latency_s"] for r in records if r["latency_s"] is not None)
@@ -411,6 +428,7 @@ def _efficiency(
         "cost_usd_total": cost_total,
         "cost_usd_per_case": cost_total / total if cost_total is not None and total else None,
         "price_table_hash": price_table_hash,
+        **run_aggregates(r["agent"] for r in records if "agent" in r),
     }
 
 

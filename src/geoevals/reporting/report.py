@@ -48,6 +48,8 @@ EFFICIENCY_LABELS: dict[str, str] = {
     "cost_usd_total": "Cost, total (USD)",
     "cost_usd_per_case": "Cost per case (USD)",
     "price_table_hash": "Price table hash",
+    "tool_error_rate": "Tool error rate",
+    "mean_steps": "Mean agent steps",
 }
 """Every field of the run result's ``efficiency`` block, in report order."""
 
@@ -175,6 +177,53 @@ def _failures(cases: list[Mapping[str, Any]]) -> list[dict[str, str]]:
     return rows
 
 
+def _outcome(case: Mapping[str, Any]) -> str:
+    """``not scored``, ``failed`` (a metric with ``passed: false``) or ``passed``."""
+    if case["status"] != "scored":
+        return "not scored"
+    if any(value["passed"] is False for value in case["metrics"].values()):
+        return "failed"
+    return "passed"
+
+
+def _trajectories(cases: list[Mapping[str, Any]]) -> dict[str, Any] | None:
+    """One summary row per case with a trajectory, and every step of each case that did not
+    pass. ``None`` when no case has a trajectory."""
+    agent_cases = [case for case in cases if "trajectory" in case]
+    if not agent_cases:
+        return None
+    summary = [
+        {
+            "case_id": case["case_id"],
+            "status": case["status"],
+            "outcome": _outcome(case),
+            **{key: fmt(value) for key, value in case["agent"].items()},
+        }
+        for case in agent_cases
+    ]
+    failed = [
+        {
+            "case_id": case["case_id"],
+            "outcome": _outcome(case),
+            "steps": [
+                {
+                    "step": str(step["step"]),
+                    "tool": step["tool"] or "(no tool)",
+                    "args": fmt(step["args"]),
+                    "status": step["status"],
+                    "error": step["error_message"] or "-",
+                    "duration": fmt(step["duration_s"]),
+                    "tokens": fmt(step["tokens"]),
+                }
+                for step in case["trajectory"]
+            ],
+        }
+        for case in agent_cases
+        if _outcome(case) != "passed"
+    ]
+    return {"summary": summary, "failed": failed}
+
+
 def _split(result: Mapping[str, Any], run_dir: Path | None) -> str:
     """The run's split, from ``config.yaml`` when present, else from the case records."""
     if run_dir is not None and (run_dir / CONFIG_FILE).is_file():
@@ -238,6 +287,7 @@ def report_context(result: Mapping[str, Any], split: str) -> dict[str, Any]:
             for key, label in EFFICIENCY_LABELS.items()
         ],
         "failures": _failures(cases),
+        "trajectories": _trajectories(cases),
         "environment": [(key, fmt(environment[key])) for key in sorted(environment)],
         "provenance": _provenance(result),
         "limitations": list(result["limitations"]),

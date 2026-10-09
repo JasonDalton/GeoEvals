@@ -26,6 +26,29 @@ Behaviors:
 - ``fail_then_succeed``: raise on the first ``failures`` calls for the case, then return the
   reference output. The count is kept per adapter instance and reset by ``setup``.
 
+``mode: mock_agent`` makes the adapter act as a scripted agent: every response also carries a
+trajectory (see ``geoevals.trajectory``), shaped by the rule's ``script`` (default ``all_ok``)::
+
+    mode: mock_agent
+    max_steps: 6                          # loop guard: tool calls before the agent is stopped
+    step_seconds: 0.01                    # duration_s recorded for each step (not slept)
+    cases:
+      case-001: {behavior: wrong, script: all_ok}
+      case-002: {behavior: reference, script: error_then_recover}
+      case-003: {behavior: malformed, script: loop_guard}
+
+Scripts (tool steps call ``read_inputs`` and then a tool named after the case's ``operation``):
+
+- ``all_ok``: every tool call succeeds, then a final-answer step (``tool: null``).
+- ``error_then_recover``: the operation tool fails once, is called again and succeeds, then a
+  final-answer step.
+- ``loop_guard``: the agent repeats the same operation call until ``max_steps`` tool calls, then a
+  guard step (``tool: null``, ``status: error``) stops it. The guard stops the agent before it
+  answers, so the script needs behavior ``wrong`` or ``malformed``.
+
+The script shapes only the trajectory; ``behavior`` still decides the output. So ``all_ok`` with
+``wrong`` is an agent whose tool calls all succeed and whose answer is still wrong.
+
 Each case draws one number from a ``random.Random`` seeded with ``"<seed>:<case_id>"``, so the
 chosen behavior depends only on the seed and case ID, not on call order, retries, or workers.
 The probability rules are tried in order against that draw; when none matches, ``default``
@@ -43,6 +66,8 @@ from pydantic import BaseModel, ConfigDict, Field, ValidationError, model_valida
 from geoevals.adapters.base import AdapterResponse, TokenUsage
 
 MockBehavior = Literal["reference", "wrong", "malformed", "raise", "sleep", "fail_then_succeed"]
+MockMode = Literal["mock", "mock_agent"]
+AgentScript = Literal["all_ok", "error_then_recover", "loop_guard"]
 
 DEFAULT_MALFORMED_OUTPUT: dict[str, Any] = {"mock_malformed_output": True}
 
@@ -71,6 +96,7 @@ class MockRule(_Model):
     seconds: float | None = Field(default=None, ge=0)
     failures: int | None = Field(default=None, ge=1)
     tokens: MockTokens | None = None
+    script: AgentScript | None = None
 
     @model_validator(mode="after")
     def _check_behavior_fields(self) -> "MockRule":
@@ -80,6 +106,8 @@ class MockRule(_Model):
             raise ValueError("behavior 'fail_then_succeed' requires 'failures'")
         if self.output is not None and self.behavior not in ("wrong", "malformed"):
             raise ValueError("'output' applies only to behaviors 'wrong' and 'malformed'")
+        if self.script == "loop_guard" and self.behavior not in ("wrong", "malformed"):
+            raise ValueError("script 'loop_guard' requires behavior 'wrong' or 'malformed'")
         return self
 
 
@@ -88,6 +116,9 @@ class MockProbabilityRule(MockRule):
 
 
 class MockConfig(_Model):
+    mode: MockMode = "mock"
+    max_steps: int = Field(default=8, ge=1)
+    step_seconds: float = Field(default=0.01, ge=0)
     seed: int = 0
     tokens: MockTokens | None = None
     references: dict[str, dict[str, Any]] = Field(default_factory=dict)
@@ -100,6 +131,10 @@ class MockConfig(_Model):
         total = sum(rule.probability for rule in self.random)
         if total > 1:
             raise ValueError(f"probabilities in 'random' sum to {total}, more than 1")
+        if self.mode != "mock_agent":
+            rules = [self.default, *self.cases.values(), *self.random]
+            if any(rule.script is not None for rule in rules):
+                raise ValueError("'script' applies only to mode 'mock_agent'")
         return self
 
 
@@ -115,6 +150,43 @@ def _make_wrong(value: Any) -> Any:
     if isinstance(value, dict):
         return {key: _make_wrong(item) for key, item in value.items()}
     return value
+
+
+def _script_trajectory(
+    script: AgentScript, case_input: Mapping[str, Any], config: MockConfig
+) -> list[dict[str, Any]]:
+    """The scripted trajectory of a ``mock_agent`` case."""
+    operation = case_input.get("operation")
+    tool = operation if isinstance(operation, str) and operation else "answer"
+    inputs = case_input.get("inputs")
+    params = inputs.get("params") if isinstance(inputs, Mapping) else None
+    tool_args = {"params": dict(params)} if isinstance(params, Mapping) else {}
+    calls: list[tuple[str | None, dict[str, Any], str | None]] = [
+        ("read_inputs", {"case_id": case_input["case_id"]}, None)
+    ]
+    if script == "error_then_recover":
+        calls.append((tool, {}, f"mock tool error: {tool} called without its parameters"))
+        calls.append((tool, tool_args, None))
+    elif script == "loop_guard":
+        calls += [(tool, tool_args, None)] * (config.max_steps - 1)
+        message = f"loop guard: stopped after {config.max_steps} tool calls without an answer"
+        calls.append((None, {}, message))
+    else:
+        calls.append((tool, tool_args, None))
+    if script != "loop_guard":
+        calls.append((None, {}, None))  # the final answer
+    return [
+        {
+            "step": number,
+            "tool": name,
+            "args": copy.deepcopy(args),
+            "status": "ok" if error is None else "error",
+            "error_message": error,
+            "duration_s": config.step_seconds,
+            "tokens": None,
+        }
+        for number, (name, args, error) in enumerate(calls)
+    ]
 
 
 class MockAdapter:
@@ -174,10 +246,17 @@ class MockAdapter:
                 output = _make_wrong(output)
 
         tokens = rule.tokens or config.tokens
+        trajectory = None
+        raw: dict[str, Any] = {"mock_behavior": rule.behavior, "call": call}
+        if config.mode == "mock_agent":
+            script = rule.script or "all_ok"
+            trajectory = _script_trajectory(script, case_input, config)
+            raw["mock_script"] = script
         return AdapterResponse(
             output=copy.deepcopy(output),
             tokens=TokenUsage(tokens.input, tokens.output) if tokens else None,
-            raw={"mock_behavior": rule.behavior, "call": call},
+            trajectory=trajectory,
+            raw=raw,
         )
 
     def teardown(self) -> None:

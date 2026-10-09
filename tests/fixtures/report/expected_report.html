@@ -90,6 +90,8 @@ code, td.mono { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-siz
 <tr><th scope="row">Cost, total (USD)</th><td class="num">0</td></tr>
 <tr><th scope="row">Cost per case (USD)</th><td class="num">0</td></tr>
 <tr><th scope="row">Price table hash</th><td class="num">n/a</td></tr>
+<tr><th scope="row">Tool error rate</th><td class="num">0.25</td></tr>
+<tr><th scope="row">Mean agent steps</th><td class="num">3</td></tr>
 </table>
 
 <h2>5. Failures</h2>
@@ -100,7 +102,21 @@ code, td.mono { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-siz
 <tr><td>dist_004</td><td>timeout</td><td>-</td><td class="mono">TimeoutError: case exceeded timeout_s=1</td></tr>
 </table>
 
-<h2>6. Environment</h2>
+<h2>6. Agent trajectories</h2>
+<table>
+<tr><th>Case</th><th>Status</th><th>Result</th><th>Tool calls</th><th>Tool errors</th><th>Agent steps</th><th>Agent runtime (s)</th></tr>
+<tr><td>dist_001</td><td>scored</td><td>passed</td><td class="num">3</td><td class="num">1</td><td class="num">4</td><td class="num">n/a</td></tr>
+<tr><td>dist_002</td><td>scored</td><td>failed</td><td class="num">1</td><td class="num">0</td><td class="num">2</td><td class="num">0.005</td></tr>
+</table>
+<p>The result comes from the metrics on the output alone. The trajectory is not scored, so tool calls that succeed do not make a case pass.</p>
+<h3>Trajectory of dist_002 (failed)</h3>
+<table>
+<tr><th>Step</th><th>Tool</th><th>Args</th><th>Status</th><th>Error</th><th>Duration (s)</th><th>Tokens</th></tr>
+<tr><td class="num">0</td><td>transform</td><td class="mono">{&#34;crs&#34;: &#34;EPSG:4326&#34;}</td><td>ok</td><td class="mono">-</td><td class="num">0.004</td><td class="mono">n/a</td></tr>
+<tr><td class="num">1</td><td>(no tool)</td><td class="mono">{}</td><td>ok</td><td class="mono">-</td><td class="num">0.001</td><td class="mono">n/a</td></tr>
+</table>
+
+<h2>7. Environment</h2>
 <table>
 <tr><th>Key</th><th>Value</th></tr>
 <tr><th scope="row">git_commit</th><td class="mono">0123456789abcdef0123456789abcdef01234567</td></tr>
@@ -110,7 +126,7 @@ code, td.mono { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-siz
 <tr><th scope="row">uv_lock_sha256</th><td class="mono">n/a</td></tr>
 </table>
 
-<h2>7. Provenance and dataset licenses</h2>
+<h2>8. Provenance and dataset licenses</h2>
 <table>
 <tr><th>Field</th><th>Value</th></tr>
 <tr><th scope="row">Benchmark license</th><td>MIT</td></tr>
@@ -125,7 +141,7 @@ code, td.mono { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-siz
 <tr><td>roads</td><td>ODbL-1.0</td><td>OpenStreetMap contributors</td><td>false</td><td class="mono">https://www.openstreetmap.org/</td></tr>
 </table>
 
-<h2>8. Limitations</h2>
+<h2>9. Limitations</h2>
 <ul>
 <li>Hand-written example run result for tests; the numbers are not measured.</li>
 <li>Pipe | and &lt;tag&gt; characters stay readable.</li>

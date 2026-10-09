@@ -2,7 +2,8 @@
 
 Benchmark specs are also checked against the metric registry. Dataset manifests are also checked
 for duplicate asset IDs and for restricted assets placed where git could commit them. Run results
-are also checked for duplicate case IDs and for case metrics without a versioned summary entry.
+are also checked for duplicate case IDs, for case metrics without a versioned summary entry, and
+for trajectories whose step numbers or ``agent`` counts do not match their steps.
 """
 
 import json
@@ -17,6 +18,7 @@ from jsonschema import Draft202012Validator
 from jsonschema.exceptions import ValidationError
 
 from geoevals.metrics.registry import registered_metric_ids
+from geoevals.trajectory import step_numbering_problem, summary_problem
 from geoevals.validation.benchmark import BenchmarkSpec
 from geoevals.validation.git import GitPathState, git_path_state
 from geoevals.validation.manifest import DatasetManifest
@@ -264,6 +266,13 @@ def validate_run_result_document(document: Any) -> list[ValidationIssue]:
                 )
             )
         first_index.setdefault(case_id, i)
+        if "trajectory" in case:
+            for problem in (
+                step_numbering_problem(case["trajectory"]),
+                summary_problem(case["agent"], case["trajectory"]),
+            ):
+                if problem is not None:
+                    issues.append(ValidationIssue(f"cases[{i}].trajectory", problem))
         # summary_metrics records each metric's version, so every scored metric needs an entry.
         for metric_id in case["metrics"]:
             if metric_id not in document["summary_metrics"]:

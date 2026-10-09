@@ -21,7 +21,8 @@ class TokenUsage:
 class AdapterResponse:
     """What an adapter returns for one case.
 
-    ``trajectory`` holds the agent's tool-call records in order (US-020 defines their fields).
+    ``trajectory`` holds the agent's step records in order (see ``geoevals.trajectory``).
+    The runner records it but never scores it.
     ``raw`` is free-form debugging data; it is not scored.
     """
 
