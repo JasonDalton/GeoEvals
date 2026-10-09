@@ -1,0 +1,29 @@
+.chief/
+
+# Environments and secrets
+.venv/
+.env
+.env.*
+
+# Run outputs and raw data
+runs/
+data/raw/
+
+# Rasters belong only in test fixtures
+*.tif
+!tests/fixtures/**/*.tif
+
+# Caches and build artifacts
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.pyright/
+.cache/
+.coverage
+htmlcov/
+build/
+dist/
+*.egg-info/
+.DS_Store
