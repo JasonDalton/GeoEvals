@@ -87,3 +87,36 @@ def test_smoke_run_and_report(tmp_path: Path) -> None:
     assert main(["report", str(run_dir)]) == 0
     assert (run_dir / "report.md").is_file()
     assert (run_dir / "report.html").is_file()
+
+
+def _smoke_run_args(out: Path) -> list[str]:
+    args = ["run", "--benchmark", str(SMOKE / "benchmark.yaml"), "--adapter", "mock"]
+    return [*args, "--config", str(SMOKE / "run_config.yaml"), "--out", str(out)]
+
+
+def test_run_with_report_writes_the_report(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    opened: list[str] = []
+    monkeypatch.setattr("webbrowser.open", lambda url: opened.append(url) or True)
+    assert main([*_smoke_run_args(tmp_path), "--report"]) == 0
+    [run_dir] = tmp_path.iterdir()
+    assert capsys.readouterr().out.splitlines() == [
+        str(run_dir),
+        str(run_dir / "report.md"),
+        str(run_dir / "report.html"),
+    ]
+    assert opened == []
+
+
+def test_run_with_open_opens_the_html_report(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    opened: list[str] = []
+    monkeypatch.setattr("webbrowser.open", lambda url: opened.append(url) or False)
+    assert main([*_smoke_run_args(tmp_path), "--open"]) == 0
+    [run_dir] = tmp_path.iterdir()
+    html = (run_dir / "report.html").resolve()
+    assert html.is_file() and (run_dir / "report.md").is_file()
+    assert opened == [html.as_uri()]
+    assert "no web browser found" in capsys.readouterr().err

@@ -6,6 +6,7 @@ import json
 import logging
 import sys
 import tempfile
+import webbrowser
 from collections.abc import Sequence
 from pathlib import Path
 from typing import Any
@@ -22,7 +23,7 @@ from geoevals.data.fetch import (
 from geoevals.data.verify import verify_manifest
 from geoevals.regenerate import RegenerateError, find_benchmark_dir, regenerate
 from geoevals.reporting.compare import Tolerance, compare_runs, load_run
-from geoevals.reporting.report import write_report
+from geoevals.reporting.report import REPORT_HTML, write_report
 from geoevals.reproduce import DEFAULT_TOLERANCE, baseline_spec, compare_reproduction
 from geoevals.runner.config import RunConfigError, load_run_config
 from geoevals.runner.cost import PriceTable, PriceTableError, load_price_table
@@ -156,6 +157,17 @@ def build_parser() -> argparse.ArgumentParser:
         type=str.upper,
         choices=["DEBUG", "INFO", "WARNING", "ERROR"],
         help="Log level for run.log and stderr (default: INFO).",
+    )
+    run.add_argument(
+        "--report",
+        action="store_true",
+        help="After the run, write report.md and report.html into the run directory.",
+    )
+    run.add_argument(
+        "--open",
+        action="store_true",
+        help="Like --report, then open report.html in the default web browser (set by the "
+        "BROWSER environment variable, if any).",
     )
 
     compare = subparsers.add_parser(
@@ -380,12 +392,21 @@ def _run(
     out: Path,
     level: str,
     prices_path: Path | None = None,
+    report: bool = False,
+    open_report: bool = False,
 ) -> int:
     run_dir = _run_to_dir(benchmark, adapter_name, config_path, out, level, prices_path)
     if run_dir is None:
         return 1
     print(run_dir)
-    return 0
+    if not (report or open_report):
+        return 0
+    status = _report(run_dir)
+    if status == 0 and open_report:
+        html = (run_dir / REPORT_HTML).resolve()
+        if not webbrowser.open(html.as_uri()):
+            print(f"{html}: no web browser found; open the file by hand", file=sys.stderr)
+    return status
 
 
 def _run_to_dir(
@@ -552,7 +573,14 @@ def main(argv: Sequence[str] | None = None) -> int:
         return _adapters_predict(args.adapter, args.config, args.case_input)
     if args.command == "run":
         return _run(
-            args.benchmark, args.adapter, args.config, args.out, args.log_level, args.prices
+            args.benchmark,
+            args.adapter,
+            args.config,
+            args.out,
+            args.log_level,
+            args.prices,
+            report=args.report,
+            open_report=args.open,
         )
     if args.command == "compare":
         return _compare(args.run_a, args.run_b, Tolerance(args.abs_tol, args.rel_tol))
