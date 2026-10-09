@@ -12,12 +12,16 @@ an item, open an issue with the benchmark proposal or new adapter template.
 
 ## Phase 5: growth after launch
 
-### Imagery extraction benchmark with geographic holdout
+### Vector benchmark on OpenStreetMap data
 
-The first benchmark for the perception pillar: feature extraction from imagery, scored on
-regions held out from any training or tuning data, so that a score measures transfer to new
-places and not memorized geography. It brings the first raster dependencies, as an optional
-extra. Detection, segmentation and change detection follow.
+The next benchmark works on spatial data in vector form, with OpenStreetMap as the main
+input: points, lines and polygons with their tags, in place of the synthetic fixtures that
+v0.1.0 ships. OSM data is licensed under the ODbL-1.0, so extracts are referenced by a dataset
+manifest and downloaded, never committed, as the
+[data governance rules](docs/data-governance.md) require. Open questions: which extracts and
+snapshot dates to pin, and how a reference output stays stable when OSM is edited.
+
+Feature extraction from imagery is not planned. Many benchmarks already cover it.
 
 ### LLM and hosted-API adapters
 

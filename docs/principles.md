@@ -20,7 +20,7 @@ The questions belong to three pillars:
 
 | Pillar | Scope | v0.1 |
 | --- | --- | --- |
-| A. Geospatial perception | Extraction from imagery and other rasters: detection, segmentation, change detection | Planned for after v0.1 |
+| A. Geospatial perception | Extraction from imagery and other rasters: detection, segmentation, change detection | Not planned; many existing benchmarks cover it |
 | B. Spatial reasoning and GIS agents | GIS operations, and agents that turn a natural-language request into a valid spatial output | `gis_correctness` |
 | C. Human-centered place context | How places work for people: access, mobility, amenities, availability | `human_context_access` |
 
