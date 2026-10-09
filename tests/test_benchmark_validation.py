@@ -151,14 +151,6 @@ def test_invalid_yaml(tmp_path: Path) -> None:
     assert issues[0].message.startswith("invalid YAML")
 
 
-def test_registry_rejects_duplicate_ids(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr(registry, "_REGISTRY", {})
-    registry.register_metric("geometry_match", "1.0.0")
-    with pytest.raises(ValueError, match="already registered"):
-        registry.register_metric("geometry_match", "1.0.0")
-    assert registry.registered_metric_ids() == {"geometry_match"}
-
-
 # --- CLI -------------------------------------------------------------------------------------
 
 

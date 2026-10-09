@@ -2,7 +2,7 @@
 
 Benchmark specs are also checked against the metric registry. Dataset manifests are also checked
 for duplicate asset IDs and for restricted assets placed where git could commit them. Run results
-are also checked for duplicate case IDs.
+are also checked for duplicate case IDs and for case metrics without a versioned summary entry.
 """
 
 import json
@@ -264,6 +264,15 @@ def validate_run_result_document(document: Any) -> list[ValidationIssue]:
                 )
             )
         first_index.setdefault(case_id, i)
+        # summary_metrics records each metric's version, so every scored metric needs an entry.
+        for metric_id in case["metrics"]:
+            if metric_id not in document["summary_metrics"]:
+                issues.append(
+                    ValidationIssue(
+                        f"cases[{i}].metrics.{metric_id}",
+                        f"metric {metric_id!r} has no summary_metrics entry recording its version",
+                    )
+                )
     return issues
 
 

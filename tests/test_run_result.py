@@ -149,6 +149,16 @@ def test_duplicate_case_id(valid_doc: Doc) -> None:
     }
 
 
+def test_case_metric_needs_versioned_summary_entry(valid_doc: Doc) -> None:
+    del valid_doc["summary_metrics"]["value_abs_error"]
+    assert _fields(valid_doc) == {
+        f"cases[{i}].metrics.value_abs_error": (
+            "metric 'value_abs_error' has no summary_metrics entry recording its version"
+        )
+        for i in (0, 1)
+    }
+
+
 def test_invalid_json(tmp_path: Path) -> None:
     path = tmp_path / "result.json"
     path.write_text("{not json", encoding="utf-8")
