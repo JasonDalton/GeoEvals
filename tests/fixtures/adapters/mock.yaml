@@ -1,0 +1,14 @@
+seed: 42
+tokens: {input: 120, output: 30}
+references:
+  case-ref: {area_m2: 12.5, crs: "EPSG:3857", valid: true, coords: [[1, 2], [3.5, 4]]}
+  case-wrong: {area_m2: 12.5, crs: "EPSG:3857", valid: true, coords: [[1, 2], [3.5, 4]]}
+  case-sleep: {area_m2: 1.0}
+  case-flaky: {area_m2: 2.0}
+default: {behavior: reference}
+cases:
+  case-wrong: {behavior: wrong}
+  case-malformed: {behavior: malformed}
+  case-raise: {behavior: raise, message: boom}
+  case-sleep: {behavior: sleep, seconds: 5}
+  case-flaky: {behavior: fail_then_succeed, failures: 2, tokens: {input: 7, output: 3}}

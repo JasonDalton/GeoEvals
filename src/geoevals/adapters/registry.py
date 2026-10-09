@@ -1,0 +1,32 @@
+"""Registry of adapters by name, used by ``--adapter <name>``."""
+
+from collections.abc import Callable, Set
+
+from geoevals.adapters.base import Adapter
+
+AdapterFactory = Callable[[], Adapter]
+
+_REGISTRY: dict[str, AdapterFactory] = {}
+"""Registered adapter name -> factory that returns a new, not yet set up adapter."""
+
+
+def register_adapter(name: str, factory: AdapterFactory) -> None:
+    """Register ``factory`` under ``name``. Raises ``ValueError`` on a duplicate name."""
+    if name in _REGISTRY:
+        raise ValueError(f"adapter {name!r} is already registered")
+    _REGISTRY[name] = factory
+
+
+def registered_adapter_names() -> Set[str]:
+    """Return the names of all registered adapters."""
+    return frozenset(_REGISTRY)
+
+
+def create_adapter(name: str) -> Adapter:
+    """Return a new adapter registered as ``name``. Raises ``ValueError`` for an unknown name."""
+    try:
+        factory = _REGISTRY[name]
+    except KeyError:
+        known = ", ".join(sorted(_REGISTRY)) or "none"
+        raise ValueError(f"unknown adapter {name!r} (registered: {known})") from None
+    return factory()

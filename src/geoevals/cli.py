@@ -1,13 +1,27 @@
 """Command-line entry point for ``geoevals``."""
 
 import argparse
+import dataclasses
+import json
 import sys
 from collections.abc import Sequence
 from pathlib import Path
 
 from geoevals import __version__
+from geoevals.adapters import create_adapter, registered_adapter_names
 from geoevals.data.verify import verify_manifest
 from geoevals.validation import SpecValidationError, validate_file
+from geoevals.validation.validate import load_yaml
+
+
+def add_adapter_argument(parser: argparse.ArgumentParser) -> None:
+    """Add ``--adapter <name>``, limited to the registered adapter names."""
+    parser.add_argument(
+        "--adapter",
+        required=True,
+        choices=sorted(registered_adapter_names()),
+        help="Registered adapter name.",
+    )
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -33,6 +47,16 @@ def build_parser() -> argparse.ArgumentParser:
         "verify", help="Recompute SHA-256 checksums of a manifest's local assets."
     )
     verify.add_argument("manifest", type=Path, help="Path to a dataset manifest.")
+
+    adapters = subparsers.add_parser("adapters", help="Adapter tools.")
+    adapter_commands = adapters.add_subparsers(dest="adapters_command", required=True)
+    adapter_commands.add_parser("list", help="List registered adapter names.")
+    predict = adapter_commands.add_parser(
+        "predict", help="Run one adapter on one case input (JSON) and print the response."
+    )
+    add_adapter_argument(predict)
+    predict.add_argument("--config", type=Path, help="Adapter config (YAML).")
+    predict.add_argument("case_input", type=Path, help="Path to a case input (JSON object).")
     return parser
 
 
@@ -76,6 +100,28 @@ def _data_verify(manifest: Path) -> int:
     return 0
 
 
+def _adapters_predict(adapter_name: str, config_path: Path | None, case_path: Path) -> int:
+    config = load_yaml(config_path) if config_path is not None else {}
+    if not isinstance(config, dict):
+        print(f"{config_path}: adapter config must be a mapping", file=sys.stderr)
+        return 1
+    case_input = json.loads(case_path.read_text(encoding="utf-8"))
+    if not isinstance(case_input, dict):
+        print(f"{case_path}: case input must be a JSON object", file=sys.stderr)
+        return 1
+    adapter = create_adapter(adapter_name)
+    adapter.setup(config)
+    try:
+        response = adapter.predict(case_input)
+    except Exception as exc:
+        print(f"{adapter_name}: {type(exc).__name__}: {exc}", file=sys.stderr)
+        return 1
+    finally:
+        adapter.teardown()
+    print(json.dumps(dataclasses.asdict(response), indent=2, sort_keys=True, default=str))
+    return 0
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
@@ -83,5 +129,11 @@ def main(argv: Sequence[str] | None = None) -> int:
         return _validate(args.path)
     if args.command == "data" and args.data_command == "verify":
         return _data_verify(args.manifest)
+    if args.command == "adapters" and args.adapters_command == "list":
+        for name in sorted(registered_adapter_names()):
+            print(name)
+        return 0
+    if args.command == "adapters" and args.adapters_command == "predict":
+        return _adapters_predict(args.adapter, args.config, args.case_input)
     parser.print_help()
     return 0
