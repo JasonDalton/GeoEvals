@@ -1,5 +1,6 @@
 import copy
 import json
+import re
 from collections.abc import Callable
 from pathlib import Path
 from typing import Any
@@ -55,7 +56,7 @@ def _fields(doc: Doc) -> dict[str, str]:
 def test_schema_is_draft_2020_12_with_version() -> None:
     schema = json.loads(SCHEMA_PATH.read_text(encoding="utf-8"))
     assert schema["$schema"] == "https://json-schema.org/draft/2020-12/schema"
-    assert schema["schema_version"] == "1.0.0" == BENCHMARK_SCHEMA_VERSION
+    assert schema["schema_version"] == "1.1.0" == BENCHMARK_SCHEMA_VERSION
     Draft202012Validator.check_schema(schema)
 
 
@@ -143,6 +144,65 @@ def test_load_benchmark_spec_raises_with_issues(tmp_path: Path, valid_doc: Doc) 
     assert exc.value.issues[0].message == "'title' is a required property"
 
 
+# --- evidence types (schema 1.1.0) -----------------------------------------------------------
+
+
+def _human_context(doc: Doc) -> None:
+    doc["pillar"] = "human_context"
+    doc["output_schema"]["properties"] = {
+        "status": {"enum": ["ok", "insufficient_data"], "evidence_type": "observed"},
+        "travel_time_s": {"type": "number", "evidence_type": "proxy"},
+    }
+
+
+def test_evidence_type_is_optional_outside_human_context(valid_doc: Doc) -> None:
+    assert _fields(valid_doc) == {}
+    valid_doc["output_schema"]["properties"]["status"]["evidence_type"] = "judgment"
+    assert _fields(valid_doc) == {}
+
+
+def test_unknown_evidence_type(valid_doc: Doc) -> None:
+    valid_doc["output_schema"]["properties"]["status"]["evidence_type"] = "measured"
+    issues = _fields(valid_doc)
+    assert list(issues) == ["output_schema.properties.status.evidence_type"]
+    assert (
+        "is not one of ['observed', 'proxy', 'judgment']"
+        in issues["output_schema.properties.status.evidence_type"]
+    )
+
+
+def test_human_context_spec_with_evidence_types_is_valid(valid_doc: Doc) -> None:
+    _human_context(valid_doc)
+    assert _fields(valid_doc) == {}
+
+
+def test_human_context_field_without_evidence_type_fails(valid_doc: Doc) -> None:
+    _human_context(valid_doc)
+    del valid_doc["output_schema"]["properties"]["travel_time_s"]["evidence_type"]
+    assert _fields(valid_doc) == {
+        "output_schema.properties.travel_time_s": "'evidence_type' is a required property"
+    }
+
+
+def test_human_context_spec_must_declare_output_fields(valid_doc: Doc) -> None:
+    _human_context(valid_doc)
+    del valid_doc["output_schema"]["properties"]
+    assert _fields(valid_doc) == {"output_schema": "'properties' is a required property"}
+
+
+def test_human_context_doc_example_is_valid(valid_doc: Doc) -> None:
+    text = (REPO_ROOT / "docs" / "human-context.md").read_text(encoding="utf-8")
+    [example] = re.findall(r"```yaml\n(.*?)```", text, flags=re.DOTALL)
+    valid_doc.update(yaml.safe_load(example))
+    assert valid_doc["pillar"] == "human_context"
+    assert _fields(valid_doc) == {}
+
+
+def test_old_schema_version_is_rejected(valid_doc: Doc) -> None:
+    valid_doc["schema_version"] = "1.0.0"
+    assert list(_fields(valid_doc)) == ["schema_version"]
+
+
 def test_invalid_yaml(tmp_path: Path) -> None:
     path = tmp_path / "benchmark.yaml"
     path.write_text("id: [unclosed\n", encoding="utf-8")
@@ -215,6 +275,14 @@ def _delete(*path: str | int) -> Callable[[Doc], None]:
     return mutate
 
 
+def _then(*mutations: Callable[[Doc], None]) -> Callable[[Doc], None]:
+    def mutate(doc: Doc) -> None:
+        for mutation in mutations:
+            mutation(doc)
+
+    return mutate
+
+
 AGREEMENT_CASES: dict[str, Callable[[Doc], None]] = {
     # documents both must accept
     "valid": lambda d: None,
@@ -223,11 +291,25 @@ AGREEMENT_CASES: dict[str, Callable[[Doc], None]] = {
     "integer_tolerance": _set("tolerances", "distance", "value", value=1),
     "empty_tolerances": _set("tolerances", value={}),
     "optional_provenance": _set("provenance", "reference_workflow", value="reference.py"),
-    "each_pillar": _set("pillar", value="human_context"),
+    "each_pillar": _set("pillar", value="perception"),
+    "evidence_type": _set("output_schema", "properties", "status", "evidence_type", value="proxy"),
+    "human_context_tagged": _human_context,
+    "output_field_boolean": _set("output_schema", "properties", "extra", value=True),
     # documents both must reject
     "missing_id": _delete("id"),
     "missing_schema_version": _delete("schema_version"),
     "wrong_schema_version": _set("schema_version", value="2.0.0"),
+    "old_schema_version": _set("schema_version", value="1.0.0"),
+    "bad_evidence_type": _set("output_schema", "properties", "status", "evidence_type", value="x"),
+    "output_properties_list": _set("output_schema", "properties", value=[]),
+    "human_context_untagged": _set("pillar", value="human_context"),
+    "human_context_no_fields": _then(_human_context, _delete("output_schema", "properties")),
+    "human_context_empty_fields": _then(
+        _human_context, _set("output_schema", "properties", value={})
+    ),
+    "human_context_boolean_field": _then(
+        _human_context, _set("output_schema", "properties", "extra", value=True)
+    ),
     "bad_pillar": _set("pillar", value="gis"),
     "bad_semver": _set("version", value="1.0"),
     "trailing_text_semver": _set("version", value="1.0.0 beta"),
@@ -265,6 +347,9 @@ EXPECTED_VALID = {
     "empty_tolerances",
     "optional_provenance",
     "each_pillar",
+    "evidence_type",
+    "human_context_tagged",
+    "output_field_boolean",
 }
 
 

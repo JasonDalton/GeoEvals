@@ -1,4 +1,4 @@
-schema_version: "1.0.0"
+schema_version: "1.1.0"
 id: runner_fixture
 version: 0.1.0
 title: Runner fixture benchmark

@@ -6,9 +6,9 @@ that both accept and reject the same documents.
 
 from typing import Annotated, Any, Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
-BENCHMARK_SCHEMA_VERSION = "1.0.0"
+BENCHMARK_SCHEMA_VERSION = "1.1.0"
 
 SEMVER_PATTERN = (
     r"^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)"
@@ -22,6 +22,8 @@ NonEmptyStr = Annotated[str, Field(min_length=1)]
 Identifier = Annotated[str, Field(pattern=IDENTIFIER_PATTERN)]
 SemVer = Annotated[str, Field(pattern=SEMVER_PATTERN)]
 Pillar = Literal["perception", "spatial_reasoning", "human_context"]
+EvidenceType = Literal["observed", "proxy", "judgment"]
+EVIDENCE_TYPES: tuple[EvidenceType, ...] = ("observed", "proxy", "judgment")
 
 
 class _SchemaModel(BaseModel):
@@ -53,7 +55,7 @@ class Provenance(_SchemaModel):
 
 
 class BenchmarkSpec(_SchemaModel):
-    schema_version: Literal["1.0.0"]
+    schema_version: Literal["1.1.0"]
     id: Identifier
     version: SemVer
     title: NonEmptyStr
@@ -70,3 +72,20 @@ class BenchmarkSpec(_SchemaModel):
     license: NonEmptyStr
     provenance: Provenance
     limitations: Annotated[list[NonEmptyStr], Field(min_length=1)]
+
+    @model_validator(mode="after")
+    def _check_output_fields(self) -> "BenchmarkSpec":
+        """Mirror the schema's ``evidence_type`` rules for ``output_schema.properties``."""
+        fields = self.output_schema.get("properties", {})
+        if not isinstance(fields, dict):
+            raise ValueError("output_schema.properties must be an object")
+        human_context = self.pillar == "human_context"
+        if human_context and not fields:
+            raise ValueError("a human_context output_schema must declare its output fields")
+        for name, field in fields.items():
+            if not isinstance(field, dict) or "evidence_type" not in field:
+                if human_context:
+                    raise ValueError(f"human_context output field {name!r} has no evidence_type")
+            elif field["evidence_type"] not in EVIDENCE_TYPES:
+                raise ValueError(f"output field {name!r} has an invalid evidence_type")
+        return self

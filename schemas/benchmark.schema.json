@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://geoevals.dev/schemas/benchmark.schema.json",
-  "schema_version": "1.0.0",
+  "schema_version": "1.1.0",
   "title": "GeoEvals benchmark spec",
   "description": "Defines a benchmark's task, inputs, outputs, cases, splits, metrics, tolerances, and provenance. Specs are authored as YAML.",
   "type": "object",
@@ -25,10 +25,22 @@
     "provenance",
     "limitations"
   ],
+  "allOf": [
+    {
+      "description": "Every output field of a human_context benchmark must carry an evidence_type.",
+      "if": {
+        "required": ["pillar"],
+        "properties": { "pillar": { "const": "human_context" } }
+      },
+      "then": {
+        "properties": { "output_schema": { "$ref": "#/$defs/humanContextOutputSchema" } }
+      }
+    }
+  ],
   "properties": {
     "schema_version": {
       "description": "Version of this benchmark spec schema that the document targets.",
-      "const": "1.0.0"
+      "const": "1.1.0"
     },
     "id": { "$ref": "#/$defs/identifier" },
     "version": { "$ref": "#/$defs/semver" },
@@ -44,8 +56,16 @@
       "type": "object"
     },
     "output_schema": {
-      "description": "JSON Schema (the output contract) that adapter output must satisfy.",
-      "type": "object"
+      "description": "JSON Schema (the output contract) that adapter output must satisfy. Its top-level properties are the output fields; each may carry an evidence_type.",
+      "type": "object",
+      "properties": {
+        "properties": {
+          "type": "object",
+          "additionalProperties": {
+            "properties": { "evidence_type": { "$ref": "#/$defs/evidenceType" } }
+          }
+        }
+      }
     },
     "cases": {
       "description": "Path, or list of paths, to the JSONL case file(s), relative to the spec file.",
@@ -94,6 +114,23 @@
     }
   },
   "$defs": {
+    "evidenceType": {
+      "description": "Kind of evidence behind an output value: observed (direct measurement), proxy (derived estimate) or judgment (subjective human rating). See docs/human-context.md.",
+      "enum": ["observed", "proxy", "judgment"]
+    },
+    "humanContextOutputSchema": {
+      "required": ["properties"],
+      "properties": {
+        "properties": {
+          "type": "object",
+          "minProperties": 1,
+          "additionalProperties": {
+            "type": "object",
+            "required": ["evidence_type"]
+          }
+        }
+      }
+    },
     "nonEmptyString": {
       "type": "string",
       "minLength": 1

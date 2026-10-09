@@ -1,4 +1,4 @@
-schema_version: "1.0.0"
+schema_version: "1.1.0"
 id: layout_fixture
 version: 0.1.0
 title: Run directory fixture benchmark
