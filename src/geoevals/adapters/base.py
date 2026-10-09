@@ -37,6 +37,10 @@ class Adapter(Protocol):
 
     The runner calls ``setup`` once with the adapter config, ``predict`` once per attempt for
     each case, and ``teardown`` once at the end. ``predict`` signals a failed case by raising.
+
+    An adapter may set the class attribute ``deterministic = True`` when it makes no paid calls
+    (a classical method, for example); its cases then cost ``0.0`` without a price table entry.
+    It is optional and read with ``getattr``, so it is not part of the protocol check.
     """
 
     name: str

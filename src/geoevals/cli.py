@@ -12,11 +12,15 @@ from geoevals import __version__
 from geoevals.adapters import create_adapter, registered_adapter_names
 from geoevals.data.verify import verify_manifest
 from geoevals.runner.config import RunConfigError, load_run_config
+from geoevals.runner.cost import PriceTable, PriceTableError, load_price_table
 from geoevals.runner.run import RunError, run_benchmark, run_logging, write_result
 from geoevals.validation import SpecValidationError, validate_file
 from geoevals.validation.validate import load_yaml
 
 logger = logging.getLogger("geoevals.cli")
+
+DEFAULT_PRICES = Path("examples/prices.example.yaml")
+"""Relative to the working directory, like the other paths on the command line."""
 
 
 def add_adapter_argument(parser: argparse.ArgumentParser) -> None:
@@ -69,6 +73,12 @@ def build_parser() -> argparse.ArgumentParser:
     run.add_argument("--config", type=Path, required=True, help="Run config (YAML).")
     run.add_argument(
         "--out", type=Path, required=True, help="Output directory for result.json and run.log."
+    )
+    run.add_argument(
+        "--prices",
+        type=Path,
+        help=f"Price table (YAML) for cost_usd (default: {DEFAULT_PRICES}; costs are null "
+        "when the default file does not exist).",
     )
     run.add_argument(
         "--log-level",
@@ -142,7 +152,29 @@ def _adapters_predict(adapter_name: str, config_path: Path | None, case_path: Pa
     return 0
 
 
-def _run(benchmark: Path, adapter_name: str, config_path: Path, out: Path, level: str) -> int:
+def _load_prices(path: Path | None) -> PriceTable | None:
+    """Load the price table. A missing default file gives None; a missing explicit file raises."""
+    if path is None:
+        if not DEFAULT_PRICES.is_file():
+            logger.warning("%s not found; running without a price table", DEFAULT_PRICES)
+            return None
+        path = DEFAULT_PRICES
+    if not path.is_file():
+        raise PriceTableError(f"{path}: file not found")
+    try:
+        return load_price_table(path)
+    except PriceTableError as exc:
+        raise PriceTableError(f"{path}: {exc}") from exc
+
+
+def _run(
+    benchmark: Path,
+    adapter_name: str,
+    config_path: Path,
+    out: Path,
+    level: str,
+    prices_path: Path | None = None,
+) -> int:
     for path in (benchmark, config_path):
         if not path.is_file():
             print(f"{path}: file not found", file=sys.stderr)
@@ -155,7 +187,12 @@ def _run(benchmark: Path, adapter_name: str, config_path: Path, out: Path, level
     out.mkdir(parents=True, exist_ok=True)
     with run_logging(out / "run.log", level):
         try:
-            result = run_benchmark(benchmark, adapter_name, config)
+            prices = _load_prices(prices_path)
+        except PriceTableError as exc:
+            logger.error("%s", exc)
+            return 1
+        try:
+            result = run_benchmark(benchmark, adapter_name, config, prices)
         except SpecValidationError as exc:
             # Logged rather than printed so the reason also lands in run.log.
             for issue in exc.issues:
@@ -184,6 +221,8 @@ def main(argv: Sequence[str] | None = None) -> int:
     if args.command == "adapters" and args.adapters_command == "predict":
         return _adapters_predict(args.adapter, args.config, args.case_input)
     if args.command == "run":
-        return _run(args.benchmark, args.adapter, args.config, args.out, args.log_level)
+        return _run(
+            args.benchmark, args.adapter, args.config, args.out, args.log_level, args.prices
+        )
     parser.print_help()
     return 0

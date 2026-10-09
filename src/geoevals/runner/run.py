@@ -19,12 +19,15 @@ time of a case. ``peak_memory_bytes`` comes from ``tracemalloc`` in the worker a
 only with ``workers: 1``, since concurrent cases would share the figure. The run's
 ``efficiency`` adds throughput, latency percentiles, timeout and failure rates, retries, and the
 peak RSS of the runner and its workers (sampled with ``psutil``).
+
+Cost: each case's ``cost_usd`` comes from the price table (see ``runner.cost``), and the run's
+``efficiency`` adds token and cost totals plus the price table hash. ``environment`` is the
+fingerprint from ``runner.environment``.
 """
 
 import hashlib
 import json
 import logging
-import platform
 import queue
 import sys
 import time
@@ -42,6 +45,8 @@ from jsonschema.exceptions import SchemaError
 from geoevals.adapters import MockAdapter, adapter_factory
 from geoevals.metrics import Metric, MetricValue, get_metric, percentile
 from geoevals.runner.config import RunConfig, canonical_config, config_hash
+from geoevals.runner.cost import Price, PriceTable, case_cost
+from geoevals.runner.environment import environment_fingerprint
 from geoevals.runner.memory import RssSampler
 from geoevals.runner.worker import Attempt, Worker, WorkerSetupError
 from geoevals.validation import (
@@ -180,10 +185,14 @@ class _Runner:
         spec: BenchmarkSpec,
         config: RunConfig,
         metrics: list[tuple[Metric, dict[str, Any]]],
+        price: Price | None,
+        deterministic: bool,
     ) -> None:
         self.spec = spec
         self.config = config
         self.metrics = metrics
+        self.price = price
+        self.deterministic = deterministic
         self.output_validator = Draft202012Validator(spec.output_schema)
 
     def run_case(self, worker: Worker, case: Case) -> dict[str, Any]:
@@ -203,6 +212,7 @@ class _Runner:
                 attempt.error_message,
             )
         record = self._record(case, attempt, retries=attempts - 1)
+        record["cost_usd"] = case_cost(self.price, self.deterministic, attempts, record["tokens"])
         log = logger.info if record["status"] == "scored" else logger.warning
         log("case %s: %s", case.case_id, record["status"])
         return record
@@ -273,9 +283,17 @@ def _resolve_metrics(spec: BenchmarkSpec) -> list[tuple[Metric, dict[str, Any]]]
 
 
 def _efficiency(
-    records: list[dict[str, Any]], wall_clock_s: float, peak_rss_bytes: int
+    records: list[dict[str, Any]],
+    wall_clock_s: float,
+    peak_rss_bytes: int,
+    priced: bool,
+    price_table_hash: str | None,
 ) -> dict[str, Any]:
-    """Run-level efficiency figures. Rates and percentiles are null when there are no cases."""
+    """Run-level efficiency figures. Rates and percentiles are null when there are no cases.
+
+    Token totals sum the cases that reported tokens. The cost total is null when the adapter is
+    not ``priced`` or any case cost is null, so a total never leaves out an unknown cost.
+    """
     total = len(records)
     latencies = sorted(r["latency_s"] for r in records if r["latency_s"] is not None)
 
@@ -284,6 +302,9 @@ def _efficiency(
 
     def rate(count: int) -> float | None:
         return count / total if total else None
+
+    costs = [r["cost_usd"] for r in records]
+    cost_total = sum(costs) if priced and None not in costs else None
 
     return {
         "wall_clock_s": wall_clock_s,
@@ -297,6 +318,11 @@ def _efficiency(
         "failure_rate": rate(sum(r["status"] != "scored" for r in records)),
         "retries_total": sum(r["retries"] for r in records),
         "peak_rss_bytes": peak_rss_bytes,
+        "tokens_input_total": sum(r["tokens"]["input"] for r in records if r["tokens"]),
+        "tokens_output_total": sum(r["tokens"]["output"] for r in records if r["tokens"]),
+        "cost_usd_total": cost_total,
+        "cost_usd_per_case": cost_total / total if cost_total is not None and total else None,
+        "price_table_hash": price_table_hash,
     }
 
 
@@ -304,8 +330,16 @@ def _timestamp(moment: datetime) -> str:
     return moment.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
 
 
-def run_benchmark(spec_path: Path, adapter_name: str, config: RunConfig) -> dict[str, Any]:
+def run_benchmark(
+    spec_path: Path,
+    adapter_name: str,
+    config: RunConfig,
+    prices: PriceTable | None = None,
+) -> dict[str, Any]:
     """Run ``adapter_name`` on every case of ``config.split`` and return the run result.
+
+    ``prices`` is the price table for ``cost_usd``; without one, costs are null unless the
+    adapter is deterministic.
 
     Raises ``SpecValidationError`` for an invalid spec or manifest and ``RunError`` when the run
     cannot start or its result is invalid. Failing cases never raise; they get a failure status.
@@ -341,7 +375,11 @@ def run_benchmark(spec_path: Path, adapter_name: str, config: RunConfig) -> dict
 
     started = datetime.now(UTC)
     clock = time.perf_counter()
-    runner = _Runner(spec, config, metrics)
+    deterministic = bool(getattr(adapter, "deterministic", False))
+    price = prices.prices.get(adapter_name) if prices else None
+    if not deterministic and price is None:
+        logger.warning("adapter %s has no price table entry; cost_usd is null", adapter_name)
+    runner = _Runner(spec, config, metrics, price, deterministic)
     workers: queue.SimpleQueue[Worker] = queue.SimpleQueue()
     adapter_config = _adapter_config(adapter_name, config, cases)
     track_memory = config.workers == 1
@@ -393,11 +431,17 @@ def run_benchmark(spec_path: Path, adapter_name: str, config: RunConfig) -> dict
         },
         "config_hash": digest,
         "dataset_manifest_hash": manifest_hash,
-        "environment": {"python": platform.python_version(), "platform": platform.platform()},
+        "environment": environment_fingerprint(),
         "started_at": _timestamp(started),
         "finished_at": _timestamp(finished),
         "summary_metrics": summary_metrics,
-        "efficiency": _efficiency(records, wall_clock_s, rss.peak_rss_bytes),
+        "efficiency": _efficiency(
+            records,
+            wall_clock_s,
+            rss.peak_rss_bytes,
+            priced=deterministic or price is not None,
+            price_table_hash=prices.hash if prices else None,
+        ),
         "failures": failures,
         "limitations": list(spec.limitations),
         "cases": records,
