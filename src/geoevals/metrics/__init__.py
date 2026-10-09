@@ -9,10 +9,13 @@ from geoevals.metrics.base import (
     bootstrap_ci,
     percentile,
 )
+from geoevals.metrics.gis import SPATIAL_METRICS
 from geoevals.metrics.registry import get_metric, register_metric, registered_metric_ids
 from geoevals.metrics.status import StatusMatch
 
 register_metric(StatusMatch())
+for _metric in SPATIAL_METRICS:
+    register_metric(_metric)
 
 __all__ = [
     "BOOTSTRAP_SEED",
