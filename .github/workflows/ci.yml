@@ -74,3 +74,7 @@ jobs:
           uv run --frozen geoevals report "$run_dir"
           cat "$run_dir/report.md"
 
+
+      # Also covered by the integration test in tests/test_reproduce.py; this shows the CLI output.
+      - name: Reproduce the published baseline
+        run: uv run --frozen geoevals reproduce baselines/gis_correctness/gis_baseline

@@ -59,3 +59,6 @@ venv = ".venv"
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = ["-ra", "--strict-markers"]
+markers = [
+    "integration: runs a whole benchmark end to end (a few seconds); part of the default run and CI",
+]

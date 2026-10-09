@@ -4,9 +4,14 @@ Only each case's ``status``, ``output`` and ``metrics`` are compared, matched by
 Everything else is ignored: timing (``latency_s``, ``scoring_s``, the ``efficiency`` block),
 memory (``peak_memory_bytes``, ``memory_note``), timestamps, ``run_id``, and the rest of the run
 record. A case found in only one run is a difference too.
+
+Values are compared exactly unless a ``Tolerance`` is given; it applies only to two numbers of
+the same type (never to booleans), so it absorbs floating-point drift between platforms but not
+a changed status, string or type.
 """
 
 import json
+import math
 from collections.abc import Iterator, Mapping
 from dataclasses import dataclass
 from pathlib import Path
@@ -25,6 +30,24 @@ class _Missing:
 
 MISSING: Any = _Missing()
 """Stands for a value that one side does not have."""
+
+
+@dataclass(frozen=True)
+class Tolerance:
+    """Two numbers match when ``|a - b| <= max(rel * max(|a|, |b|), abs)``."""
+
+    abs: float = 0.0
+    rel: float = 0.0
+
+    def close(self, a: Any, b: Any) -> bool:
+        if not (self.abs or self.rel) or type(a) is not type(b):
+            return False
+        if not isinstance(a, int | float) or isinstance(a, bool):
+            return False
+        return math.isclose(a, b, rel_tol=self.rel, abs_tol=self.abs)
+
+
+EXACT = Tolerance()
 
 
 @dataclass(frozen=True)
@@ -50,26 +73,33 @@ def _show(value: Any) -> str:
     return "<missing>" if value is MISSING else _canonical(value)
 
 
-def _diff(a: Any, b: Any, path: str) -> Iterator[tuple[str, Any, Any]]:
+def diff_values(
+    a: Any, b: Any, path: str, tolerance: Tolerance = EXACT
+) -> Iterator[tuple[str, Any, Any]]:
     """Yield ``(path, a, b)`` for every leaf where ``a`` and ``b`` differ.
 
     Mappings are compared key by key and equal-length lists item by item; anything else is
-    compared as canonical JSON, so ``1`` and ``1.0`` or ``1`` and ``true`` differ.
+    compared as canonical JSON, so ``1`` and ``1.0`` or ``1`` and ``true`` differ, unless
+    ``tolerance`` finds two numbers close.
     """
     if isinstance(a, Mapping) and isinstance(b, Mapping):
         for key in sorted(set(a) | set(b)):
-            yield from _diff(a.get(key, MISSING), b.get(key, MISSING), f"{path}.{key}")
+            yield from diff_values(
+                a.get(key, MISSING), b.get(key, MISSING), f"{path}.{key}", tolerance
+            )
     elif isinstance(a, list) and isinstance(b, list) and len(a) == len(b):
         for i, (item_a, item_b) in enumerate(zip(a, b, strict=True)):
-            yield from _diff(item_a, item_b, f"{path}[{i}]")
+            yield from diff_values(item_a, item_b, f"{path}[{i}]", tolerance)
     elif a is MISSING or b is MISSING:
         if a is not b:
             yield path, a, b
-    elif _canonical(a) != _canonical(b):
+    elif _canonical(a) != _canonical(b) and not tolerance.close(a, b):
         yield path, a, b
 
 
-def compare_runs(run_a: Mapping[str, Any], run_b: Mapping[str, Any]) -> list[Difference]:
+def compare_runs(
+    run_a: Mapping[str, Any], run_b: Mapping[str, Any], tolerance: Tolerance = EXACT
+) -> list[Difference]:
     """Per-case differences between two run results, in case-ID order."""
     cases_a = {case["case_id"]: case for case in run_a["cases"]}
     cases_b = {case["case_id"]: case for case in run_b["cases"]}
@@ -84,7 +114,9 @@ def compare_runs(run_a: Mapping[str, Any], run_b: Mapping[str, Any]) -> list[Dif
         for name in COMPARED_FIELDS:
             a = cases_a[case_id].get(name, MISSING)
             b = cases_b[case_id].get(name, MISSING)
-            differences += [Difference(case_id, f, x, y) for f, x, y in _diff(a, b, name)]
+            differences += [
+                Difference(case_id, f, x, y) for f, x, y in diff_values(a, b, name, tolerance)
+            ]
     return differences
 
 

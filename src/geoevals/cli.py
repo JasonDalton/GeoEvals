@@ -5,15 +5,18 @@ import dataclasses
 import json
 import logging
 import sys
+import tempfile
 from collections.abc import Sequence
 from pathlib import Path
+from typing import Any
 
 from geoevals import __version__
 from geoevals.adapters import create_adapter, registered_adapter_names
 from geoevals.data.verify import verify_manifest
 from geoevals.regenerate import RegenerateError, regenerate
-from geoevals.reporting.compare import compare_runs, load_run
+from geoevals.reporting.compare import Tolerance, compare_runs, load_run
 from geoevals.reporting.report import write_report
+from geoevals.reproduce import DEFAULT_TOLERANCE, baseline_spec, compare_reproduction
 from geoevals.runner.config import RunConfigError, load_run_config
 from geoevals.runner.cost import PriceTable, PriceTableError, load_price_table
 from geoevals.runner.layout import CONFIG_FILE, LOG_FILE, RESULT_FILE, write_config, write_run_dir
@@ -37,6 +40,22 @@ def add_adapter_argument(parser: argparse.ArgumentParser) -> None:
         required=True,
         choices=sorted(registered_adapter_names()),
         help="Registered adapter name.",
+    )
+
+
+def add_tolerance_arguments(parser: argparse.ArgumentParser, default: Tolerance) -> None:
+    """Add ``--abs-tol`` and ``--rel-tol``: two numbers match within either tolerance."""
+    parser.add_argument(
+        "--abs-tol",
+        type=float,
+        default=default.abs,
+        help=f"Numbers within this absolute difference match (default: {default.abs:g}).",
+    )
+    parser.add_argument(
+        "--rel-tol",
+        type=float,
+        default=default.rel,
+        help=f"Numbers within this relative difference match (default: {default.rel:g}).",
     )
 
 
@@ -105,6 +124,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
     compare.add_argument("run_a", type=Path, help="Run directory or its result.json.")
     compare.add_argument("run_b", type=Path, help="Run directory or its result.json.")
+    add_tolerance_arguments(compare, Tolerance())
 
     report = subparsers.add_parser(
         "report",
@@ -112,6 +132,37 @@ def build_parser() -> argparse.ArgumentParser:
         "be read).",
     )
     report.add_argument("run_dir", type=Path, help="Run directory or its result.json.")
+
+    reproduce = subparsers.add_parser(
+        "reproduce",
+        help="Rerun a committed baseline with its config.yaml and compare the new run with its "
+        "result.json, ignoring timing, memory, timestamps and the environment (exit 0: no "
+        "differences, 1: differences or the rerun failed, 2: the baseline could not be read).",
+    )
+    reproduce.add_argument(
+        "baseline_dir", type=Path, help="Baseline directory with result.json and config.yaml."
+    )
+    reproduce.add_argument(
+        "--root",
+        type=Path,
+        default=DEFAULT_BENCHMARKS,
+        help="Directory of benchmark directories; the spec is "
+        f"<root>/<benchmark id>/benchmark.yaml (default: {DEFAULT_BENCHMARKS}).",
+    )
+    reproduce.add_argument(
+        "--out",
+        type=Path,
+        help="Keep the rerun in <out>/<run_id>/ (default: a temporary directory, deleted "
+        "afterwards).",
+    )
+    add_tolerance_arguments(reproduce, DEFAULT_TOLERANCE)
+    reproduce.add_argument(
+        "--log-level",
+        default="WARNING",
+        type=str.upper,
+        choices=["DEBUG", "INFO", "WARNING", "ERROR"],
+        help="Log level for the rerun (default: WARNING).",
+    )
 
     bench = subparsers.add_parser("bench", help="Benchmark authoring tools.")
     bench_commands = bench.add_subparsers(dest="bench_command", required=True)
@@ -220,15 +271,31 @@ def _run(
     level: str,
     prices_path: Path | None = None,
 ) -> int:
+    run_dir = _run_to_dir(benchmark, adapter_name, config_path, out, level, prices_path)
+    if run_dir is None:
+        return 1
+    print(run_dir)
+    return 0
+
+
+def _run_to_dir(
+    benchmark: Path,
+    adapter_name: str,
+    config_path: Path,
+    out: Path,
+    level: str,
+    prices_path: Path | None = None,
+) -> Path | None:
+    """Run a benchmark into ``<out>/<run_id>/``; return that directory, or None on failure."""
     for path in (benchmark, config_path):
         if not path.is_file():
             print(f"{path}: file not found", file=sys.stderr)
-            return 1
+            return None
     try:
         config = load_run_config(config_path)
     except RunConfigError as exc:
         print(f"{config_path}: {exc}", file=sys.stderr)
-        return 1
+        return None
     run_dir: Path | None = None
     with run_logging(level) as run_log:
 
@@ -247,7 +314,7 @@ def _run(
             prices = _load_prices(prices_path)
         except PriceTableError as exc:
             logger.error("%s", exc)
-            return 1
+            return None
         try:
             result = run_benchmark(benchmark, adapter_name, config, prices, on_start=start)
         except SpecValidationError as exc:
@@ -256,10 +323,10 @@ def _run(
             for issue in exc.issues:
                 logger.error("%s: %s", exc.path, issue)
             logger.error("%s: invalid (%d error(s))", exc.path, len(exc.issues))
-            return 1
+            return None
         except (RunError, ValueError) as exc:
             logger.error("run failed: %s", exc)
-            return 1
+            return None
         assert run_dir is not None
         write_run_dir(result, run_dir)
         issues = validate_run_result_file(run_dir / RESULT_FILE)
@@ -267,18 +334,17 @@ def _run(
             for issue in issues:
                 logger.error("%s: %s", run_dir / RESULT_FILE, issue)
             logger.error("%s: invalid run result", run_dir / RESULT_FILE)
-            return 1
-    print(run_dir)
-    return 0
+            return None
+    return run_dir
 
 
-def _compare(path_a: Path, path_b: Path) -> int:
+def _compare(path_a: Path, path_b: Path, tolerance: Tolerance) -> int:
     try:
         run_a, run_b = load_run(path_a), load_run(path_b)
     except SpecValidationError as exc:
         _print_issues(exc.path, exc.issues)
         return 2
-    differences = compare_runs(run_a, run_b)
+    differences = compare_runs(run_a, run_b, tolerance)
     for difference in differences:
         print(difference)
     if not differences:
@@ -298,6 +364,48 @@ def _report(path: Path) -> int:
     for written_path in written:
         print(written_path)
     return 0
+
+
+def _reproduce(
+    baseline_dir: Path, root: Path, out: Path | None, level: str, tolerance: Tolerance
+) -> int:
+    try:
+        baseline = load_run(baseline_dir)
+    except SpecValidationError as exc:
+        _print_issues(exc.path, exc.issues)
+        return 2
+    config_path = baseline_dir / CONFIG_FILE
+    spec = baseline_spec(baseline, root)
+    adapter_name = baseline["adapter"]["name"]
+    if out is not None:
+        return _reproduce_into(baseline, spec, adapter_name, config_path, out, level, tolerance)
+    with tempfile.TemporaryDirectory(prefix="geoevals-reproduce-") as tmp:
+        return _reproduce_into(
+            baseline, spec, adapter_name, config_path, Path(tmp), level, tolerance
+        )
+
+
+def _reproduce_into(
+    baseline: dict[str, Any],
+    spec: Path,
+    adapter_name: str,
+    config_path: Path,
+    out: Path,
+    level: str,
+    tolerance: Tolerance,
+) -> int:
+    run_dir = _run_to_dir(spec, adapter_name, config_path, out, level)
+    if run_dir is None:
+        return 1
+    differences = compare_reproduction(baseline, load_run(run_dir), tolerance)
+    for difference in differences:
+        print(difference)
+    if not differences:
+        print(f"reproduced: {len(baseline['cases'])} case(s), no differences")
+        return 0
+    cases = len({difference.case_id for difference in differences})
+    print(f"{len(differences)} difference(s) in {cases} case(s)", file=sys.stderr)
+    return 1
 
 
 def _bench_regenerate(benchmark_id: str, root: Path, check: bool) -> int:
@@ -335,9 +443,12 @@ def main(argv: Sequence[str] | None = None) -> int:
             args.benchmark, args.adapter, args.config, args.out, args.log_level, args.prices
         )
     if args.command == "compare":
-        return _compare(args.run_a, args.run_b)
+        return _compare(args.run_a, args.run_b, Tolerance(args.abs_tol, args.rel_tol))
     if args.command == "report":
         return _report(args.run_dir)
+    if args.command == "reproduce":
+        tolerance = Tolerance(args.abs_tol, args.rel_tol)
+        return _reproduce(args.baseline_dir, args.root, args.out, args.log_level, tolerance)
     if args.command == "bench" and args.bench_command == "regenerate":
         return _bench_regenerate(args.benchmark_id, args.root, args.check)
     parser.print_help()
