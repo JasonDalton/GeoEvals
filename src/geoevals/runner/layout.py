@@ -61,16 +61,16 @@ def make_run_id(benchmark_id: str, adapter_name: str, started: datetime, digest:
     return f"{benchmark_id}-{adapter_name}-{started.strftime('%Y%m%dT%H%M%SZ')}-{digest[:8]}"
 
 
-def _stable(value: Any) -> Any:
+def stable(value: Any) -> Any:
     """Round floats to 15 significant digits (and ``-0.0`` to ``0.0``), recursively."""
     if isinstance(value, float):
         if not math.isfinite(value):
             raise ValueError(f"cannot write a non-finite number as JSON: {value!r}")
         return float(f"{value:.15g}") + 0.0
     if isinstance(value, Mapping):
-        return {key: _stable(item) for key, item in value.items()}
+        return {key: stable(item) for key, item in value.items()}
     if isinstance(value, list | tuple):
-        return [_stable(item) for item in value]
+        return [stable(item) for item in value]
     return value
 
 
@@ -78,7 +78,7 @@ def dumps(value: Any, indent: int | None = 2) -> str:
     """JSON with sorted keys and stable floats; compact on one line when ``indent`` is None."""
     separators = (",", ":") if indent is None else (",", ": ")
     return json.dumps(
-        _stable(value),
+        stable(value),
         indent=indent,
         separators=separators,
         sort_keys=True,

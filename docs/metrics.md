@@ -66,6 +66,12 @@ Other params: `measure_crs` (a projected CRS to measure distances, lengths and a
 features; without it features pair by position). `task_success` passes its params to every
 check.
 
+The runner builds each metric's params from three places, later ones winning: the spec's
+`tolerances` (benchmark-wide defaults), the metric's `params` in the spec, and the case's
+`tolerances`. A tolerance is written `{value, units}` in the spec or case, and only its `value`
+reaches the metric under the tolerance's name, so name it after the param (`tol_m`, `abs_tol`,
+...) and state units that match the table above.
+
 ## Measurement frames
 
 Implemented in `geoevals.metrics.spatial`. Every distance is reported in meters.

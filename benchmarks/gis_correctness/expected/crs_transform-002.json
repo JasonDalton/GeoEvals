@@ -1,0 +1,61 @@
+{
+  "crs": "EPSG:32633",
+  "features": {
+    "features": [
+      {
+        "geometry": {
+          "coordinates": [
+            391779.25925275,
+            5820072.15921103
+          ],
+          "type": "Point"
+        },
+        "properties": {
+          "name": "alpha"
+        },
+        "type": "Feature"
+      },
+      {
+        "geometry": {
+          "coordinates": [
+            398062.905425114,
+            5812148.42419565
+          ],
+          "type": "Point"
+        },
+        "properties": {
+          "name": "bravo"
+        },
+        "type": "Feature"
+      },
+      {
+        "geometry": {
+          "coordinates": [
+            -426968.398423717,
+            5488425.64570695
+          ],
+          "type": "Point"
+        },
+        "properties": {
+          "name": "charlie"
+        },
+        "type": "Feature"
+      },
+      {
+        "geometry": {
+          "coordinates": [
+            -545280.424138896,
+            5814347.23655608
+          ],
+          "type": "Point"
+        },
+        "properties": {
+          "name": "delta"
+        },
+        "type": "Feature"
+      }
+    ],
+    "type": "FeatureCollection"
+  },
+  "status": "ok"
+}

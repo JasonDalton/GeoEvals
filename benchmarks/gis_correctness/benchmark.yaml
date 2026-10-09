@@ -1,0 +1,160 @@
+schema_version: "1.0.0"
+id: gis_correctness
+version: 0.1.0
+title: GIS correctness
+pillar: spatial_reasoning
+task_statement: >-
+  Carry out one GIS operation (CRS transformation, distance, buffer, validity, spatial join,
+  overlay) on small fixture datasets and return the answer in the output contract: a status
+  and, for an answer, a GeoJSON geometry, a GeoJSON FeatureCollection, or a value with units,
+  plus the CRS of the answer. Requests that cannot be answered must get the matching status.
+intended_use: >-
+  Check whether a GIS system, classical or model-based, returns correct geometry, CRS,
+  attributes and values within stated tolerances, and abstains when it should. Scores are
+  computed on the structured output only, never on code or text.
+input_schema:
+  type: object
+  required: [case_id, operation, prompt, inputs, tolerances, strata]
+  properties:
+    case_id: {type: string, minLength: 1}
+    operation:
+      description: The GIS operation; it is also the name of the case file.
+      type: string
+      pattern: "^[a-z][a-z0-9_]*$"
+    prompt:
+      description: The request in natural language, for model-based adapters.
+      type: string
+      minLength: 1
+    inputs:
+      description: >-
+        Fixture files (name -> path relative to this spec) and operation parameters.
+      type: object
+      additionalProperties: false
+      required: [files, params]
+      properties:
+        files:
+          type: object
+          additionalProperties: {type: string, minLength: 1}
+        params: {type: object}
+    tolerances:
+      description: Tolerance name (a metric param) -> value with explicit units.
+      type: object
+      additionalProperties:
+        type: object
+        additionalProperties: false
+        required: [value, units]
+        properties:
+          value: {type: number, minimum: 0}
+          units: {type: string, minLength: 1}
+    strata:
+      type: object
+      required: [operation]
+    split: {type: string}
+output_schema:
+  $defs:
+    position:
+      type: array
+      minItems: 2
+      maxItems: 3
+      items: {type: number}
+    geometry:
+      description: A GeoJSON geometry (RFC 7946), x = easting or longitude first.
+      oneOf:
+        - type: object
+          required: [type, coordinates]
+          properties:
+            type:
+              enum: [Point, MultiPoint, LineString, MultiLineString, Polygon, MultiPolygon]
+            coordinates: {type: array}
+        - type: object
+          required: [type, geometries]
+          properties:
+            type: {const: GeometryCollection}
+            geometries:
+              type: array
+              items: {$ref: "#/$defs/geometry"}
+    feature_collection:
+      description: A GeoJSON FeatureCollection.
+      type: object
+      required: [type, features]
+      properties:
+        type: {const: FeatureCollection}
+        features:
+          type: array
+          items:
+            type: object
+            required: [type, geometry, properties]
+            properties:
+              type: {const: Feature}
+              geometry:
+                anyOf:
+                  - {type: "null"}
+                  - {$ref: "#/$defs/geometry"}
+              properties: {type: [object, "null"]}
+  type: object
+  required: [status]
+  properties:
+    status:
+      enum: [ok, needs_clarification, insufficient_data, invalid_request]
+    geometry: {$ref: "#/$defs/geometry"}
+    features: {$ref: "#/$defs/feature_collection"}
+    value: {type: [number, boolean, string]}
+    units: {type: string, minLength: 1}
+    crs:
+      description: CRS of the answer; anything pyproj.CRS.from_user_input accepts.
+      type: string
+      minLength: 1
+  if:
+    properties:
+      status: {const: ok}
+  then:
+    required: [crs]
+    oneOf:
+      - required: [geometry]
+      - required: [features]
+      - required: [value, units]
+cases:
+  - cases/crs_transform.jsonl
+  - cases/distance.jsonl
+splits:
+  test:
+    description: Every case.
+metrics:
+  - id: task_success
+    version: 1.0.0
+    params: {}
+  - id: status_match
+    version: 1.0.0
+    params: {}
+  - id: crs_match
+    version: 1.0.0
+    params: {}
+  - id: geometry_match
+    version: 1.0.0
+    params: {}
+  - id: validity_match
+    version: 1.0.0
+    params: {}
+  - id: attribute_match
+    version: 1.0.0
+    params: {}
+  - id: value_abs_error
+    version: 1.0.0
+    params: {}
+  - id: value_rel_error
+    version: 1.0.0
+    params: {}
+tolerances: {}
+dataset_manifest: manifest.yaml
+license: MIT
+provenance:
+  authors: [GeoEvals contributors]
+  created: 2026-10-09
+  reference_workflow: reference.py
+  notes: >-
+    Every expected output is computed by reference.py; regenerate them with
+    `geoevals bench regenerate gis_correctness`.
+limitations:
+  - Small synthetic fixtures; they test operation correctness, not scale or real-world data quality.
+  - Expected outputs come from one reference workflow (Shapely, pyproj, GEOS, PROJ); an error shared by those libraries would not be caught.
+  - Tolerances are set per case and stated in explicit units; a looser tolerance hides small errors.

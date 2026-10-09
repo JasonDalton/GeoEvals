@@ -1,0 +1,10 @@
+{
+  "type": "FeatureCollection",
+  "name": "places",
+  "features": [
+    {"type": "Feature", "properties": {"name": "alpha"}, "geometry": {"type": "Point", "coordinates": [13.405, 52.52]}},
+    {"type": "Feature", "properties": {"name": "bravo"}, "geometry": {"type": "Point", "coordinates": [13.5, 52.45]}},
+    {"type": "Feature", "properties": {"name": "charlie"}, "geometry": {"type": "Point", "coordinates": [2.35, 48.85]}},
+    {"type": "Feature", "properties": {"name": "delta"}, "geometry": {"type": "Point", "coordinates": [-0.1, 51.5]}}
+  ]
+}

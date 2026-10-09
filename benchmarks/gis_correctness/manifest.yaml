@@ -1,0 +1,23 @@
+schema_version: "1.0.0"
+dataset_id: gis_correctness
+description: >-
+  Fixtures of the GIS correctness benchmark. Every fixture is synthetic: written by hand by the
+  GeoEvals contributors, with no real-world source data. The fixtures together stay under 1 MB.
+assets:
+  - asset_id: places
+    path: fixtures/places.geojson
+    citation: GeoEvals contributors (2026). Synthetic places fixture for the GIS correctness benchmark.
+    access_date: 2026-10-09
+    license: MIT
+    attribution: GeoEvals contributors
+    redistributable: true
+    sha256: 4676936e3ddfc54c8db3d4ab31ce4a3b2b19d95b543f8d705386d3877465c4f6
+    crs: OGC:CRS84
+    bbox: [-0.1, 48.85, 13.5, 52.52]
+    time_range:
+      start: 2026-10-09
+      end: 2026-10-09
+    processing_steps: []
+    split: test
+    known_limitations:
+      - Synthetic points with invented names; the coordinates were chosen by hand and are not surveyed features.

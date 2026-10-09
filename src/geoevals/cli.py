@@ -11,6 +11,7 @@ from pathlib import Path
 from geoevals import __version__
 from geoevals.adapters import create_adapter, registered_adapter_names
 from geoevals.data.verify import verify_manifest
+from geoevals.regenerate import RegenerateError, regenerate
 from geoevals.reporting.compare import compare_runs, load_run
 from geoevals.reporting.report import write_report
 from geoevals.runner.config import RunConfigError, load_run_config
@@ -24,6 +25,9 @@ logger = logging.getLogger("geoevals.cli")
 
 DEFAULT_PRICES = Path("examples/prices.example.yaml")
 """Relative to the working directory, like the other paths on the command line."""
+
+DEFAULT_BENCHMARKS = Path("benchmarks")
+"""Directory holding one directory per benchmark, relative to the working directory."""
 
 
 def add_adapter_argument(parser: argparse.ArgumentParser) -> None:
@@ -108,6 +112,26 @@ def build_parser() -> argparse.ArgumentParser:
         "be read).",
     )
     report.add_argument("run_dir", type=Path, help="Run directory or its result.json.")
+
+    bench = subparsers.add_parser("bench", help="Benchmark authoring tools.")
+    bench_commands = bench.add_subparsers(dest="bench_command", required=True)
+    regen = bench_commands.add_parser(
+        "regenerate",
+        help="Recompute every expected output of a benchmark with its reference workflow "
+        "(<root>/<benchmark_id>/reference.py).",
+    )
+    regen.add_argument("benchmark_id", help="Benchmark ID (its directory name under --root).")
+    regen.add_argument(
+        "--root",
+        type=Path,
+        default=DEFAULT_BENCHMARKS,
+        help=f"Directory of benchmark directories (default: {DEFAULT_BENCHMARKS}).",
+    )
+    regen.add_argument(
+        "--check",
+        action="store_true",
+        help="Write nothing; exit 1 when a committed expected output is out of date.",
+    )
     return parser
 
 
@@ -276,6 +300,23 @@ def _report(path: Path) -> int:
     return 0
 
 
+def _bench_regenerate(benchmark_id: str, root: Path, check: bool) -> int:
+    benchmark_dir = root / benchmark_id
+    try:
+        stale = regenerate(benchmark_dir, benchmark_id, write=not check)
+    except SpecValidationError as exc:
+        _print_issues(exc.path, exc.issues)
+        return 1
+    except RegenerateError as exc:
+        print(exc, file=sys.stderr)
+        return 1
+    for path in stale:
+        print(f"{path}: {'out of date' if check else 'written'}")
+    if not stale:
+        print(f"{benchmark_dir}: expected outputs are up to date")
+    return 1 if check and stale else 0
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
@@ -297,5 +338,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         return _compare(args.run_a, args.run_b)
     if args.command == "report":
         return _report(args.run_dir)
+    if args.command == "bench" and args.bench_command == "regenerate":
+        return _bench_regenerate(args.benchmark_id, args.root, args.check)
     parser.print_help()
     return 0

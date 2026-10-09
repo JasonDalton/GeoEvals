@@ -8,6 +8,14 @@ Case files are JSONL, one case per line. Each case is a JSON object with:
 - ``split`` (optional): the split the case belongs to. May be left out only when the spec has
   exactly one split.
 - ``strata`` (optional): labels for breakdowns, copied to the case record.
+- ``tolerances`` (optional): name -> ``{value, units}``. Each value is passed to every metric as
+  the param ``name``, over the metric's params in the spec, which in turn win over the spec's
+  ``tolerances`` (the benchmark-wide defaults).
+
+``expected`` is either the reference output itself or a string: the path, relative to the spec
+file, of a JSON file that holds it. The adapter input also gets ``benchmark_dir``, the absolute
+path of the spec's directory, so an adapter can open the fixture files a case names (case paths
+are relative to the spec file).
 
 Every case ends with exactly one status. An adapter that raises gives ``adapter_error`` (retried
 up to ``max_retries`` times), a case that runs longer than ``timeout_s`` is killed and gives
@@ -28,6 +36,7 @@ fingerprint from ``runner.environment``.
 import hashlib
 import json
 import logging
+import math
 import queue
 import sys
 import time
@@ -77,11 +86,49 @@ class Case:
     input: dict[str, Any]
     expected: Any
     strata: dict[str, Any] = field(default_factory=dict)
+    tolerances: dict[str, float] = field(default_factory=dict)
 
 
 def _case_paths(spec: BenchmarkSpec, spec_dir: Path) -> list[Path]:
     paths = [spec.cases] if isinstance(spec.cases, str) else list(spec.cases)
     return [spec_dir / path for path in paths]
+
+
+@dataclass(frozen=True)
+class _Problem:
+    message: str
+
+
+def _load_expected(path: Path) -> Any:
+    """The reference output stored in the JSON file ``path``, or a ``_Problem``."""
+    if not path.is_file():
+        return _Problem(f"{path}: file not found")
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        return _Problem(f"{path}: invalid JSON: {exc}")
+
+
+def _case_tolerances(value: Any) -> dict[str, float] | str:
+    """Case ``tolerances`` as name -> value, or the reason they are invalid."""
+    if not isinstance(value, dict):
+        return "tolerances must be an object"
+    tolerances = {}
+    for name, tolerance in value.items():
+        number = tolerance.get("value") if isinstance(tolerance, dict) else None
+        units = tolerance.get("units") if isinstance(tolerance, dict) else None
+        if (
+            not isinstance(number, int | float)
+            or isinstance(number, bool)
+            or not math.isfinite(number)
+            or number < 0
+            or not isinstance(units, str)
+            or not units
+            or set(tolerance) != {"value", "units"}
+        ):
+            return f"tolerance {name!r} must be {{value: a finite number >= 0, units: a string}}"
+        tolerances[name] = float(number)
+    return tolerances
 
 
 def load_cases(spec: BenchmarkSpec, spec_dir: Path) -> list[Case]:
@@ -125,8 +172,19 @@ def load_cases(spec: BenchmarkSpec, spec_dir: Path) -> list[Case]:
             if not isinstance(strata, dict):
                 problems.append(f"{where}: case {case_id!r} strata must be an object")
                 continue
+            tolerances = _case_tolerances(record.get("tolerances", {}))
+            if isinstance(tolerances, str):
+                problems.append(f"{where}: case {case_id!r} {tolerances}")
+                continue
+            expected = record["expected"]
+            if isinstance(expected, str):
+                expected = _load_expected(spec_dir / expected)
+                if isinstance(expected, _Problem):
+                    problems.append(f"{where}: case {case_id!r} expected: {expected.message}")
+                    continue
             case_input = {key: value for key, value in record.items() if key != "expected"}
-            cases[case_id] = Case(case_id, split, case_input, record["expected"], strata)
+            case_input["benchmark_dir"] = str(spec_dir.resolve())
+            cases[case_id] = Case(case_id, split, case_input, expected, strata, tolerances)
     if problems:
         raise RunError("\n".join(problems))
     return [cases[case_id] for case_id in sorted(cases)]
@@ -164,11 +222,16 @@ def _output_problem(validator: Draft202012Validator, output: Any) -> tuple[str |
     return ("; ".join(map(str, issues)) or None), True
 
 
-def _score(metrics: list[tuple[Metric, dict[str, Any]]], output: Any, expected: Any) -> dict:
+def _score(
+    metrics: list[tuple[Metric, dict[str, Any]]],
+    output: Any,
+    expected: Any,
+    tolerances: dict[str, float],
+) -> dict:
     scores: dict[str, Any] = {}
     for metric, params in metrics:
         try:
-            value = metric.score(output, expected, params)
+            value = metric.score(output, expected, {**params, **tolerances})
         except Exception as exc:
             logger.exception("metric %s raised while scoring", metric.id)
             detail = {"scoring_error": f"{type(exc).__name__}: {exc}"}
@@ -264,12 +327,15 @@ class _Runner:
         record["status"] = "scored"
         record["output"] = attempt.output
         start = time.perf_counter()
-        record["metrics"] = _score(self.metrics, attempt.output, case.expected)
+        record["metrics"] = _score(self.metrics, attempt.output, case.expected, case.tolerances)
         record["scoring_s"] = time.perf_counter() - start
         return record
 
 
 def _resolve_metrics(spec: BenchmarkSpec) -> list[tuple[Metric, dict[str, Any]]]:
+    """Each spec metric and its params: the spec's ``tolerances`` values as defaults, overridden
+    by the metric's own ``params``."""
+    defaults = {name: tolerance.value for name, tolerance in spec.tolerances.items()}
     resolved = []
     for ref in spec.metrics:
         metric = get_metric(ref.id)
@@ -280,7 +346,7 @@ def _resolve_metrics(spec: BenchmarkSpec) -> list[tuple[Metric, dict[str, Any]]]
                 ref.version,
                 metric.version,
             )
-        resolved.append((metric, dict(ref.params)))
+        resolved.append((metric, {**defaults, **ref.params}))
     return resolved
 
 
