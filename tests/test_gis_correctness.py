@@ -223,6 +223,74 @@ def test_gis_baseline_scores_full_task_success() -> None:
     assert result["efficiency"]["cost_usd_total"] == 0.0
 
 
+# --- CRS transformation cases ------------------------------------------------------------------
+
+CRS_FAMILIES = {
+    "web_mercator",
+    "utm",
+    "state_plane",
+    "datum_shift",
+    "mercator",
+    "polar_stereographic",
+    "invalid",
+}
+AXIS_TRAP_CASE = "crs_transform-005"
+"""UTM zone 33N to EPSG:4326, whose authority axis order is latitude, longitude."""
+
+
+def _crs_cases() -> list[dict[str, Any]]:
+    return [case for path, case in _case_lines() if path.stem == "crs_transform"]
+
+
+def test_crs_cases_cover_the_traps() -> None:
+    cases = _crs_cases()
+    assert len(cases) >= 8
+    for case in cases:
+        assert case["tolerances"]["tol_m"]["units"] == "m", case["case_id"]
+        assert isinstance(case["strata"]["trap"], bool), case["case_id"]
+        assert case["strata"]["crs_family"] in CRS_FAMILIES, case["case_id"]
+    assert {case["strata"]["crs_family"] for case in cases} == CRS_FAMILIES
+    by_id = {case["case_id"]: case for case in cases}
+    params = [case["inputs"]["params"] for case in cases]
+    assert any(p.get("source_crs") == "EPSG:4267" for p in params), "NAD27 datum change"
+    assert by_id[AXIS_TRAP_CASE]["inputs"]["params"]["target_crs"] == "EPSG:4326"
+    points = [p["geometry"]["coordinates"] for p in params if p.get("source_crs") == "OGC:CRS84"]
+    assert any(abs(lon) >= 179 for lon, _ in points), "point near the antimeridian"
+    assert any(abs(lat) >= 75 for _, lat in points), "high-latitude point"
+    invalid = [case for case in cases if case["expected"] == {"status": "invalid_request"}]
+    assert invalid and all(case["strata"]["trap"] for case in invalid)
+
+
+def test_gis_baseline_passes_every_crs_case() -> None:
+    result = run_benchmark(SPEC, "gis_baseline", RunConfig(split="test"))
+    crs = [case for case in result["cases"] if case["case_id"].startswith("crs_transform-")]
+    assert len(crs) == len(_crs_cases())
+    assert {case["case_id"]: case["metrics"]["task_success"]["value"] for case in crs} == {
+        case["case_id"]: 1.0 for case in crs
+    }
+
+
+def test_mock_with_swapped_axes_fails_and_names_the_swap() -> None:
+    spec = load_benchmark_spec(SPEC)
+    references = {case.case_id: case.expected for case in load_cases(spec, BENCH)}
+    swapped = json.loads(json.dumps(references[AXIS_TRAP_CASE]))
+    swapped["geometry"]["coordinates"].reverse()
+    adapter = {
+        "references": references,
+        "cases": {AXIS_TRAP_CASE: {"behavior": "wrong", "output": swapped}},
+    }
+    result = run_benchmark(SPEC, "mock", RunConfig(split="test", adapter=adapter))
+    [case] = [case for case in result["cases"] if case["case_id"] == AXIS_TRAP_CASE]
+    task_success = case["metrics"]["task_success"]
+    assert (task_success["value"], task_success["passed"]) == (0.0, False)
+    assert task_success["detail"]["failed"] == ["geometry_match"]
+    geometry = task_success["detail"]["checks"]["geometry_match"]["detail"]
+    assert (geometry["reason"], geometry["axis_swapped"]) == ("axis_order_swapped", True)
+    assert case["metrics"]["geometry_match"]["detail"]["reason"] == "axis_order_swapped"
+    others = [c for c in result["cases"] if c["case_id"] != AXIS_TRAP_CASE]
+    assert all(c["metrics"]["task_success"]["passed"] for c in others)
+
+
 # --- runner: expected files, tolerances, benchmark_dir -----------------------------------------
 
 

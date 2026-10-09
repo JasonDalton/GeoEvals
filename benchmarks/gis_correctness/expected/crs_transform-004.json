@@ -1,0 +1,11 @@
+{
+  "crs": "OGC:CRS84",
+  "geometry": {
+    "coordinates": [
+      -74.0060000391036,
+      40.7128000058393
+    ],
+    "type": "Point"
+  },
+  "status": "ok"
+}

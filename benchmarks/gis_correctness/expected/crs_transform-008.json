@@ -1,0 +1,11 @@
+{
+  "crs": "EPSG:3832",
+  "geometry": {
+    "coordinates": [
+      3350716.67287753,
+      -1885212.94602712
+    ],
+    "type": "Point"
+  },
+  "status": "ok"
+}
