@@ -7,7 +7,11 @@ license = "MIT"
 license-files = ["LICENSE"]
 authors = [{ name = "GeoEvals contributors" }]
 requires-python = ">=3.11"
-dependencies = []
+dependencies = [
+    "jsonschema>=4.26.0",
+    "pydantic>=2",
+    "pyyaml>=6.0.3",
+]
 
 [project.scripts]
 geoevals = "geoevals.cli:main"
@@ -18,6 +22,9 @@ build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/geoevals"]
+
+[tool.hatch.build.targets.wheel.force-include]
+"schemas" = "geoevals/_schemas"
 
 [dependency-groups]
 dev = [

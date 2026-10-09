@@ -1,0 +1,38 @@
+schema_version: "1.0.0"
+id: example_distance
+version: 0.1.0
+title: Example distance benchmark
+pillar: spatial_reasoning
+task_statement: Compute the geodesic distance in meters between two points.
+intended_use: Fixture for spec validation tests.
+input_schema:
+  type: object
+  required: [a, b]
+  properties:
+    a: {type: array}
+    b: {type: array}
+output_schema:
+  type: object
+  required: [status]
+  properties:
+    status: {enum: [ok, needs_clarification, insufficient_data, invalid_request]}
+cases: cases/distance.jsonl
+splits:
+  test:
+    description: All cases.
+metrics:
+  - id: value_abs_error
+    version: 1.0.0
+    params:
+      units: m
+tolerances:
+  distance:
+    value: 0.01
+    units: m
+dataset_manifest: manifest.yaml
+license: MIT
+provenance:
+  authors: [GeoEvals contributors]
+  created: 2026-10-09
+limitations:
+  - Synthetic points only.
