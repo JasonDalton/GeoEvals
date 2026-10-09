@@ -1,7 +1,8 @@
-"""Validate benchmark specs and dataset manifests against their JSON Schemas.
+"""Validate benchmark specs, dataset manifests, and run results against their JSON Schemas.
 
 Benchmark specs are also checked against the metric registry. Dataset manifests are also checked
-for duplicate asset IDs and for restricted assets placed where git could commit them.
+for duplicate asset IDs and for restricted assets placed where git could commit them. Run results
+are also checked for duplicate case IDs.
 """
 
 import json
@@ -19,6 +20,7 @@ from geoevals.metrics.registry import registered_metric_ids
 from geoevals.validation.benchmark import BenchmarkSpec
 from geoevals.validation.git import GitPathState, git_path_state
 from geoevals.validation.manifest import DatasetManifest
+from geoevals.validation.run_result import RunResult
 
 _PACKAGED_SCHEMAS = Path(__file__).resolve().parent.parent / "_schemas"
 _REPO_SCHEMAS = Path(__file__).resolve().parents[3] / "schemas"
@@ -243,13 +245,65 @@ def load_dataset_manifest(path: Path, check_git: bool = True) -> DatasetManifest
     return DatasetManifest.model_validate(document)
 
 
+# --- run results -----------------------------------------------------------------------------
+
+
+def validate_run_result_document(document: Any) -> list[ValidationIssue]:
+    """Validate a parsed run result. Returns an empty list when the run result is valid."""
+    issues = schema_issues(document, "run-result.schema.json")
+    if issues:
+        return issues
+    first_index: dict[str, int] = {}
+    for i, case in enumerate(document["cases"]):
+        case_id = case["case_id"]
+        if case_id in first_index:
+            issues.append(
+                ValidationIssue(
+                    f"cases[{i}].case_id",
+                    f"duplicate case_id {case_id!r} (first used by cases[{first_index[case_id]}])",
+                )
+            )
+        first_index.setdefault(case_id, i)
+    return issues
+
+
+def _load_json(path: Path) -> tuple[Any, list[ValidationIssue]]:
+    try:
+        return json.loads(path.read_text(encoding="utf-8")), []
+    except json.JSONDecodeError as exc:
+        return None, [ValidationIssue("<root>", f"invalid JSON: {exc}")]
+
+
+def validate_run_result_file(path: Path) -> list[ValidationIssue]:
+    """Load a run result (``<run-dir>/result.json``) and validate it."""
+    document, issues = _load_json(path)
+    if issues:
+        return issues
+    return validate_run_result_document(document)
+
+
+def load_run_result(path: Path) -> RunResult:
+    """Load and validate a run result. Raises ``SpecValidationError`` if it is invalid."""
+    issues = validate_run_result_file(path)
+    if issues:
+        raise SpecValidationError(path, issues)
+    document, _ = _load_json(path)
+    return RunResult.model_validate(document)
+
+
 # --- document type dispatch ------------------------------------------------------------------
 
-DocumentType = Literal["benchmark spec", "dataset manifest"]
+DocumentType = Literal["benchmark spec", "dataset manifest", "run result"]
 
 
 def detect_document_type(path: Path) -> DocumentType:
-    """Guess the document type: JSONL files and mappings with ``assets`` are dataset manifests."""
+    """Guess the document type.
+
+    ``result.json`` files and mappings with ``run_id`` are run results, JSONL files and mappings
+    with ``assets`` are dataset manifests, and anything else is a benchmark spec.
+    """
+    if path.name == "result.json":
+        return "run result"
     if path.suffix == ".jsonl":
         return "dataset manifest"
     try:
@@ -258,6 +312,8 @@ def detect_document_type(path: Path) -> DocumentType:
         return "benchmark spec"
     if isinstance(document, dict) and "assets" in document:
         return "dataset manifest"
+    if isinstance(document, dict) and "run_id" in document:
+        return "run result"
     return "benchmark spec"
 
 
@@ -266,4 +322,6 @@ def validate_file(path: Path) -> tuple[DocumentType, list[ValidationIssue]]:
     kind = detect_document_type(path)
     if kind == "dataset manifest":
         return kind, validate_manifest_file(path)
+    if kind == "run result":
+        return kind, validate_run_result_file(path)
     return kind, validate_benchmark_file(path)

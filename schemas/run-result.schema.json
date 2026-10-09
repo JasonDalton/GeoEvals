@@ -1,0 +1,306 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://geoevals.dev/schemas/run-result.schema.json",
+  "schema_version": "1.0.0",
+  "title": "GeoEvals run result",
+  "description": "Machine-readable record of one benchmark run (`<run-dir>/result.json`): what ran, on what data and environment, every per-case outcome, and the run-level summaries needed to reproduce, compare, and report it.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "run_id",
+    "schema_version",
+    "benchmark",
+    "adapter",
+    "config_hash",
+    "dataset_manifest_hash",
+    "environment",
+    "started_at",
+    "finished_at",
+    "summary_metrics",
+    "efficiency",
+    "failures",
+    "limitations",
+    "cases"
+  ],
+  "properties": {
+    "run_id": {
+      "description": "Unique run identifier; also the name of the run directory.",
+      "$ref": "#/$defs/nonEmptyString"
+    },
+    "schema_version": {
+      "description": "Version of this run result schema that the document targets.",
+      "const": "1.0.0"
+    },
+    "benchmark": {
+      "description": "Benchmark spec that was run.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "version"],
+      "properties": {
+        "id": { "$ref": "#/$defs/identifier" },
+        "version": { "$ref": "#/$defs/semver" }
+      }
+    },
+    "adapter": {
+      "description": "Adapter that produced the outputs, with the configuration it was given.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "version", "config"],
+      "properties": {
+        "name": { "$ref": "#/$defs/nonEmptyString" },
+        "version": { "$ref": "#/$defs/nonEmptyString" },
+        "config": { "type": "object" }
+      }
+    },
+    "config_hash": {
+      "description": "SHA-256 of the canonicalized run config.",
+      "$ref": "#/$defs/sha256"
+    },
+    "dataset_manifest_hash": {
+      "description": "SHA-256 of the benchmark's dataset manifest file.",
+      "$ref": "#/$defs/sha256"
+    },
+    "environment": {
+      "description": "Environment fingerprint (Python, OS, hardware, library versions, git state, lockfile hash).",
+      "type": "object"
+    },
+    "started_at": { "$ref": "#/$defs/timestamp" },
+    "finished_at": { "$ref": "#/$defs/timestamp" },
+    "summary_metrics": {
+      "description": "Aggregate of each metric over the run's cases, keyed by metric ID.",
+      "type": "object",
+      "propertyNames": { "$ref": "#/$defs/identifier" },
+      "additionalProperties": { "$ref": "#/$defs/summaryMetric" }
+    },
+    "efficiency": { "$ref": "#/$defs/efficiency" },
+    "failures": {
+      "description": "Every case whose status is not `scored`.",
+      "type": "array",
+      "items": { "$ref": "#/$defs/failure" }
+    },
+    "limitations": {
+      "description": "Known limitations of the run, including those copied from the benchmark spec.",
+      "type": "array",
+      "items": { "$ref": "#/$defs/nonEmptyString" }
+    },
+    "cases": {
+      "description": "Per-case records, in case-ID order.",
+      "type": "array",
+      "items": { "$ref": "#/$defs/caseRecord" }
+    }
+  },
+  "$defs": {
+    "nonEmptyString": {
+      "type": "string",
+      "minLength": 1
+    },
+    "identifier": {
+      "description": "lower_snake_case identifier",
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]*$"
+    },
+    "semver": {
+      "description": "semantic version (MAJOR.MINOR.PATCH)",
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)(-((0|[1-9][0-9]*|[0-9]*[a-zA-Z-][0-9a-zA-Z-]*)(\\.(0|[1-9][0-9]*|[0-9]*[a-zA-Z-][0-9a-zA-Z-]*))*))?(\\+([0-9a-zA-Z-]+(\\.[0-9a-zA-Z-]+)*))?$"
+    },
+    "sha256": {
+      "description": "lowercase hex SHA-256 digest (64 characters)",
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "timestamp": {
+      "description": "ISO 8601 timestamp with time zone (YYYY-MM-DDTHH:MM:SS[.ffffff]Z)",
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]+)?(Z|[+-][0-9]{2}:[0-9]{2})$"
+    },
+    "nonNegativeNumberOrNull": {
+      "type": ["number", "null"],
+      "minimum": 0
+    },
+    "nonNegativeInteger": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "status": {
+      "description": "Outcome of a case. Only `scored` cases have metric values.",
+      "enum": ["scored", "adapter_error", "timeout", "invalid_output", "skipped"]
+    },
+    "error": {
+      "description": "Exception or validation failure that ended a case.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "message"],
+      "properties": {
+        "type": { "$ref": "#/$defs/nonEmptyString" },
+        "message": { "type": "string" }
+      }
+    },
+    "metricValue": {
+      "description": "Score of one metric on one case.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["value", "passed", "detail"],
+      "properties": {
+        "value": { "type": ["number", "null"] },
+        "passed": { "type": ["boolean", "null"] },
+        "detail": { "type": "object" }
+      }
+    },
+    "summaryMetric": {
+      "description": "Aggregate of one metric over the run's cases. Statistics are null when n is 0.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["version", "mean", "median", "n", "n_failed", "ci_low", "ci_high"],
+      "properties": {
+        "version": { "$ref": "#/$defs/semver" },
+        "mean": { "type": ["number", "null"] },
+        "median": { "type": ["number", "null"] },
+        "n": { "$ref": "#/$defs/nonNegativeInteger" },
+        "n_failed": { "$ref": "#/$defs/nonNegativeInteger" },
+        "ci_low": {
+          "description": "Lower bound of the 95% bootstrap confidence interval of the mean.",
+          "type": ["number", "null"]
+        },
+        "ci_high": {
+          "description": "Upper bound of the 95% bootstrap confidence interval of the mean.",
+          "type": ["number", "null"]
+        }
+      }
+    },
+    "efficiency": {
+      "description": "Run-level throughput, latency, failure, memory, token, and cost figures. Latency statistics are in seconds.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "wall_clock_s": { "$ref": "#/$defs/nonNegativeNumberOrNull" },
+        "cases_total": { "$ref": "#/$defs/nonNegativeInteger" },
+        "cases_per_s": { "$ref": "#/$defs/nonNegativeNumberOrNull" },
+        "latency_p50_s": { "$ref": "#/$defs/nonNegativeNumberOrNull" },
+        "latency_p90_s": { "$ref": "#/$defs/nonNegativeNumberOrNull" },
+        "latency_p99_s": { "$ref": "#/$defs/nonNegativeNumberOrNull" },
+        "latency_max_s": { "$ref": "#/$defs/nonNegativeNumberOrNull" },
+        "timeout_rate": { "$ref": "#/$defs/nonNegativeNumberOrNull" },
+        "failure_rate": { "$ref": "#/$defs/nonNegativeNumberOrNull" },
+        "retries_total": { "$ref": "#/$defs/nonNegativeInteger" },
+        "peak_rss_bytes": {
+          "type": ["integer", "null"],
+          "minimum": 0
+        },
+        "tokens_input_total": { "$ref": "#/$defs/nonNegativeInteger" },
+        "tokens_output_total": { "$ref": "#/$defs/nonNegativeInteger" },
+        "cost_usd_total": { "$ref": "#/$defs/nonNegativeNumberOrNull" },
+        "cost_usd_per_case": { "$ref": "#/$defs/nonNegativeNumberOrNull" },
+        "price_table_hash": {
+          "anyOf": [{ "$ref": "#/$defs/sha256" }, { "type": "null" }]
+        }
+      }
+    },
+    "failure": {
+      "description": "A case that was not scored.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["case_id", "status", "error"],
+      "properties": {
+        "case_id": { "$ref": "#/$defs/nonEmptyString" },
+        "status": {
+          "allOf": [{ "$ref": "#/$defs/status" }, { "not": { "const": "scored" } }]
+        },
+        "error": {
+          "anyOf": [{ "$ref": "#/$defs/error" }, { "type": "null" }]
+        }
+      }
+    },
+    "tokens": {
+      "description": "Token counts the adapter reported for the case.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["input", "output"],
+      "properties": {
+        "input": { "$ref": "#/$defs/nonNegativeInteger" },
+        "output": { "$ref": "#/$defs/nonNegativeInteger" }
+      }
+    },
+    "stratumValue": {
+      "type": ["string", "number", "boolean"]
+    },
+    "caseRecord": {
+      "description": "Outcome of one case. The same records are written one per line to `cases.jsonl`.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "case_id",
+        "split",
+        "status",
+        "strata",
+        "output",
+        "metrics",
+        "latency_s",
+        "retries",
+        "tokens",
+        "cost_usd",
+        "peak_memory_bytes",
+        "error"
+      ],
+      "allOf": [
+        {
+          "description": "memory_note is required when peak_memory_bytes is null",
+          "if": {
+            "required": ["peak_memory_bytes"],
+            "properties": { "peak_memory_bytes": { "type": "null" } }
+          },
+          "then": { "required": ["memory_note"] }
+        }
+      ],
+      "properties": {
+        "case_id": { "$ref": "#/$defs/nonEmptyString" },
+        "split": { "$ref": "#/$defs/identifier" },
+        "status": { "$ref": "#/$defs/status" },
+        "strata": {
+          "description": "Labels used for breakdowns, for example operation, crs_family, region.",
+          "type": "object",
+          "propertyNames": { "$ref": "#/$defs/identifier" },
+          "additionalProperties": { "$ref": "#/$defs/stratumValue" }
+        },
+        "output": {
+          "description": "Adapter output; null when the adapter produced none.",
+          "type": ["object", "null"]
+        },
+        "metrics": {
+          "description": "Metric values keyed by metric ID; empty unless status is `scored`.",
+          "type": "object",
+          "propertyNames": { "$ref": "#/$defs/identifier" },
+          "additionalProperties": { "$ref": "#/$defs/metricValue" }
+        },
+        "latency_s": {
+          "description": "Adapter wall-clock time in seconds; null when the adapter was not called.",
+          "$ref": "#/$defs/nonNegativeNumberOrNull"
+        },
+        "retries": { "$ref": "#/$defs/nonNegativeInteger" },
+        "tokens": {
+          "anyOf": [{ "$ref": "#/$defs/tokens" }, { "type": "null" }]
+        },
+        "cost_usd": {
+          "description": "Estimated cost; null when the adapter has no price table entry.",
+          "$ref": "#/$defs/nonNegativeNumberOrNull"
+        },
+        "peak_memory_bytes": {
+          "type": ["integer", "null"],
+          "minimum": 0
+        },
+        "memory_note": {
+          "description": "Why peak_memory_bytes is null.",
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "trajectory": {
+          "description": "Ordered tool-call records of an agent adapter.",
+          "type": "array",
+          "items": { "type": "object" }
+        },
+        "error": {
+          "anyOf": [{ "$ref": "#/$defs/error" }, { "type": "null" }]
+        }
+      }
+    }
+  }
+}
