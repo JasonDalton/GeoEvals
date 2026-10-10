@@ -22,6 +22,12 @@ metrics and schemas carry their own versions; see
 Both tracks call the local Claude Code CLI (`claude -p`) signed in to a Claude subscription;
 no API key is used. The adapter version records the Claude Code version (`0.1.0+cc.<version>`).
 
+### Fixed
+
+- `geoevals bench regenerate --check` and the expected-output tests failed on Linux: PROJ and
+  GEOS results differ in the last digits between platforms, and the check compared bytes. It now
+  compares numbers to 5 decimal places.
+
 ## 0.1.0 - 2026-10-09
 
 The first release: the evaluation contracts, a deterministic GIS correctness benchmark and a

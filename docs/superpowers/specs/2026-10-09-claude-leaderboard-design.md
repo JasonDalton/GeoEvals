@@ -229,19 +229,18 @@ No test calls a model.
   incomparable runs, `add`, and `--check`.
 - `tests/test_docs.py`: the README table matches the committed results.
 
-## Prerequisite: the Linux expected-output failure (diagnosed)
+## Prerequisite: the Linux expected-output failure (fixed)
 
-CI on Ubuntu fails three `gis_correctness` tests. Diagnosis (2026-10-10, reproduced in Docker on
-linux/arm64 and linux/amd64): `runner.layout.stable` rounds floats to 15 significant digits
-(`src/geoevals/runner/layout.py:69`) and `regenerate` compares the files byte for byte
-(`src/geoevals/regenerate.py:120`). PROJ and GEOS differ in the last bits between platforms,
-so 6 files differ in the 15th digit; each platform differs from the others. The largest
-difference is 5.7e-7 m (`spatial_join-005`, `distance_m`, against a case tolerance of 0.01 m).
+CI on Ubuntu failed three `gis_correctness` tests. Diagnosis (2026-10-10, reproduced in Docker
+on linux/arm64 and linux/amd64): `runner.layout.stable` rounds floats to 15 significant digits
+(`src/geoevals/runner/layout.py:69`) and `regenerate` compared the files byte for byte. PROJ
+and GEOS differ in the last bits between platforms, so 6 files differed in the 15th digit; each
+platform differed from the others. The largest difference was 5.7e-7 m (`spatial_join-005`,
+`distance_m`, against a case tolerance of 0.01 m).
 
-This does not block the leaderboard: answers are scored against the committed expected outputs
-with the case tolerances, which are about four orders of magnitude larger than these
-differences. The fix (for example comparing within the `geoevals reproduce` tolerance) changes
-the regenerate check, so it waits for the user's decision.
+Fix (approved 2026-10-10): `regenerate` compares numbers to 5 decimal places (absolute
+difference at most 1e-5) instead of bytes. The full test suite passes on linux/amd64 in
+Docker.
 
 ## Risks
 
