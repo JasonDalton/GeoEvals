@@ -9,13 +9,17 @@ import pytest
 
 from claude_fakes import FAKE_COMMAND, MODEL, FakeClaude, init_event, result_event
 from geoevals.adapters import SkipCase, TokenUsage, adapter_factory, registered_adapter_names
+from geoevals.adapters import claude as claude_module
 from geoevals.adapters.claude import (
     MODELS,
+    RUN_PYTHON_TOOL,
     ClaudeConfigError,
     ClaudeDirectAdapter,
     ClaudePythonAdapter,
+    trajectory_from_events,
 )
-from geoevals.leaderboard.claude_cli import ClaudeRefusal
+from geoevals.leaderboard import sandbox
+from geoevals.leaderboard.claude_cli import ClaudeRefusal, ClaudeTimeout, CliCall, CliResult
 from geoevals.leaderboard.prompting import (
     cli_schema,
     direct_message,
@@ -26,6 +30,7 @@ from geoevals.leaderboard.prompting import (
 )
 from geoevals.runner.config import parse_run_config
 from geoevals.runner.run import Case, load_cases, run_benchmark
+from geoevals.trajectory import trajectory_problem
 from geoevals.validation import load_benchmark_spec
 
 REPO = Path(__file__).parent.parent
@@ -228,3 +233,117 @@ def test_direct_adapter_in_a_full_run(fake: FakeClaude) -> None:
     assert record["tokens"] == {"input": 2 + 1099 + 10, "output": 115}
     assert record["cost_usd"] is None
     assert result["adapter"]["name"] == "claude_direct_haiku_5_5"
+
+
+# --- python adapter ---------------------------------------------------------------------------
+
+
+def _python(monkeypatch: pytest.MonkeyPatch, removed: list[str]) -> ClaudePythonAdapter:
+    monkeypatch.setattr(sandbox, "docker_available", lambda: True)
+    monkeypatch.setattr(sandbox, "remove_container", removed.append)
+    adapter = ClaudePythonAdapter("haiku_5_5")
+    adapter.setup({"claude_command": list(FAKE_COMMAND), "sandbox_image": "img:1"})
+    return adapter
+
+
+def _tool_use(tool_id: str, name: str, payload: dict[str, Any]) -> dict[str, Any]:
+    block = {"type": "tool_use", "id": tool_id, "name": name, "input": payload}
+    return {"type": "assistant", "message": {"content": [block]}}
+
+
+def _tool_result(tool_id: str, text: object, is_error: bool = False) -> dict[str, Any]:
+    block = {"type": "tool_result", "tool_use_id": tool_id, "content": text, "is_error": is_error}
+    return {"type": "user", "message": {"content": [block]}}
+
+
+ANSWER = {"status": "ok", "value": 1.5, "units": "m", "crs": "EPSG:32633"}
+TOOL_EVENTS = [
+    _tool_use("t1", RUN_PYTHON_TOOL, {"code": "print(1/0)"}),
+    _tool_result("t1", "exit code: 1\n--- stderr ---\nZeroDivisionError", is_error=True),
+    _tool_use("t2", RUN_PYTHON_TOOL, {"code": "print(1.5)"}),
+    _tool_result("t2", [{"type": "text", "text": "exit code: 0\n1.5"}]),
+    _tool_use("t3", "StructuredOutput", ANSWER),
+    _tool_result("t3", "Structured output provided successfully"),
+]
+
+
+def test_trajectory_from_events() -> None:
+    steps = trajectory_from_events([init_event(), *TOOL_EVENTS, result_event(ANSWER)])
+    assert trajectory_problem(steps) is None
+    assert [step["step"] for step in steps] == [0, 1, 2]
+    assert [step["tool"] for step in steps] == ["run_python", "run_python", None]
+    assert steps[0]["status"] == "error" and "ZeroDivisionError" in steps[0]["error_message"]
+    assert steps[1] == {
+        "step": 1,
+        "tool": "run_python",
+        "args": {"code": "print(1.5)"},
+        "status": "ok",
+        "error_message": None,
+        "duration_s": None,
+        "tokens": None,
+    }
+    assert steps[2]["args"] == {}
+
+
+def test_python_adapter_passes_the_mcp_server_and_paths(
+    fake: FakeClaude, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    removed: list[str] = []
+    adapter = _python(monkeypatch, removed)
+    tools = ["StructuredOutput", RUN_PYTHON_TOOL]
+    fake.set([init_event(tools=tools), *TOOL_EVENTS, result_event(ANSWER)])
+    case = _case(GIS, "distance-003")
+    response = adapter.predict(case.input)
+    assert response.output == ANSWER
+    assert response.trajectory is not None and len(response.trajectory) == 3
+    record = fake.record
+    argv = record["argv"]
+    assert argv[argv.index("--allowedTools") + 1] == RUN_PYTHON_TOOL
+    assert record["cwd_entries"] == ["mcp.json"]
+    assert "/bench/fixtures/distance_points.geojson" in record["stdin"]
+    assert "FeatureCollection" not in record["stdin"]
+    system = argv[argv.index("--system-prompt") + 1]
+    assert "run_python" in system
+    [name] = removed
+    assert name.startswith("geoevals-")
+
+
+def test_python_adapter_mcp_config(fake: FakeClaude, monkeypatch: pytest.MonkeyPatch) -> None:
+    calls: list[CliCall] = []
+    monkeypatch.setattr(claude_module, "run_cli", lambda call: calls.append(call) or _ok_result())
+    removed: list[str] = []
+    adapter = _python(monkeypatch, removed)
+    adapter.predict(_case(GIS, "distance-003").input)
+    [call] = calls
+    assert call.mcp_config is not None
+    server = call.mcp_config["mcpServers"]["sandbox"]
+    args = server["args"]
+    assert args[:2] == ["-m", "geoevals.leaderboard.sandbox_mcp"]
+    assert args[args.index("--image") + 1] == "img:1"
+    assert args[args.index("--name") + 1] == removed[0]
+    assert args[args.index("--max-calls") + 1] == "20"
+    assert Path(args[args.index("--fixtures") + 1]) == GIS.resolve() / "fixtures"
+
+
+def _ok_result() -> CliResult:
+    return CliResult(ANSWER, 10, 5, (MODEL,), 2, "9.9.9", [])
+
+
+def test_python_adapter_removes_the_container_on_error(
+    fake: FakeClaude, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    removed: list[str] = []
+    adapter = _python(monkeypatch, removed)
+    fake.set([init_event(), result_event(ANSWER)], sleep_s=30)
+    adapter.setup(
+        {"claude_command": list(FAKE_COMMAND), "sandbox_image": "img:1", "case_timeout_s": 1}
+    )
+    with pytest.raises(ClaudeTimeout):
+        adapter.predict(_case(GIS, "distance-003").input)
+    assert len(removed) == 1
+
+
+def test_python_setup_fails_without_docker(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(sandbox, "docker_available", lambda: False)
+    with pytest.raises(RuntimeError, match="Docker"):
+        ClaudePythonAdapter("haiku_5_5").setup({"claude_command": list(FAKE_COMMAND)})
