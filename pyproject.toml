@@ -68,8 +68,9 @@ venv = ".venv"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-addopts = ["-ra", "--strict-markers", "-m", "not network"]
+addopts = ["-ra", "--strict-markers", "-m", "not network and not docker"]
 markers = [
     "integration: runs a whole benchmark end to end (a few seconds); part of the default run and CI",
+    "docker: needs a running Docker daemon (the python-track sandbox); excluded by default and from CI, run manually with `pytest -m docker`",
     "network: downloads real data (OpenStreetMap via Overpass); excluded by default and from CI, run manually with `pytest -m network`",
 ]
