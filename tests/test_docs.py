@@ -154,7 +154,7 @@ def test_changelog_lists_benchmarks_schemas_metrics_and_adapters() -> None:
 def test_roadmap_lists_the_phase_5_items() -> None:
     headings = re.findall(r"^### (.+)$", (REPO / "ROADMAP.md").read_text(encoding="utf-8"), re.M)
     for item in [
-        "Imagery extraction benchmark with geographic holdout",
+        "Vector benchmark on OpenStreetMap data",
         "LLM and hosted-API adapters",
         "Agentic GIS tasks with real agents",
         "Expanded place-context cases",

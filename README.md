@@ -37,7 +37,7 @@ The design rules are in [`docs/principles.md`](docs/principles.md).
 
 | Pillar | Question | Status |
 | --- | --- | --- |
-| Geospatial perception | Can a model extract features from imagery and other rasters (detection, segmentation, change detection)? | Planned for after v0.1. No perception benchmark ships in v0.1. |
+| Geospatial perception | Can a model extract features from imagery and other rasters (detection, segmentation, change detection)? | Not planned. Many existing benchmarks cover imagery extraction. |
 | Spatial reasoning and GIS agents | Does the system do GIS operations correctly, and does it decline requests that it cannot answer? | `gis_correctness` (56 cases) |
 | Human-centered place context | Can the system compute how people reach everyday places, for example walking access to amenities? | `human_context_access` (51 cases), plus a manual real-geography pilot |
 
@@ -192,7 +192,7 @@ dataset manifest hash, and cite each dataset as its manifest asks (`citation`, `
 v0.1 covers the contracts, the GIS correctness benchmark and the human-context pilot. After
 v0.1:
 
-- an imagery extraction benchmark with a geographic holdout (the perception pillar)
+- a vector benchmark with OpenStreetMap data as the input
 - LLM and hosted-API adapters (the adapter protocol already records tokens and cost)
 - agentic GIS tasks with real agents, executable reference trajectories and output validation
 - more place-context cases, and temporal and geographic transfer evaluations
