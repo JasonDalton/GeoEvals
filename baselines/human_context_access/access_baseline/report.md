@@ -1,11 +1,11 @@
-# GeoEvals report: human_context_access 0.1.0 / access_baseline
+# GeoEvals report: human_context_access 0.2.0 / access_baseline
 
 ## 1. Summary
 
 | Field | Value |
 | --- | --- |
-| Run ID | human_context_access-access_baseline-20261009T201106Z-1fadf0a0 |
-| Benchmark | human_context_access 0.1.0 |
+| Run ID | human_context_access-access_baseline-20261010T232155Z-1fadf0a0 |
+| Benchmark | human_context_access 0.2.0 |
 | Split | test |
 | Adapter | access_baseline 0.1.0 |
 | Model | none recorded (the adapter config has no model) |
@@ -14,8 +14,8 @@
 | Config hash | 1fadf0a0380009519a4a65492cfd2d1547306df17984ec49975a58dfa39f62fc |
 | Dataset manifest hash | f2d344c9051b3956498c04c8da06dd43c1e1ea893b3169052aa52afdaf556b2a |
 | Run result schema | 1.0.0 |
-| Started | 2026-10-09T20:11:06.085201Z |
-| Finished | 2026-10-09T20:11:08.490423Z |
+| Started | 2026-10-10T23:21:55.186518Z |
+| Finished | 2026-10-10T23:21:57.789334Z |
 | Cases | 51 (51 scored, 0 not scored) |
 
 Comparisons are valid only between runs with the same benchmark version, metric versions, split, and dataset manifest hash.
@@ -159,17 +159,17 @@ Abstention precision 1, recall 1. A case abstains when its status is needs_clari
 
 | Measure | Value |
 | --- | --- |
-| Wall clock (s) | 2.40444 |
+| Wall clock (s) | 2.60183 |
 | Cases | 51 |
-| Throughput (cases/s) | 21.2107 |
-| Latency p50 (s) | 0.0160062 |
-| Latency p90 (s) | 0.0167536 |
-| Latency p99 (s) | 0.672888 |
-| Latency max (s) | 1.11382 |
+| Throughput (cases/s) | 19.6016 |
+| Latency p50 (s) | 0.0173566 |
+| Latency p90 (s) | 0.0191138 |
+| Latency p99 (s) | 0.70845 |
+| Latency max (s) | 1.17473 |
 | Timeout rate | 0 |
 | Failure rate | 0 |
 | Retries | 0 |
-| Peak RSS (bytes) | 266649600 |
+| Peak RSS (bytes) | 255197184 |
 | Input tokens | 0 |
 | Output tokens | 0 |
 | Cost, total (USD) | 0 |
@@ -192,10 +192,10 @@ No case recorded an agent trajectory.
 | --- | --- |
 | cpu_count_logical | 8 |
 | cpu_model | Apple M1 Pro |
-| geoevals_version | 0.1.0.dev0 |
+| geoevals_version | 0.1.0 |
 | geopandas_version | 1.2.0 |
 | geos_version | 3.14.1 |
-| git_commit | 66bd8037e31a4264c531e91bf54429cdfc11af4e |
+| git_commit | cb6b336e3ee1a3bb0142f14e3ce3a4bc48ad1a27 |
 | git_dirty | true |
 | machine | arm64 |
 | os | Darwin |
@@ -207,7 +207,7 @@ No case recorded an agent trajectory.
 | python_implementation | CPython |
 | ram_total_bytes | 17179869184 |
 | shapely_version | 2.2.0 |
-| uv_lock_sha256 | 70ba69c80197dc92ae3a9d4c6a24c2f950263e532793f7f9122f8a427620ffeb |
+| uv_lock_sha256 | ef03eb7ea7f6e758d17061ad5a3ff9951aa2bad73105153027dff22b9a028a55 |
 
 ## 8. Provenance and dataset licenses
 
@@ -232,4 +232,4 @@ No case recorded an agent trajectory.
 - One small synthetic town; it tests access computations, not scale or real-world data quality.
 - Walking is modeled as a constant speed on mapped street lengths; crossings, slope, signals and personal mobility are not modeled.
 - Opening hours are evaluated with a documented subset of the OpenStreetMap syntax (docs/human-context.md); values outside it count as unknown. Travel time is not added to the instant.
-- Tolerances are tight because the network, lengths and speed are all given; they absorb only floating-point summation order.
+- Tolerances are tight because the network, lengths and speed are all given; the detour ratio tolerance (1e-4) accepts a correct ratio given to 5 decimal places and still catches a haversine or planar straight-line distance and any longer path.

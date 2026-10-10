@@ -148,7 +148,8 @@ def test_changelog_lists_benchmarks_schemas_metrics_and_adapters() -> None:
         assert f"#### {heading}" in entry, heading
     for spec in sorted((REPO / "benchmarks").glob("*/benchmark.yaml")):
         benchmark = yaml.safe_load(spec.read_text(encoding="utf-8"))
-        assert f"`{benchmark['id']}` {benchmark['version']}" in entry, benchmark["id"]
+        listed = f"`{benchmark['id']}` {benchmark['version']}"
+        assert listed in entry or listed in _unreleased_entry(), benchmark["id"]
     for schema in sorted((REPO / "schemas").glob("*.schema.json")):
         assert f"`schemas/{schema.name}`" in entry, schema.name
     for metric_id in registered_metric_ids():

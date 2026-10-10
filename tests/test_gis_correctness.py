@@ -60,7 +60,7 @@ def test_spec_validates_with_id_and_version() -> None:
     kind, issues = validate_file(SPEC)
     assert (kind, issues) == ("benchmark spec", [])
     spec = load_benchmark_spec(SPEC)
-    assert (spec.id, spec.version) == ("gis_correctness", "0.1.0")
+    assert (spec.id, spec.version) == ("gis_correctness", "0.2.0")
 
 
 def test_spec_lists_every_case_file() -> None:

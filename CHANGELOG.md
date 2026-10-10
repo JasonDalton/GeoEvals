@@ -22,6 +22,16 @@ metrics and schemas carry their own versions; see
 Both tracks call the local Claude Code CLI (`claude -p`) signed in to a Claude subscription;
 no API key is used. The adapter version records the Claude Code version (`0.1.0+cc.<version>`).
 
+### Changed
+
+- `gis_correctness` 0.2.0 and `human_context_access` 0.2.0: tolerances recalibrated so that a
+  correct answer given to 5 decimal places passes, while each case still catches the mistake it
+  targets. `crs_transform-004` and `-005` (answers in longitude and latitude): `tol_m` 0.001 m to
+  1 m; the smallest targeted mistake is 21 km off. `buffer-005`: `tol_m` 0.2 m to 1 m; its trap
+  is 8.3 m off. `network_detour-001` to `-006`: `abs_tol` and `stretch_tol` 1e-6 to 1e-4; a
+  haversine straight-line distance is at least 1.0e-3 off. Expected outputs are unchanged.
+  Scores are not comparable with 0.1.0.
+
 ### Fixed
 
 - `geoevals bench regenerate --check` and the expected-output tests failed on Linux: PROJ and
