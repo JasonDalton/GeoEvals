@@ -1,6 +1,6 @@
 schema_version: "1.1.0"
 id: human_context_access
-version: 0.1.0
+version: 0.2.0
 title: Human-context walking access
 pillar: human_context
 task_statement: >-
@@ -184,4 +184,4 @@ limitations:
   - One small synthetic town; it tests access computations, not scale or real-world data quality.
   - Walking is modeled as a constant speed on mapped street lengths; crossings, slope, signals and personal mobility are not modeled.
   - Opening hours are evaluated with a documented subset of the OpenStreetMap syntax (docs/human-context.md); values outside it count as unknown. Travel time is not added to the instant.
-  - Tolerances are tight because the network, lengths and speed are all given; they absorb only floating-point summation order.
+  - Tolerances are tight because the network, lengths and speed are all given; the detour ratio tolerance (1e-4) accepts a correct ratio given to 5 decimal places and still catches a haversine or planar straight-line distance and any longer path.

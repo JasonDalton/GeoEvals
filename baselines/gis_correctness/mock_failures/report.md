@@ -1,11 +1,11 @@
-# GeoEvals report: gis_correctness 0.1.0 / mock
+# GeoEvals report: gis_correctness 0.2.0 / mock
 
 ## 1. Summary
 
 | Field | Value |
 | --- | --- |
-| Run ID | gis_correctness-mock-20261009T201100Z-fbbb6181 |
-| Benchmark | gis_correctness 0.1.0 |
+| Run ID | gis_correctness-mock-20261010T232149Z-fbbb6181 |
+| Benchmark | gis_correctness 0.2.0 |
 | Split | test |
 | Adapter | mock 0.1.0 |
 | Model | none recorded (the adapter config has no model) |
@@ -14,8 +14,8 @@
 | Config hash | fbbb6181df48f103fde9ce99e548adc101738dec0b0804f78c35471edf6b71dc |
 | Dataset manifest hash | 20beb1d10b212eaa1728803d1606fe42ed65c8f75496eced72d0ba5663d2f2ea |
 | Run result schema | 1.0.0 |
-| Started | 2026-10-09T20:11:00.486797Z |
-| Finished | 2026-10-09T20:11:05.073393Z |
+| Started | 2026-10-10T23:21:49.116833Z |
+| Finished | 2026-10-10T23:21:53.903944Z |
 | Cases | 56 (52 scored, 4 not scored) |
 
 Comparisons are valid only between runs with the same benchmark version, metric versions, split, and dataset manifest hash.
@@ -190,17 +190,17 @@ Abstention precision 1, recall 0.777778. A case abstains when its status is need
 
 | Measure | Value |
 | --- | --- |
-| Wall clock (s) | 4.58493 |
+| Wall clock (s) | 4.78504 |
 | Cases | 56 |
-| Throughput (cases/s) | 12.2139 |
-| Latency p50 (s) | 4.9292e-05 |
-| Latency p90 (s) | 0.000203021 |
-| Latency p99 (s) | 0.904619 |
-| Latency max (s) | 2.00957 |
+| Throughput (cases/s) | 11.7031 |
+| Latency p50 (s) | 5.27295e-05 |
+| Latency p90 (s) | 0.000196104 |
+| Latency p99 (s) | 0.900807 |
+| Latency max (s) | 2.00105 |
 | Timeout rate | 0.0178571 |
 | Failure rate | 0.0714286 |
 | Retries | 2 |
-| Peak RSS (bytes) | 158515200 |
+| Peak RSS (bytes) | 155746304 |
 | Input tokens | 5300 |
 | Output tokens | 1060 |
 | Cost, total (USD) | 0 |
@@ -237,10 +237,10 @@ No case recorded an agent trajectory.
 | --- | --- |
 | cpu_count_logical | 8 |
 | cpu_model | Apple M1 Pro |
-| geoevals_version | 0.1.0.dev0 |
+| geoevals_version | 0.1.0 |
 | geopandas_version | 1.2.0 |
 | geos_version | 3.14.1 |
-| git_commit | 66bd8037e31a4264c531e91bf54429cdfc11af4e |
+| git_commit | cb6b336e3ee1a3bb0142f14e3ce3a4bc48ad1a27 |
 | git_dirty | true |
 | machine | arm64 |
 | os | Darwin |
@@ -252,7 +252,7 @@ No case recorded an agent trajectory.
 | python_implementation | CPython |
 | ram_total_bytes | 17179869184 |
 | shapely_version | 2.2.0 |
-| uv_lock_sha256 | 70ba69c80197dc92ae3a9d4c6a24c2f950263e532793f7f9122f8a427620ffeb |
+| uv_lock_sha256 | ef03eb7ea7f6e758d17061ad5a3ff9951aa2bad73105153027dff22b9a028a55 |
 
 ## 8. Provenance and dataset licenses
 
@@ -285,4 +285,4 @@ No case recorded an agent trajectory.
 
 - Small synthetic fixtures; they test operation correctness, not scale or real-world data quality.
 - Expected outputs come from one reference workflow (Shapely, pyproj, GEOS, PROJ); an error shared by those libraries would not be caught.
-- Tolerances are set per case and stated in explicit units; a looser tolerance hides small errors.
+- Tolerances are set per case and stated in explicit units, sized to catch the smallest error of the mistake each case targets; none is tighter than a correct answer given to 5 decimal places needs.

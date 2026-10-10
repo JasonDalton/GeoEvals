@@ -88,7 +88,7 @@ def _cases() -> list[dict[str, Any]]:
 def test_spec_validates_with_id_and_version() -> None:
     assert validate_file(SPEC) == ("benchmark spec", [])
     spec = load_benchmark_spec(SPEC)
-    assert (spec.id, spec.version, spec.pillar) == (BENCHMARK_ID, "0.1.0", "human_context")
+    assert (spec.id, spec.version, spec.pillar) == (BENCHMARK_ID, "0.2.0", "human_context")
     assert validate_file(BENCH / "manifest.yaml") == ("dataset manifest", [])
 
 

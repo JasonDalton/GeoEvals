@@ -6,14 +6,14 @@
   },
   "benchmark": {
     "id": "gis_correctness",
-    "version": "0.1.0"
+    "version": "0.2.0"
   },
   "cases": [
     {
       "case_id": "abstention-001",
       "cost_usd": 0.0,
       "error": null,
-      "latency_s": 0.860299417050555,
+      "latency_s": 0.764895790955052,
       "metrics": {
         "attribute_match": {
           "detail": {
@@ -84,9 +84,9 @@
       "output": {
         "status": "needs_clarification"
       },
-      "peak_memory_bytes": 27279879,
+      "peak_memory_bytes": 29079159,
       "retries": 0,
-      "scoring_s": 0.000247124931775033,
+      "scoring_s": 0.000275875092484057,
       "split": "test",
       "status": "scored",
       "strata": {
@@ -102,7 +102,7 @@
       "case_id": "abstention-002",
       "cost_usd": 0.0,
       "error": null,
-      "latency_s": 0.107054459047504,
+      "latency_s": 0.114213833003305,
       "metrics": {
         "attribute_match": {
           "detail": {
@@ -173,9 +173,9 @@
       "output": {
         "status": "insufficient_data"
       },
-      "peak_memory_bytes": 686800,
+      "peak_memory_bytes": 689073,
       "retries": 0,
-      "scoring_s": 7.73339997977018e-05,
+      "scoring_s": 7.25840218365192e-05,
       "split": "test",
       "status": "scored",
       "strata": {
@@ -191,7 +191,7 @@
       "case_id": "abstention-003",
       "cost_usd": 0.0,
       "error": null,
-      "latency_s": 0.00839733297470957,
+      "latency_s": 0.00589654105715454,
       "metrics": {
         "attribute_match": {
           "detail": {
@@ -262,9 +262,9 @@
       "output": {
         "status": "insufficient_data"
       },
-      "peak_memory_bytes": 22857,
+      "peak_memory_bytes": 22464,
       "retries": 0,
-      "scoring_s": 6.78750220686197e-05,
+      "scoring_s": 6.52089947834611e-05,
       "split": "test",
       "status": "scored",
       "strata": {
@@ -280,7 +280,7 @@
       "case_id": "abstention-004",
       "cost_usd": 0.0,
       "error": null,
-      "latency_s": 0.00428620900493115,
+      "latency_s": 0.00432458298746496,
       "metrics": {
         "attribute_match": {
           "detail": {
@@ -351,9 +351,9 @@
       "output": {
         "status": "insufficient_data"
       },
-      "peak_memory_bytes": 21351,
+      "peak_memory_bytes": 21221,
       "retries": 0,
-      "scoring_s": 7.00419768691063e-05,
+      "scoring_s": 6.57080672681332e-05,
       "split": "test",
       "status": "scored",
       "strata": {
@@ -369,7 +369,7 @@
       "case_id": "abstention-005",
       "cost_usd": 0.0,
       "error": null,
-      "latency_s": 0.00991295790299773,
+      "latency_s": 0.00884333299472928,
       "metrics": {
         "attribute_match": {
           "detail": {
@@ -440,9 +440,9 @@
       "output": {
         "status": "invalid_request"
       },
-      "peak_memory_bytes": 38606,
+      "peak_memory_bytes": 39797,
       "retries": 0,
-      "scoring_s": 6.1041908338666e-05,
+      "scoring_s": 6.30420399829745e-05,
       "split": "test",
       "status": "scored",
       "strata": {
@@ -458,7 +458,7 @@
       "case_id": "abstention-006",
       "cost_usd": 0.0,
       "error": null,
-      "latency_s": 0.0105009999824688,
+      "latency_s": 0.00981570803560317,
       "metrics": {
         "attribute_match": {
           "detail": {
@@ -529,9 +529,9 @@
       "output": {
         "status": "insufficient_data"
       },
-      "peak_memory_bytes": 35143,
+      "peak_memory_bytes": 35439,
       "retries": 0,
-      "scoring_s": 6.28749839961529e-05,
+      "scoring_s": 7.02920369803905e-05,
       "split": "test",
       "status": "scored",
       "strata": {
@@ -547,7 +547,7 @@
       "case_id": "abstention-007",
       "cost_usd": 0.0,
       "error": null,
-      "latency_s": 3.79580305889249e-05,
+      "latency_s": 4.39580762758851e-05,
       "metrics": {
         "attribute_match": {
           "detail": {
@@ -620,7 +620,7 @@
       },
       "peak_memory_bytes": 1728,
       "retries": 0,
-      "scoring_s": 5.09170349687338e-05,
+      "scoring_s": 6.37500779703259e-05,
       "split": "test",
       "status": "scored",
       "strata": {
@@ -636,7 +636,7 @@
       "case_id": "abstention-008",
       "cost_usd": 0.0,
       "error": null,
-      "latency_s": 0.00414862495381385,
+      "latency_s": 0.00431991706136614,
       "metrics": {
         "attribute_match": {
           "detail": {
@@ -707,9 +707,9 @@
       "output": {
         "status": "invalid_request"
       },
-      "peak_memory_bytes": 19195,
+      "peak_memory_bytes": 19513,
       "retries": 0,
-      "scoring_s": 5.50000695511699e-05,
+      "scoring_s": 5.92080177739263e-05,
       "split": "test",
       "status": "scored",
       "strata": {
@@ -725,7 +725,7 @@
       "case_id": "buffer-001",
       "cost_usd": 0.0,
       "error": null,
-      "latency_s": 0.0579063330078498,
+      "latency_s": 0.0493040420114994,
       "metrics": {
         "attribute_match": {
           "detail": {
@@ -1080,9 +1080,9 @@
         },
         "status": "ok"
       },
-      "peak_memory_bytes": 52951,
+      "peak_memory_bytes": 52764,
       "retries": 0,
-      "scoring_s": 0.0500745410099626,
+      "scoring_s": 0.0474273329600692,
       "split": "test",
       "status": "scored",
       "strata": {
@@ -1096,7 +1096,7 @@
       "case_id": "buffer-002",
       "cost_usd": 0.0,
       "error": null,
-      "latency_s": 0.00158562499564141,
+      "latency_s": 0.00169595808256418,
       "metrics": {
         "attribute_match": {
           "detail": {
@@ -1511,9 +1511,9 @@
         },
         "status": "ok"
       },
-      "peak_memory_bytes": 25831,
+      "peak_memory_bytes": 25774,
       "retries": 0,
-      "scoring_s": 0.00123070797417313,
+      "scoring_s": 0.00114429101813585,
       "split": "test",
       "status": "scored",
       "strata": {
@@ -1527,7 +1527,7 @@
       "case_id": "buffer-003",
       "cost_usd": 0.0,
       "error": null,
-      "latency_s": 0.00093716592527926,
+      "latency_s": 0.000914874952286482,
       "metrics": {
         "attribute_match": {
           "detail": {
@@ -1619,9 +1619,9 @@
         },
         "status": "ok"
       },
-      "peak_memory_bytes": 7292,
+      "peak_memory_bytes": 7349,
       "retries": 0,
-      "scoring_s": 0.000253000063821673,
+      "scoring_s": 0.000300874933600426,
       "split": "test",
       "status": "scored",
       "strata": {
@@ -1635,7 +1635,7 @@
       "case_id": "buffer-004",
       "cost_usd": 0.0,
       "error": null,
-      "latency_s": 0.000841540982946754,
+      "latency_s": 0.000836165971122682,
       "metrics": {
         "attribute_match": {
           "detail": {
@@ -1750,9 +1750,9 @@
         },
         "status": "ok"
       },
-      "peak_memory_bytes": 7260,
+      "peak_memory_bytes": 7317,
       "retries": 0,
-      "scoring_s": 0.000346667016856372,
+      "scoring_s": 0.000324374996125698,
       "split": "test",
       "status": "scored",
       "strata": {
@@ -1766,7 +1766,7 @@
       "case_id": "buffer-005",
       "cost_usd": 0.0,
       "error": null,
-      "latency_s": 0.00130266707856208,
+      "latency_s": 0.00141866703052074,
       "metrics": {
         "attribute_match": {
           "detail": {
@@ -1785,7 +1785,7 @@
             "area_error_rel": 3.10455105717843e-11,
             "area_tol_rel": 0.01,
             "hausdorff_m": 5.37565544270047e-09,
-            "tol_m": 0.2
+            "tol_m": 1.0
           },
           "passed": true,
           "value": 1.0
@@ -1810,7 +1810,7 @@
                   "area_error_rel": 3.10455105717843e-11,
                   "area_tol_rel": 0.01,
                   "hausdorff_m": 5.37565544270047e-09,
-                  "tol_m": 0.2
+                  "tol_m": 1.0
                 },
                 "passed": true
               },
@@ -1889,9 +1889,9 @@
         },
         "status": "ok"
       },
-      "peak_memory_bytes": 9863,
+      "peak_memory_bytes": 9920,
       "retries": 0,
-      "scoring_s": 0.0396794169209898,
+      "scoring_s": 0.0425886251032352,
       "split": "test",
       "status": "scored",
       "strata": {
@@ -1905,7 +1905,7 @@
       "case_id": "buffer-006",
       "cost_usd": 0.0,
       "error": null,
-      "latency_s": 0.00841808307450265,
+      "latency_s": 0.00772274995688349,
       "metrics": {
         "attribute_match": {
           "detail": {
@@ -2686,9 +2686,9 @@
         },
         "status": "ok"
       },
-      "peak_memory_bytes": 59011,
+      "peak_memory_bytes": 59178,
       "retries": 0,
-      "scoring_s": 0.0435787079622969,
+      "scoring_s": 0.043513625045307,
       "split": "test",
       "status": "scored",
       "strata": {
@@ -2702,7 +2702,7 @@
       "case_id": "buffer-007",
       "cost_usd": 0.0,
       "error": null,
-      "latency_s": 0.000903291977010667,
+      "latency_s": 0.000972082954831421,
       "metrics": {
         "attribute_match": {
           "detail": {
@@ -2817,9 +2817,9 @@
         },
         "status": "ok"
       },
-      "peak_memory_bytes": 7255,
+      "peak_memory_bytes": 7317,
       "retries": 0,
-      "scoring_s": 0.000293084071017802,
+      "scoring_s": 0.000353959039784968,
       "split": "test",
       "status": "scored",
       "strata": {
@@ -2833,7 +2833,7 @@
       "case_id": "crs_transform-001",
       "cost_usd": 0.0,
       "error": null,
-      "latency_s": 0.00333145807962865,
+      "latency_s": 0.00720675010234118,
       "metrics": {
         "attribute_match": {
           "detail": {
@@ -2926,7 +2926,7 @@
       },
       "peak_memory_bytes": 8359,
       "retries": 0,
-      "scoring_s": 0.000353707931935787,
+      "scoring_s": 0.000463500036858022,
       "split": "test",
       "status": "scored",
       "strata": {
@@ -2940,7 +2940,7 @@
       "case_id": "crs_transform-002",
       "cost_usd": 0.0,
       "error": null,
-      "latency_s": 0.00998141698073596,
+      "latency_s": 0.0117669580504298,
       "metrics": {
         "attribute_match": {
           "detail": {},
@@ -3084,9 +3084,9 @@
         },
         "status": "ok"
       },
-      "peak_memory_bytes": 65486,
+      "peak_memory_bytes": 66079,
       "retries": 0,
-      "scoring_s": 0.000447459053248167,
+      "scoring_s": 0.000514250015839934,
       "split": "test",
       "status": "scored",
       "strata": {
@@ -3100,7 +3100,7 @@
       "case_id": "crs_transform-003",
       "cost_usd": 0.0,
       "error": null,
-      "latency_s": 0.00377833400852978,
+      "latency_s": 0.00377958395984024,
       "metrics": {
         "attribute_match": {
           "detail": {
@@ -3171,9 +3171,9 @@
       "output": {
         "status": "invalid_request"
       },
-      "peak_memory_bytes": 4873,
+      "peak_memory_bytes": 4810,
       "retries": 0,
-      "scoring_s": 5.28329983353615e-05,
+      "scoring_s": 6.90419692546129e-05,
       "split": "test",
       "status": "scored",
       "strata": {
@@ -3187,7 +3187,7 @@
       "case_id": "crs_transform-004",
       "cost_usd": 0.0,
       "error": null,
-      "latency_s": 0.00148912507575005,
+      "latency_s": 0.00172683293931186,
       "metrics": {
         "attribute_match": {
           "detail": {
@@ -3204,7 +3204,7 @@
         "geometry_match": {
           "detail": {
             "hausdorff_m": 0.0,
-            "tol_m": 0.001
+            "tol_m": 1.0
           },
           "passed": true,
           "value": 1.0
@@ -3227,7 +3227,7 @@
               "geometry_match": {
                 "detail": {
                   "hausdorff_m": 0.0,
-                  "tol_m": 0.001
+                  "tol_m": 1.0
                 },
                 "passed": true
               },
@@ -3278,9 +3278,9 @@
         },
         "status": "ok"
       },
-      "peak_memory_bytes": 8066,
+      "peak_memory_bytes": 7957,
       "retries": 0,
-      "scoring_s": 0.0413762500975281,
+      "scoring_s": 0.0443530840566382,
       "split": "test",
       "status": "scored",
       "strata": {
@@ -3294,7 +3294,7 @@
       "case_id": "crs_transform-005",
       "cost_usd": 0.0,
       "error": null,
-      "latency_s": 0.00088900001719594,
+      "latency_s": 0.00111704191658646,
       "metrics": {
         "attribute_match": {
           "detail": {
@@ -3311,7 +3311,7 @@
         "geometry_match": {
           "detail": {
             "hausdorff_m": 0.0,
-            "tol_m": 0.001
+            "tol_m": 1.0
           },
           "passed": true,
           "value": 1.0
@@ -3334,7 +3334,7 @@
               "geometry_match": {
                 "detail": {
                   "hausdorff_m": 0.0,
-                  "tol_m": 0.001
+                  "tol_m": 1.0
                 },
                 "passed": true
               },
@@ -3385,9 +3385,9 @@
         },
         "status": "ok"
       },
-      "peak_memory_bytes": 8060,
+      "peak_memory_bytes": 8008,
       "retries": 0,
-      "scoring_s": 0.0425441249972209,
+      "scoring_s": 0.0437413749750704,
       "split": "test",
       "status": "scored",
       "strata": {
@@ -3401,7 +3401,7 @@
       "case_id": "crs_transform-006",
       "cost_usd": 0.0,
       "error": null,
-      "latency_s": 0.00702670798636973,
+      "latency_s": 0.00953891698736697,
       "metrics": {
         "attribute_match": {
           "detail": {
@@ -3492,9 +3492,9 @@
         },
         "status": "ok"
       },
-      "peak_memory_bytes": 8229,
+      "peak_memory_bytes": 8115,
       "retries": 0,
-      "scoring_s": 0.000456790905445814,
+      "scoring_s": 0.000576957943849266,
       "split": "test",
       "status": "scored",
       "strata": {
@@ -3508,7 +3508,7 @@
       "case_id": "crs_transform-007",
       "cost_usd": 0.0,
       "error": null,
-      "latency_s": 0.0254650840070099,
+      "latency_s": 0.0365707500604913,
       "metrics": {
         "attribute_match": {
           "detail": {
@@ -3599,9 +3599,9 @@
         },
         "status": "ok"
       },
-      "peak_memory_bytes": 7735,
+      "peak_memory_bytes": 7741,
       "retries": 0,
-      "scoring_s": 0.0413962079910561,
+      "scoring_s": 0.0544655419653282,
       "split": "test",
       "status": "scored",
       "strata": {
@@ -3615,7 +3615,7 @@
       "case_id": "crs_transform-008",
       "cost_usd": 0.0,
       "error": null,
-      "latency_s": 0.0024768749717623,
+      "latency_s": 0.00532445800490677,
       "metrics": {
         "attribute_match": {
           "detail": {
@@ -3708,7 +3708,7 @@
       },
       "peak_memory_bytes": 8355,
       "retries": 0,
-      "scoring_s": 0.00030266703106463,
+      "scoring_s": 0.000432458007708192,
       "split": "test",
       "status": "scored",
       "strata": {
@@ -3722,7 +3722,7 @@
       "case_id": "crs_transform-009",
       "cost_usd": 0.0,
       "error": null,
-      "latency_s": 0.00370620901230723,
+      "latency_s": 0.00341470900457352,
       "metrics": {
         "attribute_match": {
           "detail": {
@@ -3813,9 +3813,9 @@
         },
         "status": "ok"
       },
-      "peak_memory_bytes": 8294,
+      "peak_memory_bytes": 8357,
       "retries": 0,
-      "scoring_s": 0.000323291984386742,
+      "scoring_s": 0.000442582997493446,
       "split": "test",
       "status": "scored",
       "strata": {
@@ -3829,7 +3829,7 @@
       "case_id": "crs_transform-010",
       "cost_usd": 0.0,
       "error": null,
-      "latency_s": 0.00227625004481524,
+      "latency_s": 0.00261945801321417,
       "metrics": {
         "attribute_match": {
           "detail": {
@@ -3922,7 +3922,7 @@
       },
       "peak_memory_bytes": 8321,
       "retries": 0,
-      "scoring_s": 0.000284250010736287,
+      "scoring_s": 0.000404957914724946,
       "split": "test",
       "status": "scored",
       "strata": {
@@ -3936,7 +3936,7 @@
       "case_id": "distance-001",
       "cost_usd": 0.0,
       "error": null,
-      "latency_s": 0.00561654206831008,
+      "latency_s": 0.00616970798000693,
       "metrics": {
         "attribute_match": {
           "detail": {
@@ -4016,9 +4016,9 @@
         "units": "km",
         "value": 880.223093784306
       },
-      "peak_memory_bytes": 24919,
+      "peak_memory_bytes": 23585,
       "retries": 0,
-      "scoring_s": 0.000102083082310855,
+      "scoring_s": 0.00012995908036828,
       "split": "test",
       "status": "scored",
       "strata": {
@@ -4032,7 +4032,7 @@
       "case_id": "distance-002",
       "cost_usd": 0.0,
       "error": null,
-      "latency_s": 0.00625008402857929,
+      "latency_s": 0.00726425007451326,
       "metrics": {
         "attribute_match": {
           "detail": {
@@ -4112,9 +4112,9 @@
         "units": "m",
         "value": 10112.8525062576
       },
-      "peak_memory_bytes": 21133,
+      "peak_memory_bytes": 21009,
       "retries": 0,
-      "scoring_s": 0.000110374996438622,
+      "scoring_s": 0.000129417050629854,
       "split": "test",
       "status": "scored",
       "strata": {
@@ -4128,7 +4128,7 @@
       "case_id": "distance-003",
       "cost_usd": 0.0,
       "error": null,
-      "latency_s": 0.00599299999885261,
+      "latency_s": 0.00620470789726824,
       "metrics": {
         "attribute_match": {
           "detail": {
@@ -4208,9 +4208,9 @@
         "units": "m",
         "value": 4340.86721231835
       },
-      "peak_memory_bytes": 20485,
+      "peak_memory_bytes": 20328,
       "retries": 0,
-      "scoring_s": 0.000117167015559971,
+      "scoring_s": 0.000135667040012777,
       "split": "test",
       "status": "scored",
       "strata": {
@@ -4224,7 +4224,7 @@
       "case_id": "distance-004",
       "cost_usd": 0.0,
       "error": null,
-      "latency_s": 0.0048905840376392,
+      "latency_s": 0.00581166695337743,
       "metrics": {
         "attribute_match": {
           "detail": {
@@ -4304,9 +4304,9 @@
         "units": "km",
         "value": 5581.44207305713
       },
-      "peak_memory_bytes": 20220,
+      "peak_memory_bytes": 19954,
       "retries": 0,
-      "scoring_s": 9.76660521700978e-05,
+      "scoring_s": 0.000134916044771671,
       "split": "test",
       "status": "scored",
       "strata": {
@@ -4320,7 +4320,7 @@
       "case_id": "distance-005",
       "cost_usd": 0.0,
       "error": null,
-      "latency_s": 0.00483483308926225,
+      "latency_s": 0.00654441700316966,
       "metrics": {
         "attribute_match": {
           "detail": {
@@ -4400,9 +4400,9 @@
         "units": "mi",
         "value": 716.13247972686
       },
-      "peak_memory_bytes": 20118,
+      "peak_memory_bytes": 19628,
       "retries": 0,
-      "scoring_s": 9.62089980021119e-05,
+      "scoring_s": 0.000127166975289583,
       "split": "test",
       "status": "scored",
       "strata": {
@@ -4416,7 +4416,7 @@
       "case_id": "distance-006",
       "cost_usd": 0.0,
       "error": null,
-      "latency_s": 0.00567091698758304,
+      "latency_s": 0.00679687492083758,
       "metrics": {
         "attribute_match": {
           "detail": {
@@ -4496,9 +4496,9 @@
         "units": "us_ft",
         "value": 14241.6044609474
       },
-      "peak_memory_bytes": 20587,
+      "peak_memory_bytes": 21843,
       "retries": 0,
-      "scoring_s": 0.000100667006336153,
+      "scoring_s": 0.000143291079439223,
       "split": "test",
       "status": "scored",
       "strata": {
@@ -4512,7 +4512,7 @@
       "case_id": "distance-007",
       "cost_usd": 0.0,
       "error": null,
-      "latency_s": 0.0050218750257045,
+      "latency_s": 0.00634762505069375,
       "metrics": {
         "attribute_match": {
           "detail": {
@@ -4592,9 +4592,9 @@
         "units": "km",
         "value": 760.306715196043
       },
-      "peak_memory_bytes": 19940,
+      "peak_memory_bytes": 19853,
       "retries": 0,
-      "scoring_s": 9.51249385252595e-05,
+      "scoring_s": 0.000124542042613029,
       "split": "test",
       "status": "scored",
       "strata": {
@@ -4608,7 +4608,7 @@
       "case_id": "distance-008",
       "cost_usd": 0.0,
       "error": null,
-      "latency_s": 0.00485833291895688,
+      "latency_s": 0.00573237496428192,
       "metrics": {
         "attribute_match": {
           "detail": {
@@ -4688,9 +4688,9 @@
         "units": "ft",
         "value": 33187.425571759
       },
-      "peak_memory_bytes": 19310,
+      "peak_memory_bytes": 19206,
       "retries": 0,
-      "scoring_s": 9.70000401139259e-05,
+      "scoring_s": 0.000125374994240701,
       "split": "test",
       "status": "scored",
       "strata": {
@@ -4704,7 +4704,7 @@
       "case_id": "distance-009",
       "cost_usd": 0.0,
       "error": null,
-      "latency_s": 0.00816774996928871,
+      "latency_s": 0.00810408301185817,
       "metrics": {
         "attribute_match": {
           "detail": {
@@ -4784,9 +4784,9 @@
         "units": "mi",
         "value": 2.69645847604714
       },
-      "peak_memory_bytes": 23320,
+      "peak_memory_bytes": 23518,
       "retries": 0,
-      "scoring_s": 0.000217832974158227,
+      "scoring_s": 0.000247708987444639,
       "split": "test",
       "status": "scored",
       "strata": {
@@ -4800,7 +4800,7 @@
       "case_id": "overlay-001",
       "cost_usd": 0.0,
       "error": null,
-      "latency_s": 0.035260709002614,
+      "latency_s": 0.0379102919250727,
       "metrics": {
         "attribute_match": {
           "detail": {},
@@ -5000,9 +5000,9 @@
         },
         "status": "ok"
       },
-      "peak_memory_bytes": 87196,
+      "peak_memory_bytes": 76386,
       "retries": 0,
-      "scoring_s": 0.126095833955333,
+      "scoring_s": 0.131336292019114,
       "split": "test",
       "status": "scored",
       "strata": {
@@ -5016,7 +5016,7 @@
       "case_id": "overlay-002",
       "cost_usd": 0.0,
       "error": null,
-      "latency_s": 0.060630708001554,
+      "latency_s": 0.0655206249793991,
       "metrics": {
         "attribute_match": {
           "detail": {},
@@ -5432,9 +5432,9 @@
         },
         "status": "ok"
       },
-      "peak_memory_bytes": 126374,
+      "peak_memory_bytes": 125876,
       "retries": 0,
-      "scoring_s": 0.320569250034168,
+      "scoring_s": 0.349411625065841,
       "split": "test",
       "status": "scored",
       "strata": {
@@ -5448,7 +5448,7 @@
       "case_id": "overlay-003",
       "cost_usd": 0.0,
       "error": null,
-      "latency_s": 0.0236637499183416,
+      "latency_s": 0.0251458329148591,
       "metrics": {
         "attribute_match": {
           "detail": {},
@@ -5666,9 +5666,9 @@
         },
         "status": "ok"
       },
-      "peak_memory_bytes": 58874,
+      "peak_memory_bytes": 59092,
       "retries": 0,
-      "scoring_s": 0.121346249943599,
+      "scoring_s": 0.131684291991405,
       "split": "test",
       "status": "scored",
       "strata": {
@@ -5682,7 +5682,7 @@
       "case_id": "overlay-004",
       "cost_usd": 0.0,
       "error": null,
-      "latency_s": 0.0437105420278385,
+      "latency_s": 0.0482979998923838,
       "metrics": {
         "attribute_match": {
           "detail": {},
@@ -5990,9 +5990,9 @@
         },
         "status": "ok"
       },
-      "peak_memory_bytes": 102042,
+      "peak_memory_bytes": 101093,
       "retries": 0,
-      "scoring_s": 0.205454749986529,
+      "scoring_s": 0.216555041959509,
       "split": "test",
       "status": "scored",
       "strata": {
@@ -6006,7 +6006,7 @@
       "case_id": "overlay-005",
       "cost_usd": 0.0,
       "error": null,
-      "latency_s": 0.018808624939993,
+      "latency_s": 0.0194276670226827,
       "metrics": {
         "attribute_match": {
           "detail": {},
@@ -6200,9 +6200,9 @@
         },
         "status": "ok"
       },
-      "peak_memory_bytes": 51880,
+      "peak_memory_bytes": 51745,
       "retries": 0,
-      "scoring_s": 0.120795833994634,
+      "scoring_s": 0.132080417010002,
       "split": "test",
       "status": "scored",
       "strata": {
@@ -6216,7 +6216,7 @@
       "case_id": "overlay-006",
       "cost_usd": 0.0,
       "error": null,
-      "latency_s": 0.0300793340429664,
+      "latency_s": 0.0360523749841377,
       "metrics": {
         "attribute_match": {
           "detail": {},
@@ -6362,9 +6362,9 @@
         },
         "status": "ok"
       },
-      "peak_memory_bytes": 86276,
+      "peak_memory_bytes": 86204,
       "retries": 0,
-      "scoring_s": 0.0429984170477837,
+      "scoring_s": 0.0471277079777792,
       "split": "test",
       "status": "scored",
       "strata": {
@@ -6378,7 +6378,7 @@
       "case_id": "spatial_join-001",
       "cost_usd": 0.0,
       "error": null,
-      "latency_s": 0.0219557919772342,
+      "latency_s": 0.0237764590419829,
       "metrics": {
         "attribute_match": {
           "detail": {},
@@ -6534,9 +6534,9 @@
         },
         "status": "ok"
       },
-      "peak_memory_bytes": 73763,
+      "peak_memory_bytes": 73868,
       "retries": 0,
-      "scoring_s": 0.161844667047262,
+      "scoring_s": 0.179163916036487,
       "split": "test",
       "status": "scored",
       "strata": {
@@ -6551,7 +6551,7 @@
       "case_id": "spatial_join-002",
       "cost_usd": 0.0,
       "error": null,
-      "latency_s": 0.0215664999559522,
+      "latency_s": 0.0419352089520544,
       "metrics": {
         "attribute_match": {
           "detail": {},
@@ -6787,9 +6787,9 @@
         },
         "status": "ok"
       },
-      "peak_memory_bytes": 73577,
+      "peak_memory_bytes": 73361,
       "retries": 0,
-      "scoring_s": 0.161548000061885,
+      "scoring_s": 0.167938250000589,
       "split": "test",
       "status": "scored",
       "strata": {
@@ -6804,7 +6804,7 @@
       "case_id": "spatial_join-003",
       "cost_usd": 0.0,
       "error": null,
-      "latency_s": 0.020874832989648,
+      "latency_s": 0.0230150420684367,
       "metrics": {
         "attribute_match": {
           "detail": {},
@@ -6968,9 +6968,9 @@
         },
         "status": "ok"
       },
-      "peak_memory_bytes": 72920,
+      "peak_memory_bytes": 79659,
       "retries": 0,
-      "scoring_s": 0.079502624925226,
+      "scoring_s": 0.0858379170531407,
       "split": "test",
       "status": "scored",
       "strata": {
@@ -6985,7 +6985,7 @@
       "case_id": "spatial_join-004",
       "cost_usd": 0.0,
       "error": null,
-      "latency_s": 0.0206472079735249,
+      "latency_s": 0.0221589170396328,
       "metrics": {
         "attribute_match": {
           "detail": {},
@@ -7173,9 +7173,9 @@
         },
         "status": "ok"
       },
-      "peak_memory_bytes": 73641,
+      "peak_memory_bytes": 72701,
       "retries": 0,
-      "scoring_s": 0.241306458017789,
+      "scoring_s": 0.261678167036735,
       "split": "test",
       "status": "scored",
       "strata": {
@@ -7190,7 +7190,7 @@
       "case_id": "spatial_join-005",
       "cost_usd": 0.0,
       "error": null,
-      "latency_s": 0.0254437919938937,
+      "latency_s": 0.027845915989019,
       "metrics": {
         "attribute_match": {
           "detail": {},
@@ -7384,9 +7384,9 @@
         },
         "status": "ok"
       },
-      "peak_memory_bytes": 73890,
+      "peak_memory_bytes": 87506,
       "retries": 0,
-      "scoring_s": 0.241872000042349,
+      "scoring_s": 0.261818415950984,
       "split": "test",
       "status": "scored",
       "strata": {
@@ -7401,7 +7401,7 @@
       "case_id": "spatial_join-006",
       "cost_usd": 0.0,
       "error": null,
-      "latency_s": 0.0248260000953451,
+      "latency_s": 0.0267551250290126,
       "metrics": {
         "attribute_match": {
           "detail": {},
@@ -7541,9 +7541,9 @@
         },
         "status": "ok"
       },
-      "peak_memory_bytes": 71591,
+      "peak_memory_bytes": 71897,
       "retries": 0,
-      "scoring_s": 0.000416707945987582,
+      "scoring_s": 0.000460874987766147,
       "split": "test",
       "status": "scored",
       "strata": {
@@ -7558,7 +7558,7 @@
       "case_id": "spatial_join-007",
       "cost_usd": 0.0,
       "error": null,
-      "latency_s": 0.020054665976204,
+      "latency_s": 0.0229698750190437,
       "metrics": {
         "attribute_match": {
           "detail": {},
@@ -7794,9 +7794,9 @@
         },
         "status": "ok"
       },
-      "peak_memory_bytes": 74105,
+      "peak_memory_bytes": 74123,
       "retries": 0,
-      "scoring_s": 0.168128792080097,
+      "scoring_s": 0.17964754102286,
       "split": "test",
       "status": "scored",
       "strata": {
@@ -7811,7 +7811,7 @@
       "case_id": "validity-001",
       "cost_usd": 0.0,
       "error": null,
-      "latency_s": 0.000887749949470162,
+      "latency_s": 0.000868000090122223,
       "metrics": {
         "attribute_match": {
           "detail": {
@@ -7896,9 +7896,9 @@
         "units": "bool",
         "value": false
       },
-      "peak_memory_bytes": 6935,
+      "peak_memory_bytes": 6932,
       "retries": 0,
-      "scoring_s": 0.000103040947578847,
+      "scoring_s": 0.000107084051705897,
       "split": "test",
       "status": "scored",
       "strata": {
@@ -7913,7 +7913,7 @@
       "case_id": "validity-002",
       "cost_usd": 0.0,
       "error": null,
-      "latency_s": 0.000371458008885384,
+      "latency_s": 0.000529041979461908,
       "metrics": {
         "attribute_match": {
           "detail": {
@@ -7998,9 +7998,9 @@
         "units": "bool",
         "value": false
       },
-      "peak_memory_bytes": 4877,
+      "peak_memory_bytes": 4872,
       "retries": 0,
-      "scoring_s": 8.59170686453581e-05,
+      "scoring_s": 0.000111458008177578,
       "split": "test",
       "status": "scored",
       "strata": {
@@ -8015,7 +8015,7 @@
       "case_id": "validity-003",
       "cost_usd": 0.0,
       "error": null,
-      "latency_s": 0.000597625039517879,
+      "latency_s": 0.000726124970242381,
       "metrics": {
         "attribute_match": {
           "detail": {
@@ -8102,7 +8102,7 @@
       },
       "peak_memory_bytes": 7093,
       "retries": 0,
-      "scoring_s": 9.57080628722906e-05,
+      "scoring_s": 9.7749987617135e-05,
       "split": "test",
       "status": "scored",
       "strata": {
@@ -8117,7 +8117,7 @@
       "case_id": "validity-004",
       "cost_usd": 0.0,
       "error": null,
-      "latency_s": 0.000585333909839392,
+      "latency_s": 0.000634000054560602,
       "metrics": {
         "attribute_match": {
           "detail": {
@@ -8202,9 +8202,9 @@
         "units": "bool",
         "value": false
       },
-      "peak_memory_bytes": 7115,
+      "peak_memory_bytes": 7068,
       "retries": 0,
-      "scoring_s": 8.72910022735596e-05,
+      "scoring_s": 9.46669606491923e-05,
       "split": "test",
       "status": "scored",
       "strata": {
@@ -8219,7 +8219,7 @@
       "case_id": "validity-005",
       "cost_usd": 0.0,
       "error": null,
-      "latency_s": 0.00062574993353337,
+      "latency_s": 0.000765250064432621,
       "metrics": {
         "attribute_match": {
           "detail": {
@@ -8304,9 +8304,9 @@
         "units": "bool",
         "value": false
       },
-      "peak_memory_bytes": 6775,
+      "peak_memory_bytes": 6951,
       "retries": 0,
-      "scoring_s": 8.64580506458879e-05,
+      "scoring_s": 9.00420127436519e-05,
       "split": "test",
       "status": "scored",
       "strata": {
@@ -8321,7 +8321,7 @@
       "case_id": "validity-006",
       "cost_usd": 0.0,
       "error": null,
-      "latency_s": 0.000536499894224107,
+      "latency_s": 0.00064974999986589,
       "metrics": {
         "attribute_match": {
           "detail": {
@@ -8406,9 +8406,9 @@
         "units": "bool",
         "value": false
       },
-      "peak_memory_bytes": 7109,
+      "peak_memory_bytes": 7166,
       "retries": 0,
-      "scoring_s": 8.54169484227896e-05,
+      "scoring_s": 8.89590010046959e-05,
       "split": "test",
       "status": "scored",
       "strata": {
@@ -8423,7 +8423,7 @@
       "case_id": "validity-007",
       "cost_usd": 0.0,
       "error": null,
-      "latency_s": 0.000495207961648703,
+      "latency_s": 0.000702707911841571,
       "metrics": {
         "attribute_match": {
           "detail": {
@@ -8508,9 +8508,9 @@
         "units": "bool",
         "value": true
       },
-      "peak_memory_bytes": 7077,
+      "peak_memory_bytes": 7071,
       "retries": 0,
-      "scoring_s": 8.50000651553273e-05,
+      "scoring_s": 9.81669872999191e-05,
       "split": "test",
       "status": "scored",
       "strata": {
@@ -8525,7 +8525,7 @@
       "case_id": "validity-008",
       "cost_usd": 0.0,
       "error": null,
-      "latency_s": 0.00101995805744082,
+      "latency_s": 0.000954125076532364,
       "metrics": {
         "attribute_match": {
           "detail": {
@@ -8658,9 +8658,9 @@
         },
         "status": "ok"
       },
-      "peak_memory_bytes": 5378,
+      "peak_memory_bytes": 5491,
       "retries": 0,
-      "scoring_s": 0.0416838329983875,
+      "scoring_s": 0.0415174580411986,
       "split": "test",
       "status": "scored",
       "strata": {
@@ -8675,7 +8675,7 @@
       "case_id": "validity-009",
       "cost_usd": 0.0,
       "error": null,
-      "latency_s": 0.000787958037108183,
+      "latency_s": 0.001192209077999,
       "metrics": {
         "attribute_match": {
           "detail": {
@@ -8808,9 +8808,9 @@
         },
         "status": "ok"
       },
-      "peak_memory_bytes": 5444,
+      "peak_memory_bytes": 5507,
       "retries": 0,
-      "scoring_s": 0.00040374998934567,
+      "scoring_s": 0.000465625082142651,
       "split": "test",
       "status": "scored",
       "strata": {
@@ -8825,32 +8825,32 @@
   "config_hash": "1fadf0a0380009519a4a65492cfd2d1547306df17984ec49975a58dfa39f62fc",
   "dataset_manifest_hash": "20beb1d10b212eaa1728803d1606fe42ed65c8f75496eced72d0ba5663d2f2ea",
   "efficiency": {
-    "cases_per_s": 13.2479334479759,
+    "cases_per_s": 12.5680702675453,
     "cases_total": 56,
     "cost_usd_per_case": 0.0,
     "cost_usd_total": 0.0,
     "failure_rate": 0.0,
-    "latency_max_s": 0.860299417050555,
-    "latency_p50_s": 0.00531920854700729,
-    "latency_p90_s": 0.0326700215227902,
-    "latency_p99_s": 0.446014690148879,
+    "latency_max_s": 0.764895790955052,
+    "latency_p50_s": 0.00627616647398099,
+    "latency_p90_s": 0.0399227504385635,
+    "latency_p99_s": 0.407020714081593,
     "mean_steps": null,
-    "peak_rss_bytes": 267386880,
+    "peak_rss_bytes": 264404992,
     "price_table_hash": "bac82dab3dacce874bb244d6293734dafcf129d683e7c78cc207567177435b87",
     "retries_total": 0,
     "timeout_rate": 0.0,
     "tokens_input_total": 0,
     "tokens_output_total": 0,
     "tool_error_rate": null,
-    "wall_clock_s": 4.22707437502686
+    "wall_clock_s": 4.45573575003073
   },
   "environment": {
     "cpu_count_logical": 8,
     "cpu_model": "Apple M1 Pro",
-    "geoevals_version": "0.1.0.dev0",
+    "geoevals_version": "0.1.0",
     "geopandas_version": "1.2.0",
     "geos_version": "3.14.1",
-    "git_commit": "e4b9d82107a9bd54921bb237df64a4ba4064ccb4",
+    "git_commit": "cb6b336e3ee1a3bb0142f14e3ce3a4bc48ad1a27",
     "git_dirty": true,
     "machine": "arm64",
     "os": "Darwin",
@@ -8862,14 +8862,14 @@
     "python_implementation": "CPython",
     "ram_total_bytes": 17179869184,
     "shapely_version": "2.2.0",
-    "uv_lock_sha256": "078e04266a13499b96e1057eb01cf0214bc1ed20e20ebbd033b1e027cbc7d74e"
+    "uv_lock_sha256": "ef03eb7ea7f6e758d17061ad5a3ff9951aa2bad73105153027dff22b9a028a55"
   },
   "failures": [],
-  "finished_at": "2026-10-09T18:37:05.214408Z",
+  "finished_at": "2026-10-10T23:21:47.790541Z",
   "limitations": [
     "Small synthetic fixtures; they test operation correctness, not scale or real-world data quality.",
     "Expected outputs come from one reference workflow (Shapely, pyproj, GEOS, PROJ); an error shared by those libraries would not be caught.",
-    "Tolerances are set per case and stated in explicit units; a looser tolerance hides small errors."
+    "Tolerances are set per case and stated in explicit units, sized to catch the smallest error of the mistake each case targets; none is tighter than a correct answer given to 5 decimal places needs."
   ],
   "provenance": {
     "benchmark": {
@@ -8978,9 +8978,9 @@
       "dataset_id": "gis_correctness"
     }
   },
-  "run_id": "gis_correctness-gis_baseline-20261009T183700Z-1fadf0a0",
+  "run_id": "gis_correctness-gis_baseline-20261010T232143Z-1fadf0a0",
   "schema_version": "1.0.0",
-  "started_at": "2026-10-09T18:37:00.986533Z",
+  "started_at": "2026-10-10T23:21:43.333784Z",
   "summary_metrics": {
     "attribute_match": {
       "ci_high": 1.0,

@@ -6,14 +6,14 @@
   },
   "benchmark": {
     "id": "human_context_access",
-    "version": "0.1.0"
+    "version": "0.2.0"
   },
   "cases": [
     {
       "case_id": "abstention-001",
       "cost_usd": 0.0,
       "error": null,
-      "latency_s": 1.11382362502627,
+      "latency_s": 1.17473304097075,
       "metrics": {
         "reachable_count_error": {
           "detail": {
@@ -77,9 +77,9 @@
       "output": {
         "status": "insufficient_data"
       },
-      "peak_memory_bytes": 36369453,
+      "peak_memory_bytes": 36367552,
       "retries": 0,
-      "scoring_s": 0.000336041091941297,
+      "scoring_s": 0.000415374990552664,
       "split": "test",
       "status": "scored",
       "strata": {
@@ -97,7 +97,7 @@
       "case_id": "abstention-002",
       "cost_usd": 0.0,
       "error": null,
-      "latency_s": 0.0145525420084596,
+      "latency_s": 0.0159085829509422,
       "metrics": {
         "reachable_count_error": {
           "detail": {
@@ -161,9 +161,9 @@
       "output": {
         "status": "insufficient_data"
       },
-      "peak_memory_bytes": 147570,
+      "peak_memory_bytes": 147691,
       "retries": 0,
-      "scoring_s": 6.1917002312839e-05,
+      "scoring_s": 6.7042070440948e-05,
       "split": "test",
       "status": "scored",
       "strata": {
@@ -181,7 +181,7 @@
       "case_id": "abstention-003",
       "cost_usd": 0.0,
       "error": null,
-      "latency_s": 0.231951832887717,
+      "latency_s": 0.242167041986249,
       "metrics": {
         "reachable_count_error": {
           "detail": {
@@ -245,9 +245,9 @@
       "output": {
         "status": "insufficient_data"
       },
-      "peak_memory_bytes": 3356698,
+      "peak_memory_bytes": 3353290,
       "retries": 0,
-      "scoring_s": 6.7290966399014e-05,
+      "scoring_s": 7.06249848008156e-05,
       "split": "test",
       "status": "scored",
       "strata": {
@@ -265,7 +265,7 @@
       "case_id": "abstention-004",
       "cost_usd": 0.0,
       "error": null,
-      "latency_s": 0.0156011249637231,
+      "latency_s": 0.0174123329343274,
       "metrics": {
         "reachable_count_error": {
           "detail": {
@@ -329,9 +329,9 @@
       "output": {
         "status": "insufficient_data"
       },
-      "peak_memory_bytes": 168123,
+      "peak_memory_bytes": 168100,
       "retries": 0,
-      "scoring_s": 5.94999874010682e-05,
+      "scoring_s": 6.99579250067472e-05,
       "split": "test",
       "status": "scored",
       "strata": {
@@ -349,7 +349,7 @@
       "case_id": "abstention-005",
       "cost_usd": 0.0,
       "error": null,
-      "latency_s": 0.0152410420123488,
+      "latency_s": 0.0160009580431506,
       "metrics": {
         "reachable_count_error": {
           "detail": {
@@ -415,7 +415,7 @@
       },
       "peak_memory_bytes": 146842,
       "retries": 0,
-      "scoring_s": 5.41670015081763e-05,
+      "scoring_s": 7.05410493537784e-05,
       "split": "test",
       "status": "scored",
       "strata": {
@@ -433,7 +433,7 @@
       "case_id": "abstention-006",
       "cost_usd": 0.0,
       "error": null,
-      "latency_s": 4.53749671578407e-05,
+      "latency_s": 5.34170540049672e-05,
       "metrics": {
         "reachable_count_error": {
           "detail": {
@@ -499,7 +499,7 @@
       },
       "peak_memory_bytes": 2010,
       "retries": 0,
-      "scoring_s": 5.96249010413885e-05,
+      "scoring_s": 4.67919744551182e-05,
       "split": "test",
       "status": "scored",
       "strata": {
@@ -517,7 +517,7 @@
       "case_id": "abstention-007",
       "cost_usd": 0.0,
       "error": null,
-      "latency_s": 3.94580420106649e-05,
+      "latency_s": 4.81250463053584e-05,
       "metrics": {
         "reachable_count_error": {
           "detail": {
@@ -583,7 +583,7 @@
       },
       "peak_memory_bytes": 1664,
       "retries": 0,
-      "scoring_s": 4.66249184682965e-05,
+      "scoring_s": 6.37919874861836e-05,
       "split": "test",
       "status": "scored",
       "strata": {
@@ -601,7 +601,7 @@
       "case_id": "abstention-008",
       "cost_usd": 0.0,
       "error": null,
-      "latency_s": 4.38749557361007e-05,
+      "latency_s": 4.09579370170832e-05,
       "metrics": {
         "reachable_count_error": {
           "detail": {
@@ -667,7 +667,7 @@
       },
       "peak_memory_bytes": 2080,
       "retries": 0,
-      "scoring_s": 6.14169985055923e-05,
+      "scoring_s": 5.42079797014594e-05,
       "split": "test",
       "status": "scored",
       "strata": {
@@ -685,7 +685,7 @@
       "case_id": "abstention-009",
       "cost_usd": 0.0,
       "error": null,
-      "latency_s": 3.17079247906804e-05,
+      "latency_s": 2.96669313684106e-05,
       "metrics": {
         "reachable_count_error": {
           "detail": {
@@ -751,7 +751,7 @@
       },
       "peak_memory_bytes": 1955,
       "retries": 0,
-      "scoring_s": 4.445796366781e-05,
+      "scoring_s": 4.69580991193652e-05,
       "split": "test",
       "status": "scored",
       "strata": {
@@ -769,7 +769,7 @@
       "case_id": "abstention-010",
       "cost_usd": 0.0,
       "error": null,
-      "latency_s": 3.96249815821648e-05,
+      "latency_s": 3.51250637322664e-05,
       "metrics": {
         "reachable_count_error": {
           "detail": {
@@ -835,7 +835,7 @@
       },
       "peak_memory_bytes": 2232,
       "retries": 0,
-      "scoring_s": 4.1667022742331e-05,
+      "scoring_s": 4.16659750044346e-05,
       "split": "test",
       "status": "scored",
       "strata": {
@@ -856,7 +856,7 @@
       "case_id": "abstention-011",
       "cost_usd": 0.0,
       "error": null,
-      "latency_s": 0.0021343749249354,
+      "latency_s": 0.00213079107925296,
       "metrics": {
         "reachable_count_error": {
           "detail": {
@@ -920,9 +920,9 @@
       "output": {
         "status": "invalid_request"
       },
-      "peak_memory_bytes": 21226,
+      "peak_memory_bytes": 21315,
       "retries": 0,
-      "scoring_s": 4.8832967877388e-05,
+      "scoring_s": 5.76659804210067e-05,
       "split": "test",
       "status": "scored",
       "strata": {
@@ -943,7 +943,7 @@
       "case_id": "abstention-012",
       "cost_usd": 0.0,
       "error": null,
-      "latency_s": 0.00123450008686632,
+      "latency_s": 0.000480125076137483,
       "metrics": {
         "reachable_count_error": {
           "detail": {
@@ -1007,9 +1007,9 @@
       "output": {
         "status": "invalid_request"
       },
-      "peak_memory_bytes": 7273,
+      "peak_memory_bytes": 7328,
       "retries": 0,
-      "scoring_s": 4.45001060143113e-05,
+      "scoring_s": 4.7417008318007e-05,
       "split": "test",
       "status": "scored",
       "strata": {
@@ -1030,7 +1030,7 @@
       "case_id": "abstention-013",
       "cost_usd": 0.0,
       "error": null,
-      "latency_s": 0.0164008329156786,
+      "latency_s": 0.017917082994245,
       "metrics": {
         "reachable_count_error": {
           "detail": {
@@ -1094,9 +1094,9 @@
       "output": {
         "status": "insufficient_data"
       },
-      "peak_memory_bytes": 146191,
+      "peak_memory_bytes": 146254,
       "retries": 0,
-      "scoring_s": 5.40000619366765e-05,
+      "scoring_s": 6.25420361757278e-05,
       "split": "test",
       "status": "scored",
       "strata": {
@@ -1117,7 +1117,7 @@
       "case_id": "amenity_count-001",
       "cost_usd": 0.0,
       "error": null,
-      "latency_s": 0.0160124589456245,
+      "latency_s": 0.0176314170239493,
       "metrics": {
         "reachable_count_error": {
           "detail": {
@@ -1191,7 +1191,7 @@
       },
       "peak_memory_bytes": 145746,
       "retries": 0,
-      "scoring_s": 0.000157082919031382,
+      "scoring_s": 0.000193957937881351,
       "split": "test",
       "status": "scored",
       "strata": {
@@ -1207,7 +1207,7 @@
       "case_id": "amenity_count-002",
       "cost_usd": 0.0,
       "error": null,
-      "latency_s": 0.0165599590400234,
+      "latency_s": 0.0174535830738023,
       "metrics": {
         "reachable_count_error": {
           "detail": {
@@ -1284,7 +1284,7 @@
       },
       "peak_memory_bytes": 144986,
       "retries": 0,
-      "scoring_s": 6.67079584673047e-05,
+      "scoring_s": 7.69159523770213e-05,
       "split": "test",
       "status": "scored",
       "strata": {
@@ -1300,7 +1300,7 @@
       "case_id": "amenity_count-003",
       "cost_usd": 0.0,
       "error": null,
-      "latency_s": 0.0170200420543551,
+      "latency_s": 0.0182947920402512,
       "metrics": {
         "reachable_count_error": {
           "detail": {
@@ -1374,9 +1374,9 @@
         "units": "count",
         "value": 4
       },
-      "peak_memory_bytes": 144866,
+      "peak_memory_bytes": 144809,
       "retries": 0,
-      "scoring_s": 6.76660565659404e-05,
+      "scoring_s": 7.7791977673769e-05,
       "split": "test",
       "status": "scored",
       "strata": {
@@ -1392,7 +1392,7 @@
       "case_id": "amenity_count-004",
       "cost_usd": 0.0,
       "error": null,
-      "latency_s": 0.0158820000942796,
+      "latency_s": 0.0172485410002992,
       "metrics": {
         "reachable_count_error": {
           "detail": {
@@ -1467,7 +1467,7 @@
       },
       "peak_memory_bytes": 144810,
       "retries": 0,
-      "scoring_s": 5.97499310970306e-05,
+      "scoring_s": 7.59169925004244e-05,
       "split": "test",
       "status": "scored",
       "strata": {
@@ -1483,7 +1483,7 @@
       "case_id": "amenity_count-005",
       "cost_usd": 0.0,
       "error": null,
-      "latency_s": 0.0163143330719322,
+      "latency_s": 0.0172156249172986,
       "metrics": {
         "reachable_count_error": {
           "detail": {
@@ -1558,9 +1558,9 @@
         "units": "count",
         "value": 5
       },
-      "peak_memory_bytes": 144802,
+      "peak_memory_bytes": 144745,
       "retries": 0,
-      "scoring_s": 6.3291983678937e-05,
+      "scoring_s": 7.34999775886536e-05,
       "split": "test",
       "status": "scored",
       "strata": {
@@ -1576,7 +1576,7 @@
       "case_id": "amenity_count-006",
       "cost_usd": 0.0,
       "error": null,
-      "latency_s": 0.016332249972038,
+      "latency_s": 0.0171887091128156,
       "metrics": {
         "reachable_count_error": {
           "detail": {
@@ -1652,7 +1652,7 @@
       },
       "peak_memory_bytes": 144794,
       "retries": 0,
-      "scoring_s": 7.11249886080623e-05,
+      "scoring_s": 7.27500300854445e-05,
       "split": "test",
       "status": "scored",
       "strata": {
@@ -1668,7 +1668,7 @@
       "case_id": "amenity_count-007",
       "cost_usd": 0.0,
       "error": null,
-      "latency_s": 0.0157264579320326,
+      "latency_s": 0.0169488750398159,
       "metrics": {
         "reachable_count_error": {
           "detail": {
@@ -1741,9 +1741,9 @@
         "units": "count",
         "value": 3
       },
-      "peak_memory_bytes": 144786,
+      "peak_memory_bytes": 144667,
       "retries": 0,
-      "scoring_s": 6.29579881206155e-05,
+      "scoring_s": 7.27089354768395e-05,
       "split": "test",
       "status": "scored",
       "strata": {
@@ -1759,7 +1759,7 @@
       "case_id": "amenity_count-008",
       "cost_usd": 0.0,
       "error": null,
-      "latency_s": 0.0157754579558969,
+      "latency_s": 0.0178154160967097,
       "metrics": {
         "reachable_count_error": {
           "detail": {
@@ -1832,7 +1832,7 @@
       },
       "peak_memory_bytes": 144778,
       "retries": 0,
-      "scoring_s": 6.18339981883764e-05,
+      "scoring_s": 8.7207998149097e-05,
       "split": "test",
       "status": "scored",
       "strata": {
@@ -1848,7 +1848,7 @@
       "case_id": "amenity_count-009",
       "cost_usd": 0.0,
       "error": null,
-      "latency_s": 0.0158405000111088,
+      "latency_s": 0.0164393750019372,
       "metrics": {
         "reachable_count_error": {
           "detail": {
@@ -1920,9 +1920,9 @@
         "units": "count",
         "value": 2
       },
-      "peak_memory_bytes": 144708,
+      "peak_memory_bytes": 144713,
       "retries": 0,
-      "scoring_s": 6.4415973611176e-05,
+      "scoring_s": 6.91249733790755e-05,
       "split": "test",
       "status": "scored",
       "strata": {
@@ -1938,7 +1938,7 @@
       "case_id": "nearest_amenity-001",
       "cost_usd": 0.0,
       "error": null,
-      "latency_s": 0.016006208024919,
+      "latency_s": 0.0176614160882309,
       "metrics": {
         "reachable_count_error": {
           "detail": {
@@ -2011,7 +2011,7 @@
       },
       "peak_memory_bytes": 144778,
       "retries": 0,
-      "scoring_s": 6.48330897092819e-05,
+      "scoring_s": 7.40829855203629e-05,
       "split": "test",
       "status": "scored",
       "strata": {
@@ -2026,7 +2026,7 @@
       "case_id": "nearest_amenity-002",
       "cost_usd": 0.0,
       "error": null,
-      "latency_s": 0.0157794579863548,
+      "latency_s": 0.0172826669877395,
       "metrics": {
         "reachable_count_error": {
           "detail": {
@@ -2099,7 +2099,7 @@
       },
       "peak_memory_bytes": 144746,
       "retries": 0,
-      "scoring_s": 6.24170061200857e-05,
+      "scoring_s": 7.4584037065506e-05,
       "split": "test",
       "status": "scored",
       "strata": {
@@ -2114,7 +2114,7 @@
       "case_id": "nearest_amenity-003",
       "cost_usd": 0.0,
       "error": null,
-      "latency_s": 0.0154724169988185,
+      "latency_s": 0.0170867079868913,
       "metrics": {
         "reachable_count_error": {
           "detail": {
@@ -2187,7 +2187,7 @@
       },
       "peak_memory_bytes": 144714,
       "retries": 0,
-      "scoring_s": 6.85839913785458e-05,
+      "scoring_s": 8.67909984663129e-05,
       "split": "test",
       "status": "scored",
       "strata": {
@@ -2202,7 +2202,7 @@
       "case_id": "nearest_amenity-004",
       "cost_usd": 0.0,
       "error": null,
-      "latency_s": 0.0165282919770107,
+      "latency_s": 0.017356582917273,
       "metrics": {
         "reachable_count_error": {
           "detail": {
@@ -2276,7 +2276,7 @@
       },
       "peak_memory_bytes": 144706,
       "retries": 0,
-      "scoring_s": 6.24579843133688e-05,
+      "scoring_s": 7.44999852031469e-05,
       "split": "test",
       "status": "scored",
       "strata": {
@@ -2291,7 +2291,7 @@
       "case_id": "nearest_amenity-005",
       "cost_usd": 0.0,
       "error": null,
-      "latency_s": 0.0155958749819547,
+      "latency_s": 0.0175610419828445,
       "metrics": {
         "reachable_count_error": {
           "detail": {
@@ -2364,7 +2364,7 @@
       },
       "peak_memory_bytes": 144698,
       "retries": 0,
-      "scoring_s": 6.69159926474094e-05,
+      "scoring_s": 8.09580087661743e-05,
       "split": "test",
       "status": "scored",
       "strata": {
@@ -2379,7 +2379,7 @@
       "case_id": "nearest_amenity-006",
       "cost_usd": 0.0,
       "error": null,
-      "latency_s": 0.0160702919820324,
+      "latency_s": 0.0178919159807265,
       "metrics": {
         "reachable_count_error": {
           "detail": {
@@ -2452,7 +2452,7 @@
       },
       "peak_memory_bytes": 144690,
       "retries": 0,
-      "scoring_s": 6.78329961374402e-05,
+      "scoring_s": 7.47499288991094e-05,
       "split": "test",
       "status": "scored",
       "strata": {
@@ -2467,7 +2467,7 @@
       "case_id": "nearest_amenity-007",
       "cost_usd": 0.0,
       "error": null,
-      "latency_s": 0.0163243330316618,
+      "latency_s": 0.0201345829991624,
       "metrics": {
         "reachable_count_error": {
           "detail": {
@@ -2538,9 +2538,9 @@
         "units": "s",
         "value": 537.496240601504
       },
-      "peak_memory_bytes": 144625,
+      "peak_memory_bytes": 144682,
       "retries": 0,
-      "scoring_s": 6.3624931499362e-05,
+      "scoring_s": 7.18750525265932e-05,
       "split": "test",
       "status": "scored",
       "strata": {
@@ -2555,7 +2555,7 @@
       "case_id": "nearest_amenity-008",
       "cost_usd": 0.0,
       "error": null,
-      "latency_s": 0.0157612919574603,
+      "latency_s": 0.0164599169511348,
       "metrics": {
         "reachable_count_error": {
           "detail": {
@@ -2628,7 +2628,7 @@
       },
       "peak_memory_bytes": 144698,
       "retries": 0,
-      "scoring_s": 5.88750699535012e-05,
+      "scoring_s": 6.70830486342311e-05,
       "split": "test",
       "status": "scored",
       "strata": {
@@ -2643,7 +2643,7 @@
       "case_id": "network_detour-001",
       "cost_usd": 0.0,
       "error": null,
-      "latency_s": 0.0141299999086186,
+      "latency_s": 0.0155801670625806,
       "metrics": {
         "reachable_count_error": {
           "detail": {
@@ -2715,7 +2715,7 @@
       },
       "peak_memory_bytes": 144610,
       "retries": 0,
-      "scoring_s": 6.45839609205723e-05,
+      "scoring_s": 6.51669688522816e-05,
       "split": "test",
       "status": "scored",
       "strata": {
@@ -2730,7 +2730,7 @@
       "case_id": "network_detour-002",
       "cost_usd": 0.0,
       "error": null,
-      "latency_s": 0.0140954169910401,
+      "latency_s": 0.0153342919657007,
       "metrics": {
         "reachable_count_error": {
           "detail": {
@@ -2800,9 +2800,9 @@
         "units": "ratio",
         "value": 1.01009964481211
       },
-      "peak_memory_bytes": 144529,
+      "peak_memory_bytes": 144586,
       "retries": 0,
-      "scoring_s": 5.95829915255308e-05,
+      "scoring_s": 7.1333022788167e-05,
       "split": "test",
       "status": "scored",
       "strata": {
@@ -2817,7 +2817,7 @@
       "case_id": "network_detour-003",
       "cost_usd": 0.0,
       "error": null,
-      "latency_s": 0.0146171250380576,
+      "latency_s": 0.0155351670691743,
       "metrics": {
         "reachable_count_error": {
           "detail": {
@@ -2887,9 +2887,9 @@
         "units": "ratio",
         "value": 6.31603601624009
       },
-      "peak_memory_bytes": 144586,
+      "peak_memory_bytes": 144472,
       "retries": 0,
-      "scoring_s": 5.93750737607479e-05,
+      "scoring_s": 6.27080444246531e-05,
       "split": "test",
       "status": "scored",
       "strata": {
@@ -2904,7 +2904,7 @@
       "case_id": "network_detour-004",
       "cost_usd": 0.0,
       "error": null,
-      "latency_s": 0.0144114579306915,
+      "latency_s": 0.014961792039685,
       "metrics": {
         "reachable_count_error": {
           "detail": {
@@ -2974,9 +2974,9 @@
         "units": "ratio",
         "value": 3.97565228309453
       },
-      "peak_memory_bytes": 144529,
+      "peak_memory_bytes": 144586,
       "retries": 0,
-      "scoring_s": 6.11670548096299e-05,
+      "scoring_s": 7.66670564189553e-05,
       "split": "test",
       "status": "scored",
       "strata": {
@@ -2991,7 +2991,7 @@
       "case_id": "network_detour-005",
       "cost_usd": 0.0,
       "error": null,
-      "latency_s": 0.0142728749196976,
+      "latency_s": 0.0156772499904037,
       "metrics": {
         "reachable_count_error": {
           "detail": {
@@ -3063,7 +3063,7 @@
       },
       "peak_memory_bytes": 144586,
       "retries": 0,
-      "scoring_s": 6.35839533060789e-05,
+      "scoring_s": 6.5166037529707e-05,
       "split": "test",
       "status": "scored",
       "strata": {
@@ -3078,7 +3078,7 @@
       "case_id": "network_detour-006",
       "cost_usd": 0.0,
       "error": null,
-      "latency_s": 0.0140135830733925,
+      "latency_s": 0.014841541997157,
       "metrics": {
         "reachable_count_error": {
           "detail": {
@@ -3148,9 +3148,9 @@
         "units": "ratio",
         "value": 1.01367105186691
       },
-      "peak_memory_bytes": 144586,
+      "peak_memory_bytes": 144529,
       "retries": 0,
-      "scoring_s": 5.82500360906124e-05,
+      "scoring_s": 0.000111875007860363,
       "split": "test",
       "status": "scored",
       "strata": {
@@ -3165,7 +3165,7 @@
       "case_id": "open_amenities-001",
       "cost_usd": 0.0,
       "error": null,
-      "latency_s": 0.0164081660332158,
+      "latency_s": 0.0171232499415055,
       "metrics": {
         "reachable_count_error": {
           "detail": {
@@ -3237,7 +3237,7 @@
       },
       "peak_memory_bytes": 145066,
       "retries": 0,
-      "scoring_s": 6.18339981883764e-05,
+      "scoring_s": 6.72499882057309e-05,
       "split": "test",
       "status": "scored",
       "strata": {
@@ -3255,7 +3255,7 @@
       "case_id": "open_amenities-002",
       "cost_usd": 0.0,
       "error": null,
-      "latency_s": 0.0161937919910997,
+      "latency_s": 0.0170411670114845,
       "metrics": {
         "reachable_count_error": {
           "detail": {
@@ -3323,9 +3323,9 @@
         "unknown_ids": [],
         "value": 0
       },
-      "peak_memory_bytes": 144986,
+      "peak_memory_bytes": 144988,
       "retries": 0,
-      "scoring_s": 6.03329390287399e-05,
+      "scoring_s": 6.4791995100677e-05,
       "split": "test",
       "status": "scored",
       "strata": {
@@ -3343,7 +3343,7 @@
       "case_id": "open_amenities-003",
       "cost_usd": 0.0,
       "error": null,
-      "latency_s": 0.0160667919553816,
+      "latency_s": 0.0175107499817386,
       "metrics": {
         "reachable_count_error": {
           "detail": {
@@ -3417,7 +3417,7 @@
       },
       "peak_memory_bytes": 145098,
       "retries": 0,
-      "scoring_s": 6.62920065224171e-05,
+      "scoring_s": 7.26660946384072e-05,
       "split": "test",
       "status": "scored",
       "strata": {
@@ -3435,7 +3435,7 @@
       "case_id": "open_amenities-004",
       "cost_usd": 0.0,
       "error": null,
-      "latency_s": 0.0167536248918623,
+      "latency_s": 0.0180897919926792,
       "metrics": {
         "reachable_count_error": {
           "detail": {
@@ -3508,9 +3508,9 @@
         "unknown_ids": [],
         "value": 4
       },
-      "peak_memory_bytes": 144956,
+      "peak_memory_bytes": 145009,
       "retries": 0,
-      "scoring_s": 7.22500262781978e-05,
+      "scoring_s": 7.37090595066547e-05,
       "split": "test",
       "status": "scored",
       "strata": {
@@ -3528,191 +3528,7 @@
       "case_id": "open_amenities-005",
       "cost_usd": 0.0,
       "error": null,
-      "latency_s": 0.0173980420222506,
-      "metrics": {
-        "reachable_count_error": {
-          "detail": {
-            "signed_error": 0.0
-          },
-          "passed": true,
-          "value": 0.0
-        },
-        "reachable_set_jaccard": {
-          "detail": {},
-          "passed": true,
-          "value": 1.0
-        },
-        "route_stretch_abs_error": {
-          "detail": {
-            "applicable": false
-          },
-          "passed": null,
-          "value": null
-        },
-        "status_match": {
-          "detail": {
-            "expected": "ok",
-            "predicted": "ok"
-          },
-          "passed": true,
-          "value": 1.0
-        },
-        "task_success": {
-          "detail": {
-            "checks": {
-              "status_match": {
-                "detail": {
-                  "expected": "ok",
-                  "predicted": "ok"
-                },
-                "passed": true
-              },
-              "value_abs_error": {
-                "detail": {},
-                "passed": true
-              }
-            }
-          },
-          "passed": true,
-          "value": 1.0
-        },
-        "travel_time_abs_error_s": {
-          "detail": {
-            "applicable": false
-          },
-          "passed": null,
-          "value": null
-        },
-        "unknown_set_jaccard": {
-          "detail": {},
-          "passed": true,
-          "value": 1.0
-        }
-      },
-      "output": {
-        "ids": [
-          "poi-024",
-          "poi-025"
-        ],
-        "status": "ok",
-        "units": "count",
-        "unknown_ids": [],
-        "value": 2
-      },
-      "peak_memory_bytes": 145010,
-      "retries": 0,
-      "scoring_s": 7.15419882908463e-05,
-      "split": "test",
-      "status": "scored",
-      "strata": {
-        "amenity_category": "transit_stop",
-        "day_type": "weekday",
-        "hours_feature": "overnight",
-        "neighborhood_type": "grid",
-        "operation": "open_amenities",
-        "threshold_min": 10,
-        "time_of_day": "night"
-      },
-      "tokens": null
-    },
-    {
-      "case_id": "open_amenities-006",
-      "cost_usd": 0.0,
-      "error": null,
-      "latency_s": 0.0168850830523297,
-      "metrics": {
-        "reachable_count_error": {
-          "detail": {
-            "signed_error": 0.0
-          },
-          "passed": true,
-          "value": 0.0
-        },
-        "reachable_set_jaccard": {
-          "detail": {},
-          "passed": true,
-          "value": 1.0
-        },
-        "route_stretch_abs_error": {
-          "detail": {
-            "applicable": false
-          },
-          "passed": null,
-          "value": null
-        },
-        "status_match": {
-          "detail": {
-            "expected": "ok",
-            "predicted": "ok"
-          },
-          "passed": true,
-          "value": 1.0
-        },
-        "task_success": {
-          "detail": {
-            "checks": {
-              "status_match": {
-                "detail": {
-                  "expected": "ok",
-                  "predicted": "ok"
-                },
-                "passed": true
-              },
-              "value_abs_error": {
-                "detail": {},
-                "passed": true
-              }
-            }
-          },
-          "passed": true,
-          "value": 1.0
-        },
-        "travel_time_abs_error_s": {
-          "detail": {
-            "applicable": false
-          },
-          "passed": null,
-          "value": null
-        },
-        "unknown_set_jaccard": {
-          "detail": {},
-          "passed": true,
-          "value": 1.0
-        }
-      },
-      "output": {
-        "ids": [
-          "poi-022",
-          "poi-023",
-          "poi-024",
-          "poi-025"
-        ],
-        "status": "ok",
-        "units": "count",
-        "unknown_ids": [],
-        "value": 4
-      },
-      "peak_memory_bytes": 145011,
-      "retries": 0,
-      "scoring_s": 6.31670700386167e-05,
-      "split": "test",
-      "status": "scored",
-      "strata": {
-        "amenity_category": "transit_stop",
-        "day_type": "weekend",
-        "hours_feature": "overnight",
-        "neighborhood_type": "grid",
-        "operation": "open_amenities",
-        "threshold_min": 10,
-        "time_of_day": "night"
-      },
-      "tokens": null
-    },
-    {
-      "case_id": "open_amenities-007",
-      "cost_usd": 0.0,
-      "error": null,
-      "latency_s": 0.0165399160468951,
+      "latency_s": 0.0185288329375908,
       "metrics": {
         "reachable_count_error": {
           "detail": {
@@ -3785,7 +3601,191 @@
       },
       "peak_memory_bytes": 145009,
       "retries": 0,
-      "scoring_s": 7.17081129550934e-05,
+      "scoring_s": 7.35409557819366e-05,
+      "split": "test",
+      "status": "scored",
+      "strata": {
+        "amenity_category": "transit_stop",
+        "day_type": "weekday",
+        "hours_feature": "overnight",
+        "neighborhood_type": "grid",
+        "operation": "open_amenities",
+        "threshold_min": 10,
+        "time_of_day": "night"
+      },
+      "tokens": null
+    },
+    {
+      "case_id": "open_amenities-006",
+      "cost_usd": 0.0,
+      "error": null,
+      "latency_s": 0.0187462079338729,
+      "metrics": {
+        "reachable_count_error": {
+          "detail": {
+            "signed_error": 0.0
+          },
+          "passed": true,
+          "value": 0.0
+        },
+        "reachable_set_jaccard": {
+          "detail": {},
+          "passed": true,
+          "value": 1.0
+        },
+        "route_stretch_abs_error": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        },
+        "status_match": {
+          "detail": {
+            "expected": "ok",
+            "predicted": "ok"
+          },
+          "passed": true,
+          "value": 1.0
+        },
+        "task_success": {
+          "detail": {
+            "checks": {
+              "status_match": {
+                "detail": {
+                  "expected": "ok",
+                  "predicted": "ok"
+                },
+                "passed": true
+              },
+              "value_abs_error": {
+                "detail": {},
+                "passed": true
+              }
+            }
+          },
+          "passed": true,
+          "value": 1.0
+        },
+        "travel_time_abs_error_s": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        },
+        "unknown_set_jaccard": {
+          "detail": {},
+          "passed": true,
+          "value": 1.0
+        }
+      },
+      "output": {
+        "ids": [
+          "poi-022",
+          "poi-023",
+          "poi-024",
+          "poi-025"
+        ],
+        "status": "ok",
+        "units": "count",
+        "unknown_ids": [],
+        "value": 4
+      },
+      "peak_memory_bytes": 144954,
+      "retries": 0,
+      "scoring_s": 7.67080346122384e-05,
+      "split": "test",
+      "status": "scored",
+      "strata": {
+        "amenity_category": "transit_stop",
+        "day_type": "weekend",
+        "hours_feature": "overnight",
+        "neighborhood_type": "grid",
+        "operation": "open_amenities",
+        "threshold_min": 10,
+        "time_of_day": "night"
+      },
+      "tokens": null
+    },
+    {
+      "case_id": "open_amenities-007",
+      "cost_usd": 0.0,
+      "error": null,
+      "latency_s": 0.0184517499292269,
+      "metrics": {
+        "reachable_count_error": {
+          "detail": {
+            "signed_error": 0.0
+          },
+          "passed": true,
+          "value": 0.0
+        },
+        "reachable_set_jaccard": {
+          "detail": {},
+          "passed": true,
+          "value": 1.0
+        },
+        "route_stretch_abs_error": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        },
+        "status_match": {
+          "detail": {
+            "expected": "ok",
+            "predicted": "ok"
+          },
+          "passed": true,
+          "value": 1.0
+        },
+        "task_success": {
+          "detail": {
+            "checks": {
+              "status_match": {
+                "detail": {
+                  "expected": "ok",
+                  "predicted": "ok"
+                },
+                "passed": true
+              },
+              "value_abs_error": {
+                "detail": {},
+                "passed": true
+              }
+            }
+          },
+          "passed": true,
+          "value": 1.0
+        },
+        "travel_time_abs_error_s": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        },
+        "unknown_set_jaccard": {
+          "detail": {},
+          "passed": true,
+          "value": 1.0
+        }
+      },
+      "output": {
+        "ids": [
+          "poi-024",
+          "poi-025"
+        ],
+        "status": "ok",
+        "units": "count",
+        "unknown_ids": [],
+        "value": 2
+      },
+      "peak_memory_bytes": 145066,
+      "retries": 0,
+      "scoring_s": 7.94170191511512e-05,
       "split": "test",
       "status": "scored",
       "strata": {
@@ -3803,7 +3803,7 @@
       "case_id": "open_amenities-008",
       "cost_usd": 0.0,
       "error": null,
-      "latency_s": 0.0167135420488194,
+      "latency_s": 0.0180332500021905,
       "metrics": {
         "reachable_count_error": {
           "detail": {
@@ -3875,7 +3875,7 @@
       },
       "peak_memory_bytes": 145011,
       "retries": 0,
-      "scoring_s": 6.21250364929438e-05,
+      "scoring_s": 7.11670145392418e-05,
       "split": "test",
       "status": "scored",
       "strata": {
@@ -3893,7 +3893,7 @@
       "case_id": "open_amenities-009",
       "cost_usd": 0.0,
       "error": null,
-      "latency_s": 0.0167382500367239,
+      "latency_s": 0.0185594169888645,
       "metrics": {
         "reachable_count_error": {
           "detail": {
@@ -3966,9 +3966,9 @@
         "unknown_ids": [],
         "value": 4
       },
-      "peak_memory_bytes": 144947,
+      "peak_memory_bytes": 145066,
       "retries": 0,
-      "scoring_s": 6.29579881206155e-05,
+      "scoring_s": 0.000109666958451271,
       "split": "test",
       "status": "scored",
       "strata": {
@@ -3986,7 +3986,7 @@
       "case_id": "open_amenities-010",
       "cost_usd": 0.0,
       "error": null,
-      "latency_s": 0.0163600000087172,
+      "latency_s": 0.0215698749525473,
       "metrics": {
         "reachable_count_error": {
           "detail": {
@@ -4060,9 +4060,9 @@
         "unknown_ids": [],
         "value": 5
       },
-      "peak_memory_bytes": 145066,
+      "peak_memory_bytes": 145004,
       "retries": 0,
-      "scoring_s": 6.22080406174064e-05,
+      "scoring_s": 8.54169484227896e-05,
       "split": "test",
       "status": "scored",
       "strata": {
@@ -4080,7 +4080,7 @@
       "case_id": "open_amenities-011",
       "cost_usd": 0.0,
       "error": null,
-      "latency_s": 0.0164852080633864,
+      "latency_s": 0.0185882500372827,
       "metrics": {
         "reachable_count_error": {
           "detail": {
@@ -4151,9 +4151,9 @@
         "unknown_ids": [],
         "value": 2
       },
-      "peak_memory_bytes": 144955,
+      "peak_memory_bytes": 145010,
       "retries": 0,
-      "scoring_s": 6.29590358585119e-05,
+      "scoring_s": 7.90420453995466e-05,
       "split": "test",
       "status": "scored",
       "strata": {
@@ -4171,7 +4171,7 @@
       "case_id": "open_amenities-012",
       "cost_usd": 0.0,
       "error": null,
-      "latency_s": 0.0157734589884058,
+      "latency_s": 0.0174408330349252,
       "metrics": {
         "reachable_count_error": {
           "detail": {
@@ -4241,9 +4241,9 @@
         "unknown_ids": [],
         "value": 1
       },
-      "peak_memory_bytes": 145011,
+      "peak_memory_bytes": 145066,
       "retries": 0,
-      "scoring_s": 6.61249505355954e-05,
+      "scoring_s": 6.91669993102551e-05,
       "split": "test",
       "status": "scored",
       "strata": {
@@ -4261,7 +4261,7 @@
       "case_id": "open_amenities-013",
       "cost_usd": 0.0,
       "error": null,
-      "latency_s": 0.0165620000334457,
+      "latency_s": 0.0206212090561166,
       "metrics": {
         "reachable_count_error": {
           "detail": {
@@ -4332,9 +4332,9 @@
         "unknown_ids": [],
         "value": 2
       },
-      "peak_memory_bytes": 144892,
+      "peak_memory_bytes": 145010,
       "retries": 0,
-      "scoring_s": 5.88749535381794e-05,
+      "scoring_s": 7.82079296186566e-05,
       "split": "test",
       "status": "scored",
       "strata": {
@@ -4352,7 +4352,7 @@
       "case_id": "open_amenities-014",
       "cost_usd": 0.0,
       "error": null,
-      "latency_s": 0.0164297500159591,
+      "latency_s": 0.0183897910173982,
       "metrics": {
         "reachable_count_error": {
           "detail": {
@@ -4428,7 +4428,7 @@
       },
       "peak_memory_bytes": 145011,
       "retries": 0,
-      "scoring_s": 6.7375018261373e-05,
+      "scoring_s": 7.65000004321337e-05,
       "split": "test",
       "status": "scored",
       "strata": {
@@ -4446,7 +4446,7 @@
       "case_id": "open_amenities-015",
       "cost_usd": 0.0,
       "error": null,
-      "latency_s": 0.0162860000273213,
+      "latency_s": 0.0191138330847025,
       "metrics": {
         "reachable_count_error": {
           "detail": {
@@ -4514,9 +4514,9 @@
         "unknown_ids": [],
         "value": 0
       },
-      "peak_memory_bytes": 145130,
+      "peak_memory_bytes": 145075,
       "retries": 0,
-      "scoring_s": 5.9416051954031e-05,
+      "scoring_s": 7.70420301705599e-05,
       "split": "test",
       "status": "scored",
       "strata": {
@@ -4534,32 +4534,32 @@
   "config_hash": "1fadf0a0380009519a4a65492cfd2d1547306df17984ec49975a58dfa39f62fc",
   "dataset_manifest_hash": "f2d344c9051b3956498c04c8da06dd43c1e1ea893b3169052aa52afdaf556b2a",
   "efficiency": {
-    "cases_per_s": 21.2107361959265,
+    "cases_per_s": 19.6016257817543,
     "cases_total": 51,
     "cost_usd_per_case": 0.0,
     "cost_usd_total": 0.0,
     "failure_rate": 0.0,
-    "latency_max_s": 1.11382362502627,
-    "latency_p50_s": 0.016006208024919,
-    "latency_p90_s": 0.0167536248918623,
-    "latency_p99_s": 0.672887728956994,
+    "latency_max_s": 1.17473304097075,
+    "latency_p50_s": 0.017356582917273,
+    "latency_p90_s": 0.0191138330847025,
+    "latency_p99_s": 0.7084500414785,
     "mean_steps": null,
-    "peak_rss_bytes": 266649600,
+    "peak_rss_bytes": 255197184,
     "price_table_hash": "bac82dab3dacce874bb244d6293734dafcf129d683e7c78cc207567177435b87",
     "retries_total": 0,
     "timeout_rate": 0.0,
     "tokens_input_total": 0,
     "tokens_output_total": 0,
     "tool_error_rate": null,
-    "wall_clock_s": 2.40444270905573
+    "wall_clock_s": 2.60182500001974
   },
   "environment": {
     "cpu_count_logical": 8,
     "cpu_model": "Apple M1 Pro",
-    "geoevals_version": "0.1.0.dev0",
+    "geoevals_version": "0.1.0",
     "geopandas_version": "1.2.0",
     "geos_version": "3.14.1",
-    "git_commit": "66bd8037e31a4264c531e91bf54429cdfc11af4e",
+    "git_commit": "cb6b336e3ee1a3bb0142f14e3ce3a4bc48ad1a27",
     "git_dirty": true,
     "machine": "arm64",
     "os": "Darwin",
@@ -4571,15 +4571,15 @@
     "python_implementation": "CPython",
     "ram_total_bytes": 17179869184,
     "shapely_version": "2.2.0",
-    "uv_lock_sha256": "70ba69c80197dc92ae3a9d4c6a24c2f950263e532793f7f9122f8a427620ffeb"
+    "uv_lock_sha256": "ef03eb7ea7f6e758d17061ad5a3ff9951aa2bad73105153027dff22b9a028a55"
   },
   "failures": [],
-  "finished_at": "2026-10-09T20:11:08.490423Z",
+  "finished_at": "2026-10-10T23:21:57.789334Z",
   "limitations": [
     "One small synthetic town; it tests access computations, not scale or real-world data quality.",
     "Walking is modeled as a constant speed on mapped street lengths; crossings, slope, signals and personal mobility are not modeled.",
     "Opening hours are evaluated with a documented subset of the OpenStreetMap syntax (docs/human-context.md); values outside it count as unknown. Travel time is not added to the instant.",
-    "Tolerances are tight because the network, lengths and speed are all given; they absorb only floating-point summation order."
+    "Tolerances are tight because the network, lengths and speed are all given; the detour ratio tolerance (1e-4) accepts a correct ratio given to 5 decimal places and still catches a haversine or planar straight-line distance and any longer path."
   ],
   "provenance": {
     "benchmark": {
@@ -4625,9 +4625,9 @@
       "dataset_id": "human_context_access"
     }
   },
-  "run_id": "human_context_access-access_baseline-20261009T201106Z-1fadf0a0",
+  "run_id": "human_context_access-access_baseline-20261010T232155Z-1fadf0a0",
   "schema_version": "1.0.0",
-  "started_at": "2026-10-09T20:11:06.085201Z",
+  "started_at": "2026-10-10T23:21:55.186518Z",
   "summary_metrics": {
     "reachable_count_error": {
       "ci_high": 0.0,

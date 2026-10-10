@@ -3,7 +3,7 @@
 | Field | Value |
 | --- | --- |
 | Benchmark ID | `human_context_access` (directory `benchmarks/human_context/`) |
-| Version | 0.1.0 (`benchmark.yaml`) |
+| Version | 0.2.0 (`benchmark.yaml`) |
 | Pillar | `human_context` |
 | Cases | 51, one split (`test`) |
 | License | MIT (spec, cases, generator and fixtures) |
@@ -136,10 +136,13 @@ the unknown bucket (`unknown_ids`) of opening-hours answers; see
 | --- | --- | --- |
 | `abs_tol`, `time_tol_s` | s | 0.001 |
 | `abs_tol`, `count_tol` | count | 0 |
-| `abs_tol`, `stretch_tol` | ratio | 1e-06 |
+| `abs_tol`, `stretch_tol` | ratio | 1e-04 |
 
 The tolerances are tight on purpose. The network, the edge lengths and the speed are all given,
-so a correct answer is exact up to floating-point summation order.
+so a correct answer is exact up to floating-point summation order. The detour ratio tolerance,
+1e-4, accepts a correct ratio given to 5 decimal places. It still catches a straight-line
+distance computed with the haversine formula (at least 1.0e-3 off on these cases) or in planar
+degrees, and any longer path.
 
 ## Reference outputs
 
