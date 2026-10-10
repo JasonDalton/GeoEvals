@@ -19,7 +19,12 @@ from geoevals.adapters.gis_baseline import OPERATIONS, UNITS_IN_M
 from geoevals.cli import main
 from geoevals.data.verify import verify_manifest
 from geoevals.metrics.spatial import reproject
-from geoevals.regenerate import RegenerateError, expected_outputs, regenerate
+from geoevals.regenerate import (
+    RegenerateError,
+    expected_outputs,
+    regenerate,
+    same_within_tolerance,
+)
 from geoevals.reporting.report import report_context
 from geoevals.runner.config import RunConfig
 from geoevals.runner.run import RunError, _resolve_metrics, _score, load_cases, run_benchmark
@@ -160,10 +165,36 @@ def test_regenerate_rewrites_stale_outputs(tmp_path: Path) -> None:
 
     stale = regenerate(copy, "gis_correctness")
     assert sorted(stale) == sorted([expected_files[0], expected_files[1], case_file])
-    assert case_file.read_text(encoding="utf-8") == original
+    # Rewritten with this platform's PROJ and GEOS, which can differ from the committed files in
+    # the last digits.
+    assert same_within_tolerance(original, case_file.read_text(encoding="utf-8"))
     assert regenerate(copy, "gis_correctness") == []
     for path in expected_files:
-        assert path.read_bytes() == (BENCH / "expected" / path.name).read_bytes()
+        committed = (BENCH / "expected" / path.name).read_text(encoding="utf-8")
+        assert same_within_tolerance(committed, path.read_text(encoding="utf-8"))
+
+
+def test_regenerate_accepts_platform_differences_within_5_decimals(tmp_path: Path) -> None:
+    copy = tmp_path / "gis_correctness"
+    shutil.copytree(BENCH, copy, ignore=shutil.ignore_patterns("__pycache__"))
+    path = copy / "cases" / "distance.jsonl"
+    original = path.read_text(encoding="utf-8")
+    first = json.loads(original.splitlines()[0])
+    value = first["expected"]["value"]
+    assert isinstance(value, float)
+
+    def with_value(new: float) -> str:
+        lines = original.splitlines(keepends=True)
+        case = json.loads(lines[0])
+        case["expected"]["value"] = new
+        return json.dumps(case, ensure_ascii=False) + "\n" + "".join(lines[1:])
+
+    path.write_text(with_value(value + 6e-7), encoding="utf-8")
+    assert regenerate(copy, "gis_correctness", write=False) == []
+    path.write_text(with_value(value + 2e-5), encoding="utf-8")
+    assert regenerate(copy, "gis_correctness") == [path]
+    assert same_within_tolerance(original, path.read_text(encoding="utf-8"))
+    assert not same_within_tolerance(original, with_value(value + 2e-5))
 
 
 def test_regenerate_checks_the_benchmark_id() -> None:
