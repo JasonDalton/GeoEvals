@@ -1,4 +1,7 @@
+import json
 import shutil
+import subprocess
+import sys
 import uuid
 from collections.abc import Iterator
 from pathlib import Path
@@ -16,6 +19,7 @@ from geoevals.leaderboard.sandbox import (
     start_container,
     truncate,
 )
+from geoevals.leaderboard.sandbox_mcp import TOOL_NAME, SandboxServer
 
 REPO = Path(__file__).parent.parent
 FIXTURES = REPO / "benchmarks" / "gis_correctness" / "fixtures"
@@ -116,3 +120,119 @@ def test_remove_container() -> None:
 def test_docker_available_without_docker(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(shutil, "which", lambda name: None)
     assert docker_available() is False
+
+
+# --- MCP server -------------------------------------------------------------------------------
+
+
+def _server(
+    results: list[ExecResult] | None = None, max_calls: int = 3
+) -> tuple[SandboxServer, list[str]]:
+    ran: list[str] = []
+    queue = list(results or [])
+
+    def execute(code: str) -> ExecResult:
+        ran.append(code)
+        return queue.pop(0) if queue else ExecResult(0, "out\n", "", False)
+
+    return SandboxServer(execute, max_calls), ran
+
+
+def _call(server: SandboxServer, code: object, request_id: int = 3) -> dict:
+    reply = server.handle(
+        {
+            "jsonrpc": "2.0",
+            "id": request_id,
+            "method": "tools/call",
+            "params": {"name": TOOL_NAME, "arguments": {"code": code}},
+        }
+    )
+    assert reply is not None
+    return reply["result"]
+
+
+def test_mcp_initialize_and_list() -> None:
+    server, _ = _server()
+    init = server.handle(
+        {
+            "jsonrpc": "2.0",
+            "id": 1,
+            "method": "initialize",
+            "params": {"protocolVersion": "2099-01-01"},
+        }
+    )
+    assert init is not None
+    assert init["result"]["protocolVersion"] == "2099-01-01"
+    assert "tools" in init["result"]["capabilities"]
+    assert server.handle({"jsonrpc": "2.0", "method": "notifications/initialized"}) is None
+    listed = server.handle({"jsonrpc": "2.0", "id": 2, "method": "tools/list"})
+    assert listed is not None
+    [tool] = listed["result"]["tools"]
+    assert tool["name"] == "run_python"
+    assert tool["inputSchema"]["required"] == ["code"]
+    assert tool["inputSchema"]["properties"]["code"]["type"] == "string"
+
+
+def test_mcp_call_formats_the_result_and_flags_errors() -> None:
+    server, ran = _server(
+        [
+            ExecResult(0, "42\n", "", False),
+            ExecResult(1, "", "boom", False),
+            ExecResult(137, "", "slow", True),
+        ]
+    )
+    ok = _call(server, "print(42)")
+    assert ok["isError"] is False
+    assert ok["content"][0]["text"] == "exit code: 0\n--- stdout ---\n42\n\n--- stderr ---\n"
+    assert _call(server, "x")["isError"] is True
+    assert _call(server, "y")["isError"] is True
+    assert ran == ["print(42)", "x", "y"]
+
+
+def test_mcp_call_limit_runs_nothing_more() -> None:
+    server, ran = _server(max_calls=2)
+    _call(server, "a")
+    _call(server, "b")
+    limited = _call(server, "c")
+    assert limited["isError"] is True
+    assert "Submit your answer" in limited["content"][0]["text"]
+    assert ran == ["a", "b"]
+
+
+def test_mcp_rejects_bad_calls() -> None:
+    server, ran = _server()
+    assert _call(server, 7)["isError"] is True
+    unknown = server.handle(
+        {"jsonrpc": "2.0", "id": 9, "method": "tools/call", "params": {"name": "shell"}}
+    )
+    assert unknown is not None and unknown["result"]["isError"] is True
+    missing = server.handle({"jsonrpc": "2.0", "id": 10, "method": "resources/list"})
+    assert missing is not None and missing["error"]["code"] == -32601
+    assert ran == []
+
+
+def test_mcp_main_over_stdio() -> None:
+    messages = [
+        {"jsonrpc": "2.0", "id": 1, "method": "initialize", "params": {}},
+        {"jsonrpc": "2.0", "method": "notifications/initialized"},
+        {"jsonrpc": "2.0", "id": 2, "method": "tools/list"},
+    ]
+    completed = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "geoevals.leaderboard.sandbox_mcp",
+            "--image",
+            "unused",
+            "--name",
+            "unused",
+        ],
+        input="".join(json.dumps(m) + "\n" for m in messages),
+        capture_output=True,
+        text=True,
+        timeout=60,
+        check=True,
+    )
+    replies = [json.loads(line) for line in completed.stdout.splitlines()]
+    assert [reply["id"] for reply in replies] == [1, 2]
+    assert replies[1]["result"]["tools"][0]["name"] == "run_python"
