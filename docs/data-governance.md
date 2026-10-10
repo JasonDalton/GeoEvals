@@ -99,6 +99,11 @@ Never commit:
 Adapters that call paid or hosted services must read credentials from the environment, never
 from a committed config file. CI uses no secrets.
 
+The Claude leaderboard adapters store no credentials at all: they run the local Claude Code
+CLI, which uses the maintainer's own sign-in. They send each case's prompt, parameters and input
+files to Anthropic. Those inputs are the MIT-licensed synthetic fixtures of the v0.1.0
+benchmarks; no personal or restricted data is sent.
+
 CI scans the full git history with [gitleaks](https://github.com/gitleaks/gitleaks) and fails
 on any finding. A secret that reaches a commit stays in the history: revoke it first, then
 rewrite the history. To scan locally before you push, run `gitleaks git .` from the repository

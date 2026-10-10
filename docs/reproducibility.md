@@ -90,6 +90,19 @@ environment: `uv sync --frozen --no-cache` from `uv.lock`, with the uv cache tur
 difference, or a baseline that cannot be read, fails the job. The published baselines are
 listed in [`baselines/README.md`](../baselines/README.md).
 
+## Leaderboard runs
+
+The Claude leaderboard ([`leaderboard/README.md`](../leaderboard/README.md)) pins what it can:
+the benchmark version and dataset manifest hash (the same for every row of a benchmark), the
+run config in `leaderboard/configs/`, the prompt template version
+(`src/geoevals/adapters/prompts/`), the effort level, the model ID, and the Claude Code version
+(in the adapter version). The python track's sandbox image is built from `uv.lock`.
+
+Model outputs are not deterministic, so a leaderboard run cannot be reproduced bit for bit, and
+`geoevals reproduce` does not apply to it. Each committed `result.json` holds every case's
+output and scores, and `uv run geoevals leaderboard build` rebuilds the README table from them;
+CI checks that the table matches.
+
 ## Across platforms
 
 GEOS and PROJ builds on different platforms can differ in the last bits of a result. For

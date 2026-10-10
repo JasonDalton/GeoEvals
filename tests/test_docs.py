@@ -65,6 +65,7 @@ def _markdown_files() -> list[Path]:
     files += sorted((REPO / "docs").glob("*.md"))
     files += sorted((REPO / "benchmarks").glob("*/README.md"))
     files.append(REPO / "baselines" / "README.md")
+    files.append(REPO / "leaderboard" / "README.md")
     files += sorted((REPO / "datasets").glob("**/*.md"))
     return files
 

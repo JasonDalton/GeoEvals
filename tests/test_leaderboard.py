@@ -4,6 +4,7 @@ from typing import Any
 
 import pytest
 
+from geoevals.adapters.claude import ClaudeAdapterConfig
 from geoevals.cli import main
 from geoevals.leaderboard.table import (
     END,
@@ -14,6 +15,9 @@ from geoevals.leaderboard.table import (
     render,
     update_readme,
 )
+from geoevals.runner.config import load_run_config
+from geoevals.runner.run import load_cases
+from geoevals.validation import load_benchmark_spec
 
 README = f"# Title\n\nIntro.\n\n{START}\nold table\n{END}\n\n## Next\n"
 
@@ -153,3 +157,33 @@ def test_cli_add_reports_errors(tmp_path: Path, capsys: pytest.CaptureFixture[st
     (run_dir / "result.json").write_text(json.dumps(_result(adapter="mock")), encoding="utf-8")
     assert main(["leaderboard", "add", str(run_dir), "--results", str(tmp_path / "r")]) == 1
     assert "mock" in capsys.readouterr().err
+
+
+def test_leaderboard_configs_are_valid() -> None:
+    repo = Path(__file__).parent.parent
+    configs = sorted((repo / "leaderboard" / "configs").glob("*.yaml"))
+    assert [path.name for path in configs] == [
+        "direct.yaml",
+        "pilot-direct.yaml",
+        "pilot-python.yaml",
+        "python.yaml",
+    ]
+    case_ids: dict[str, set[str]] = {}
+    for bench_dir in [
+        repo / "benchmarks" / "gis_correctness",
+        repo / "benchmarks" / "human_context",
+    ]:
+        spec = load_benchmark_spec(bench_dir / "benchmark.yaml")
+        case_ids[spec.id] = {case.case_id for case in load_cases(spec, bench_dir)}
+    for path in configs:
+        config = load_run_config(path)
+        adapter = ClaudeAdapterConfig.model_validate(config.adapter)
+        assert adapter.case_timeout_s < config.timeout_s, path.name
+        assert adapter.effort == "high" and adapter.prompt_version == "v1"
+        if path.name.startswith("pilot-"):
+            assert adapter.only_cases is not None
+            for ids in case_ids.values():
+                assert len(set(adapter.only_cases) & ids) == 5, path.name
+            assert set(adapter.only_cases) <= set.union(*case_ids.values())
+        else:
+            assert adapter.only_cases is None

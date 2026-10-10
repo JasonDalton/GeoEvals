@@ -1,0 +1,83 @@
+# Claude leaderboard
+
+This directory holds the run configs and the committed results behind the leaderboard table in
+the [main README](../README.md#leaderboard). The design is in
+[`docs/superpowers/specs/2026-10-09-claude-leaderboard-design.md`](../docs/superpowers/specs/2026-10-09-claude-leaderboard-design.md).
+
+Every run happens on the maintainer's machine through the local Claude Code CLI, signed in to a
+Claude subscription. No API key is used: the adapters remove `ANTHROPIC_API_KEY` from the CLI's
+environment and fail a case unless the CLI reports the subscription sign-in.
+
+## Adapters
+
+| Adapter | Track | Model |
+| --- | --- | --- |
+| `claude_direct_opus_5_5`, `claude_python_opus_5_5` | direct, python | `claude-opus-5-5` |
+| `claude_direct_sonnet_5_5`, `claude_python_sonnet_5_5` | direct, python | `claude-sonnet-5-5` |
+| `claude_direct_haiku_5_5`, `claude_python_haiku_5_5` | direct, python | `claude-haiku-5-5` |
+
+- **direct**: the model gets the request, its parameters and the input files inlined as
+  GeoJSON, and has no tools except the structured-output tool for its answer.
+- **python**: the model gets the file paths and a `run_python` tool. Each call runs in the
+  case's Docker container (`geoevals-sandbox:<hash of uv.lock>`): no network, read-only root
+  filesystem, only the benchmark's `fixtures/` mounted read-only at `/bench/fixtures`, 60 s and
+  20 KB of output per call, 20 calls per case.
+
+The model never sees the expected output, the case strata (which flag trap cases), the
+tolerances or the case ID. Each CLI call runs with `--restricted --tools ""` in an empty
+temporary directory, so the maintainer's plugins, hooks and `CLAUDE.md` do not reach it.
+
+## Requirements
+
+- Claude Code on `PATH`, signed in (`claude` then `/login`).
+- For the python track, a running Docker daemon. The first run builds the sandbox image from
+  `uv.lock` (about 800 MB; it needs network access once).
+
+## Run a pilot
+
+A pilot runs five cases per benchmark and skips the rest, so its time and tokens can be checked
+before a full run. A pilot is never accepted on the leaderboard.
+
+```sh
+uv run geoevals run --benchmark benchmarks/gis_correctness/benchmark.yaml \
+  --adapter claude_direct_opus_5_5 --config leaderboard/configs/pilot-direct.yaml --out runs/pilot
+```
+
+Use `pilot-python.yaml` with a `claude_python_*` adapter, and
+`benchmarks/human_context/benchmark.yaml` for the other benchmark.
+
+## Run and add a full run
+
+```sh
+uv run geoevals run --benchmark benchmarks/gis_correctness/benchmark.yaml \
+  --adapter claude_direct_opus_5_5 --config leaderboard/configs/direct.yaml --out runs/leaderboard
+uv run geoevals leaderboard add runs/leaderboard/<run_id>
+uv run geoevals leaderboard build
+```
+
+`leaderboard add` copies `result.json` and `config.yaml` to
+`results/<benchmark_id>/<adapter>/`, replacing an earlier run of the same adapter. It refuses a
+run with skipped cases. `leaderboard build` rewrites the table in the README; CI checks that
+the table matches the committed results.
+
+## When a run stops early
+
+- **Usage limit.** When the subscription's usage limit is reached, the case and every later
+  case are skipped, and the run cannot be added. Run it again after the limit resets.
+- **Timeouts and errors.** A case that takes longer than `case_timeout_s` (840 s), a refusal,
+  or an answer that does not match the output schema counts as a failure in the table. These
+  runs can be added; they are part of the result.
+
+## What the numbers mean
+
+- **Task success** is the mean of `task_success` over every case, with its 95% interval.
+- **Latency** is wall-clock time per case, CLI startup included.
+- **Tokens in** count every prompt token the model processed, cache reads included (Claude
+  Code caches its own prompt); **tokens out** include thinking.
+- There is no cost column: runs on a subscription have no per-token charge. The CLI's estimate
+  at API list prices is used only as a per-case runaway guard (`max_case_usd`).
+- Claude Code's harness (its tool definitions and structured-output mechanism) is part of
+  what is measured; its version is recorded in each adapter version (`0.1.0+cc.<version>`).
+
+Model outputs are not deterministic, so a rerun gives a different result. The table can always
+be rebuilt from the committed results.

@@ -1,0 +1,12 @@
+# Full leaderboard run, python track. See leaderboard/README.md.
+split: test
+seed: 0
+timeout_s: 900
+max_retries: 0
+workers: 1
+adapter:
+  effort: high
+  prompt_version: v1
+  case_timeout_s: 840
+  max_case_usd: 5
+  max_tool_calls: 20
