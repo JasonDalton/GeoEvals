@@ -5,10 +5,14 @@ Each accepted run is ``leaderboard/results/<benchmark_id>/<adapter>/result.json`
 leaderboard build`` writes the table between the README markers ``<!-- leaderboard:start -->``
 and ``<!-- leaderboard:end -->``.
 
-A run is accepted only if it comes from a Claude leaderboard adapter and no case was skipped (a
-pilot with ``only_cases``, or a run stopped by the usage limit, is incomplete). All runs of a
-benchmark must share its version and dataset manifest hash, so that rows are comparable. Every
-column comes from fields the run result already has.
+A run is accepted only if it comes from a Claude leaderboard adapter with the default CLI, on
+the ``test`` split, and every case ran on the model: no case was skipped (a pilot with
+``only_cases``, or a run stopped by the usage limit), hit the runner's own timeout, or failed
+with a harness error (``claude_cli.HARNESS_ERRORS``: auth, CLI errors, an unexpected model, a
+version change). The model's own failures (timeouts within ``case_timeout_s``, refusals, no or
+invalid answer, the per-case budget) count as failed cases. All runs of a benchmark must share
+its version, dataset manifest hash, effort and prompt version, so that rows are comparable.
+Every column comes from fields the run result already has.
 """
 
 import json
@@ -19,6 +23,7 @@ from pathlib import Path
 from typing import Any
 
 from geoevals.adapters.claude import MODELS
+from geoevals.leaderboard.claude_cli import HARNESS_ERRORS
 
 START = "<!-- leaderboard:start -->"
 END = "<!-- leaderboard:end -->"
@@ -26,6 +31,7 @@ DEFAULT_RESULTS = Path("leaderboard/results")
 RESULT_FILE = "result.json"
 CONFIG_FILE = "config.yaml"
 TRACKS = ("direct", "python")
+SPLIT = "test"
 ADAPTER_PATTERN = re.compile(rf"^claude_({'|'.join(TRACKS)})_({'|'.join(MODELS)})$")
 MODEL_NAMES = {"opus_5_5": "Opus 5.5", "sonnet_5_5": "Sonnet 5.5", "haiku_5_5": "Haiku 5.5"}
 
@@ -68,16 +74,34 @@ def row_from_result(result: dict[str, Any], where: str) -> Row:
             f"{where}: adapter {adapter['name']!r} is not a Claude leaderboard adapter"
         )
     track, model = match.groups()
+    config = adapter.get("config") or {}
+    if "claude_command" in config:
+        raise LeaderboardError(f"{where}: runs with a custom claude_command are not accepted")
     cases = result["cases"]
-    skipped = sum(case["status"] == "skipped" for case in cases)
-    if skipped:
-        raise LeaderboardError(
-            f"{where}: {skipped} of {len(cases)} case(s) were skipped; "
-            "only complete runs are accepted"
-        )
+    splits = sorted({case.get("split") for case in cases}, key=str)
+    if splits != [SPLIT]:
+        raise LeaderboardError(f"{where}: the run covers split(s) {splits}, not only {SPLIT!r}")
+    problems = {
+        "skipped": [c for c in cases if c["status"] == "skipped"],
+        "stopped by the runner's timeout": [c for c in cases if c["status"] == "timeout"],
+        "failed in the harness": [
+            c
+            for c in cases
+            if c["status"] == "adapter_error"
+            and (c.get("error") or {}).get("type") in HARNESS_ERRORS
+        ],
+    }
+    for reason, bad in problems.items():
+        if bad:
+            first = bad[0]
+            error = first.get("error") or {}
+            raise LeaderboardError(
+                f"{where}: {len(bad)} of {len(cases)} case(s) {reason} (first: "
+                f"{first['case_id']} {error.get('type', '')}: {error.get('message', '')}); "
+                "only complete runs are accepted"
+            )
     success = result["summary_metrics"]["task_success"]
     efficiency = result["efficiency"]
-    config = adapter.get("config") or {}
     version = str(adapter["version"])
     return Row(
         benchmark=result["benchmark"]["id"],
@@ -111,21 +135,22 @@ def load_rows(results_dir: Path) -> list[Row]:
     """Every accepted run under ``results_dir``, sorted for the table.
 
     Raises ``LeaderboardError`` for a run that is not accepted, and when the runs of a
-    benchmark differ in benchmark version or dataset manifest hash.
+    benchmark differ in benchmark version, dataset manifest hash, effort or prompt version.
     """
     rows = [
         row_from_result(_read(path), str(path))
         for path in sorted(results_dir.glob(f"*/*/{RESULT_FILE}"))
     ]
-    by_benchmark: dict[str, set[tuple[str, str]]] = {}
+    by_benchmark: dict[str, set[tuple[str, str, str, str]]] = {}
     for row in rows:
         by_benchmark.setdefault(row.benchmark, set()).add(
-            (row.benchmark_version, row.manifest_hash)
+            (row.benchmark_version, row.manifest_hash, row.effort, row.prompt_version)
         )
     for benchmark, variants in sorted(by_benchmark.items()):
         if len(variants) > 1:
             listed = ", ".join(
-                f"{version} (manifest {digest[:8]})" for version, digest in sorted(variants)
+                f"{version} (manifest {digest[:8]}, effort {effort}, prompt {prompt})"
+                for version, digest, effort, prompt in sorted(variants)
             )
             raise LeaderboardError(f"runs of {benchmark} are not comparable: {listed}")
     return sorted(rows, key=Row.sort_key)

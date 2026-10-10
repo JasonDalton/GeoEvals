@@ -31,6 +31,12 @@ def main() -> int:
             "cwd": os.getcwd(),
             "cwd_entries": sorted(os.listdir(".")),
             "env_has_api_key": "ANTHROPIC_API_KEY" in os.environ,
+            "env": {
+                k: v
+                for k, v in os.environ.items()
+                if k.startswith(("ANTHROPIC", "CLAUDE", "DISABLE"))
+            },
+            "ppid": os.getppid(),
             "pid": os.getpid(),
         }
         with open(record_path, "w", encoding="utf-8") as file:

@@ -19,7 +19,13 @@ from geoevals.adapters.claude import (
     trajectory_from_events,
 )
 from geoevals.leaderboard import sandbox
-from geoevals.leaderboard.claude_cli import ClaudeRefusal, ClaudeTimeout, CliCall, CliResult
+from geoevals.leaderboard.claude_cli import (
+    ClaudeRefusal,
+    ClaudeTimeout,
+    ClaudeVersionChanged,
+    CliCall,
+    CliResult,
+)
 from geoevals.leaderboard.prompting import (
     cli_schema,
     direct_message,
@@ -131,6 +137,12 @@ def _direct(config: dict[str, Any] | None = None, slug: str = "haiku_5_5") -> Cl
 @pytest.fixture
 def fake(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> FakeClaude:
     return FakeClaude(tmp_path, monkeypatch)
+
+
+@pytest.fixture(autouse=True)
+def no_real_cli(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Adapters read the CLI version; tests never run the real CLI."""
+    monkeypatch.setattr(claude_module, "claude_code_version", lambda command=None: "9.9.9")
 
 
 def test_direct_adapter_returns_answer_and_tokens(fake: FakeClaude) -> None:
@@ -321,6 +333,7 @@ def test_python_adapter_mcp_config(fake: FakeClaude, monkeypatch: pytest.MonkeyP
     assert args[:2] == ["-m", "geoevals.leaderboard.sandbox_mcp"]
     assert args[args.index("--image") + 1] == "img:1"
     assert args[args.index("--name") + 1] == removed[0]
+    assert call.container == removed[0], "the watchdog removes the container if stopped"
     assert args[args.index("--max-calls") + 1] == "20"
     assert Path(args[args.index("--fixtures") + 1]) == GIS.resolve() / "fixtures"
 
@@ -347,3 +360,13 @@ def test_python_setup_fails_without_docker(monkeypatch: pytest.MonkeyPatch) -> N
     monkeypatch.setattr(sandbox, "docker_available", lambda: False)
     with pytest.raises(RuntimeError, match="Docker"):
         ClaudePythonAdapter("haiku_5_5").setup({"claude_command": list(FAKE_COMMAND)})
+
+
+def test_version_change_during_a_run_fails_the_case(
+    fake: FakeClaude, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    adapter = _direct()
+    init = {**init_event(), "claude_code_version": "9.9.10"}
+    fake.set([init, result_event({"status": "ok"})])
+    with pytest.raises(ClaudeVersionChanged, match=r"9\.9\.10"):
+        adapter.predict(_case(GIS, "distance-001").input)

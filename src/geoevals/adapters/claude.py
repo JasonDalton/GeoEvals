@@ -38,6 +38,7 @@ from geoevals.adapters.base import AdapterResponse, SkipCase, TokenUsage
 from geoevals.leaderboard import prompting
 from geoevals.leaderboard.claude_cli import (
     ClaudeUsageLimit,
+    ClaudeVersionChanged,
     CliCall,
     CliResult,
     claude_code_version,
@@ -89,6 +90,7 @@ class _ClaudeAdapter:
         self._config = ClaudeAdapterConfig()
         self._template = ""
         self._usage_limited = False
+        self._cli_version = "unknown"
 
     def setup(self, config: Mapping[str, Any]) -> None:
         try:
@@ -100,6 +102,7 @@ class _ClaudeAdapter:
             raise RuntimeError(
                 f"the Claude Code CLI ({self._config.claude_command[0]!r}) is not on PATH"
             )
+        self._cli_version = claude_code_version(self._config.claude_command)
 
     def predict(self, case_input: Mapping[str, Any]) -> AdapterResponse:
         only = self._config.only_cases
@@ -115,6 +118,16 @@ class _ClaudeAdapter:
 
     def _predict(self, case_input: Mapping[str, Any]) -> AdapterResponse:
         raise NotImplementedError
+
+    def _run(self, call: CliCall) -> CliResult:
+        """Run the call and check that it ran on the Claude Code version found at setup."""
+        result = run_cli(call)
+        if result.claude_code_version != self._cli_version:
+            raise ClaudeVersionChanged(
+                f"the case ran on Claude Code {result.claude_code_version}, "
+                f"not {self._cli_version} (found at setup)"
+            )
+        return result
 
     def _call(self, case_input: Mapping[str, Any], user_message: str, **fields: Any) -> CliCall:
         task_statement, schema = prompting.spec_for(case_input)
@@ -144,7 +157,7 @@ class ClaudeDirectAdapter(_ClaudeAdapter):
     track = "direct"
 
     def _predict(self, case_input: Mapping[str, Any]) -> AdapterResponse:
-        result = run_cli(self._call(case_input, prompting.direct_message(case_input)))
+        result = self._run(self._call(case_input, prompting.direct_message(case_input)))
         assert result.structured_output is not None  # check_result guarantees it
         return AdapterResponse(output=result.structured_output, tokens=_tokens(result))
 
@@ -187,9 +200,10 @@ class ClaudePythonAdapter(_ClaudeAdapter):
             prompting.python_message(case_input, sandbox.MOUNT),
             mcp_config=mcp_config,
             allowed_tools=(RUN_PYTHON_TOOL,),
+            container=name,
         )
         try:
-            result = run_cli(call)
+            result = self._run(call)
         finally:
             sandbox.remove_container(name)
         assert result.structured_output is not None  # check_result guarantees it

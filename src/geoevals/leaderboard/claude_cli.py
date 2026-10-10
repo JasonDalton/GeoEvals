@@ -1,8 +1,10 @@
 """Run one case through the local Claude Code CLI (``claude -p``) and parse its output.
 
-The CLI runs signed in to the maintainer's Claude subscription: ``ANTHROPIC_API_KEY`` and
-``ANTHROPIC_AUTH_TOKEN`` are removed from its environment, and the ``apiKeySource`` it reports
-must be ``none``. Each call is isolated from the maintainer's own setup:
+The CLI runs signed in to the maintainer's Claude subscription: every ``ANTHROPIC_*`` variable
+(API keys, base URLs) and every ``CLAUDE*`` variable except ``CLAUDE_CONFIG_DIR`` (Bedrock,
+Vertex and Foundry switches, and the settings of a Claude Code session the run was started
+from) is removed from its environment, auto-update is turned off for the call, and the
+``apiKeySource`` it reports must be ``none``. Each call is isolated from the maintainer's own setup:
 
 - ``--restricted`` ignores the user, project and local settings files, so plugins, hooks and
   ``CLAUDE.md`` do not reach the model;
@@ -15,7 +17,12 @@ The final answer is the ``structured_output`` of the ``result`` event. Tokens ar
 ``modelUsage``: input counts every prompt token the model processed (uncached, cache creation
 and cache reads), output counts output tokens (thinking included).
 
+The CLI runs under ``geoevals.leaderboard.watchdog``, which stops it (and removes the case's
+container) if the adapter worker is killed.
+
 Errors are exceptions whose class name the runner records as the case's error type.
+``HARNESS_ERRORS`` names the ones that say the harness, not the model, failed; the leaderboard
+rejects a run that has any of them.
 """
 
 import contextlib
@@ -23,14 +30,22 @@ import json
 import os
 import signal
 import subprocess
+import sys
 import tempfile
 from collections.abc import Sequence
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-REMOVED_ENV = ("ANTHROPIC_API_KEY", "ANTHROPIC_AUTH_TOKEN")
+REMOVED_ENV_PREFIXES = ("ANTHROPIC_", "CLAUDE")
+KEPT_ENV = frozenset({"CLAUDE_CONFIG_DIR"})
+"""``CLAUDE*`` variables of the launching session (``CLAUDE_EFFORT``, ``CLAUDE_CODE_*``) are
+removed so that a run does not depend on where it was started; the config directory, which
+locates the sign-in, is kept."""
+ADDED_ENV = {"DISABLE_AUTOUPDATER": "1"}
 STDERR_TAIL = 2000
+TERMINATE_GRACE_S = 30.0
+USAGE_LIMIT_MARKERS = ("usage limit", "rate limit", "rate_limit", "limit reached", "429")
 
 
 class ClaudeCliError(RuntimeError):
@@ -42,7 +57,11 @@ class ClaudeTimeout(ClaudeCliError):
 
 
 class ClaudeRunError(ClaudeCliError):
-    """The CLI exited without a result, or reported an error result."""
+    """The CLI exited without a result, or reported an error result (a harness failure)."""
+
+
+class ClaudeBudgetExceeded(ClaudeCliError):
+    """The case passed ``max_case_usd`` at API list prices (the model ran away)."""
 
 
 class ClaudeRefusal(ClaudeCliError):
@@ -65,6 +84,24 @@ class ClaudeUsageLimit(ClaudeCliError):
     """The subscription's usage limit was reached (HTTP 429 after the CLI's own retries)."""
 
 
+class ClaudeVersionChanged(ClaudeCliError):
+    """The case ran on a different Claude Code version than the adapter recorded."""
+
+
+HARNESS_ERRORS = frozenset(
+    {
+        "ClaudeRunError",
+        "ClaudeUnexpectedModel",
+        "ClaudeAuthError",
+        "ClaudeUsageLimit",
+        "ClaudeVersionChanged",
+        "WorkerCrashed",
+    }
+)
+"""Error types that say the harness failed; the model's own failures (timeout, refusal, no
+answer, budget) are not in it."""
+
+
 @dataclass(frozen=True)
 class CliCall:
     """One CLI call. ``command`` is the CLI executable and any leading arguments."""
@@ -79,6 +116,8 @@ class CliCall:
     mcp_config: dict[str, Any] | None = None
     allowed_tools: tuple[str, ...] = ()
     command: tuple[str, ...] = ("claude",)
+    container: str | None = None
+    """Docker container the watchdog removes if the call is stopped."""
 
 
 @dataclass(frozen=True)
@@ -150,15 +189,19 @@ def check_result(
     result = next((e for e in reversed(events) if e.get("type") == "result"), None)
     if result is None:
         tail = stderr.strip()[-STDERR_TAIL:]
+        if any(marker in tail.lower() for marker in USAGE_LIMIT_MARKERS):
+            raise ClaudeUsageLimit(f"usage limit reached (exit code {exit_code}): {tail}")
         raise ClaudeRunError(f"the CLI exited with exit code {exit_code} and no result: {tail}")
     source = init.get("apiKeySource")
-    if source not in (None, "none"):
-        raise ClaudeAuthError(f"the CLI used {source}, not the subscription sign-in")
-    if result.get("api_error_status") == 429:
-        raise ClaudeUsageLimit(f"usage limit reached (HTTP 429): {result.get('result')}")
+    if source != "none":
+        raise ClaudeAuthError(f"the CLI reported apiKeySource {source!r}, not the subscription")
+    if _usage_limited(result):
+        raise ClaudeUsageLimit(f"usage limit reached: {str(result.get('result'))[:STDERR_TAIL]}")
     if result.get("stop_reason") == "refusal":
         detail = result.get("result")
         raise ClaudeRefusal(f"the model declined to answer (stop reason refusal): {detail}")
+    if result.get("subtype") == "error_max_budget_usd":
+        raise ClaudeBudgetExceeded("the case passed max_case_usd at API list prices")
     if result.get("subtype") != "success" or result.get("is_error"):
         status = result.get("api_error_status")
         raise ClaudeRunError(
@@ -190,20 +233,45 @@ def check_result(
     )
 
 
+def _usage_limited(result: dict[str, Any]) -> bool:
+    if result.get("api_error_status") == 429:
+        return True
+    if not (result.get("is_error") or result.get("subtype") != "success"):
+        return False
+    text = str(result.get("result") or "").lower()
+    return any(marker in text for marker in USAGE_LIMIT_MARKERS)
+
+
+def _environment() -> dict[str, str]:
+    env = {
+        key: value
+        for key, value in os.environ.items()
+        if key in KEPT_ENV or not key.startswith(REMOVED_ENV_PREFIXES)
+    }
+    return {**env, **ADDED_ENV}
+
+
+def _watched(command: list[str], container: str | None) -> list[str]:
+    watchdog = [sys.executable, "-m", "geoevals.leaderboard.watchdog"]
+    if container is not None:
+        watchdog += ["--container", container]
+    return [*watchdog, "--", *command]
+
+
 def run_cli(call: CliCall) -> CliResult:
     """Run the CLI for one case and return its answer. Raises a ``ClaudeCliError`` subclass.
 
-    The CLI runs in its own process group; on timeout the whole group (the CLI and any MCP
-    server it started) is killed.
+    The CLI runs under the watchdog. On timeout the watchdog is told to stop the CLI's process
+    group (the CLI and any MCP server it started) and remove the container.
     """
-    env = {key: value for key, value in os.environ.items() if key not in REMOVED_ENV}
+    env = _environment()
     with tempfile.TemporaryDirectory(prefix="geoevals-claude-") as tmp:
         mcp_path = None
         if call.mcp_config is not None:
             mcp_path = Path(tmp) / "mcp.json"
             mcp_path.write_text(json.dumps(call.mcp_config), encoding="utf-8")
         process = subprocess.Popen(
-            build_command(call, mcp_path),
+            _watched(build_command(call, mcp_path), call.container),
             cwd=tmp,
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
@@ -216,18 +284,24 @@ def run_cli(call: CliCall) -> CliResult:
         try:
             stdout, stderr = process.communicate(call.user_message, timeout=call.timeout_s)
         except subprocess.TimeoutExpired:
-            _kill_group(process)
+            _stop(process)
             raise ClaudeTimeout(f"the CLI exceeded case_timeout_s={call.timeout_s:g}") from None
         except BaseException:
-            _kill_group(process)
+            _stop(process)
             raise
     return check_result(parse_events(stdout), call.model, process.returncode, stderr)
 
 
-def _kill_group(process: subprocess.Popen[str]) -> None:
-    with contextlib.suppress(ProcessLookupError, PermissionError):
-        os.killpg(process.pid, signal.SIGKILL)
-    process.communicate()
+def _stop(process: subprocess.Popen[str]) -> None:
+    """Ask the watchdog to stop the CLI and clean up; kill its group if it does not exit."""
+    with contextlib.suppress(ProcessLookupError):
+        process.send_signal(signal.SIGTERM)
+    try:
+        process.communicate(timeout=TERMINATE_GRACE_S)
+    except subprocess.TimeoutExpired:
+        with contextlib.suppress(ProcessLookupError, PermissionError):
+            os.killpg(process.pid, signal.SIGKILL)
+        process.communicate()
 
 
 def claude_code_version(command: Sequence[str] = ("claude",)) -> str:

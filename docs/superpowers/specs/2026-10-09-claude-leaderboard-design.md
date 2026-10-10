@@ -48,8 +48,10 @@ claude -p <user message> --model <model-id> --effort high
   --max-budget-usd <cap> --output-format stream-json --verbose
 ```
 
-run in a new empty temporary directory, with stdin closed and `ANTHROPIC_API_KEY` removed from
-the environment, so that the subscription is used. These flags were checked on Claude Code
+run in a new empty temporary directory, with the user message on stdin, every `ANTHROPIC_*`
+variable and every `CLAUDE*` variable except `CLAUDE_CONFIG_DIR` removed from the environment
+(so that the subscription is used and the launching session's settings do not leak in), and
+`DISABLE_AUTOUPDATER=1`. These flags were checked on Claude Code
 2.1.296 on 2026-10-10:
 
 - `--restricted` ignores the user, project and local settings files, so the maintainer's
@@ -73,8 +75,11 @@ From the `result` event it reads `structured_output`, `usage`, `modelUsage`, `nu
 `apiKeySource` (it must be `none`, which means subscription sign-in) and the tool list.
 
 The per-case wall-clock limit of the CLI process (`case_timeout_s`) is shorter than the run's
-`timeout_s`, so the adapter, not the runner, stops a slow case and can clean up. The CLI runs in
-its own process group, and the whole group is killed on timeout.
+`timeout_s`, so the adapter, not the runner, stops a slow case and can clean up. The CLI runs
+under a watchdog process (`geoevals.leaderboard.watchdog`) in its own process group. The
+watchdog stops the group and removes the case's container on the adapter's timeout (SIGTERM)
+and when its parent dies (the runner kills a worker with SIGKILL on `timeout_s`). Every case
+must report the Claude Code version found at setup.
 
 ### 2. Adapters
 
@@ -175,8 +180,10 @@ included), and input and output tokens (`efficiency.tokens_input_total`,
 `tokens_output_total`). Every column comes from fields a run result already has; the run
 result schema does not change.
 
-A run is accepted only if no case was skipped, and only if all accepted runs of a benchmark
-share the benchmark version and dataset manifest hash. Below the table, the README states the
+A run is accepted only if it used the default CLI on the `test` split and no case was skipped,
+stopped by the runner's timeout, or failed with a harness error (the "run rejected" rows
+below), and only if all accepted runs of a benchmark share the benchmark version, dataset
+manifest hash, effort and prompt version. Below the table, the README states the
 benchmark versions, manifest hashes, Claude Code versions, prompt versions, effort, and how
 tokens are counted.
 
@@ -191,17 +198,20 @@ tokens are counted.
 
 ## Error handling
 
-| Event | Recorded as |
-| --- | --- |
-| `stop_reason: "refusal"` | `adapter_error`, error type `ClaudeRefusal` |
-| No `structured_output` in the result | `adapter_error`, error type `ClaudeNoAnswer` |
-| CLI error result (`subtype` not `success`, for example the budget cap) | `adapter_error`, error type `ClaudeRunError` with the subtype |
-| A model other than the requested one in `modelUsage` | `adapter_error`, error type `ClaudeUnexpectedModel` |
-| `apiKeySource` other than `none` | `adapter_error`, error type `ClaudeAuthError` (the run did not use the subscription) |
-| Usage limit (HTTP 429 after CLI retries) | `skipped`, and every later case too; the leaderboard rejects the run |
-| CLI exceeds `case_timeout_s` | `adapter_error`, error type `ClaudeTimeout` |
-| Answer not valid against the spec output schema | `invalid_output` (by the runner) |
-| Correct abstention status | A valid answer, scored as usual |
+| Event | Recorded as | Leaderboard |
+| --- | --- | --- |
+| `stop_reason: "refusal"` | `adapter_error`, `ClaudeRefusal` | failed case |
+| No `structured_output` in the result | `adapter_error`, `ClaudeNoAnswer` | failed case |
+| The per-case budget cap (`error_max_budget_usd`) | `adapter_error`, `ClaudeBudgetExceeded` | failed case |
+| CLI exceeds `case_timeout_s` | `adapter_error`, `ClaudeTimeout` | failed case |
+| Answer not valid against the spec output schema | `invalid_output` (by the runner) | failed case |
+| Other CLI error result or no result (API, network) | `adapter_error`, `ClaudeRunError` | run rejected |
+| A model other than the requested one in `modelUsage` | `adapter_error`, `ClaudeUnexpectedModel` | run rejected |
+| `apiKeySource` other than `none`, or no init event | `adapter_error`, `ClaudeAuthError` | run rejected |
+| Claude Code version differs from the one at setup | `adapter_error`, `ClaudeVersionChanged` | run rejected |
+| Worker crash, or the runner's own `timeout_s` | `adapter_error` `WorkerCrashed`, or `timeout` | run rejected |
+| Usage limit (HTTP 429, or limit text in the result or stderr) | `skipped`, and every later case too | run rejected |
+| Correct abstention status | A valid answer, scored as usual | scored |
 
 ## Testing
 

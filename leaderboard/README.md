@@ -64,9 +64,18 @@ the table matches the committed results.
 
 - **Usage limit.** When the subscription's usage limit is reached, the case and every later
   case are skipped, and the run cannot be added. Run it again after the limit resets.
-- **Timeouts and errors.** A case that takes longer than `case_timeout_s` (840 s), a refusal,
-  or an answer that does not match the output schema counts as a failure in the table. These
-  runs can be added; they are part of the result.
+- **Harness failures.** A case that failed in the harness, not in the model, makes the run
+  unacceptable: the CLI not on the subscription sign-in, a CLI or API error (for example the
+  network), a model other than the requested one, a Claude Code version change during the run,
+  a crashed worker, or a case stopped by the runner's `timeout_s` instead of the adapter's
+  `case_timeout_s`. Fix the cause and run it again.
+- **Model failures.** A case that takes longer than `case_timeout_s` (840 s), a refusal, a
+  case that passes `max_case_usd`, no answer, or an answer that does not match the output
+  schema counts as a failed case in the table. These runs can be added; they are part of the
+  result.
+
+The CLI runs under a small watchdog: if the adapter's worker process is killed, the watchdog
+stops the CLI and removes the case's container.
 
 ## What the numbers mean
 

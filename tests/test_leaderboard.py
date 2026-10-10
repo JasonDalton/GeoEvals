@@ -29,13 +29,16 @@ def _result(
     mean: float = 0.75,
     version: str = "0.1.0",
     manifest: str = "a" * 64,
+    errors: dict[int, str] | None = None,
+    config: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
+    errors = errors or {}
     return {
         "benchmark": {"id": benchmark, "version": version},
         "adapter": {
             "name": adapter,
             "version": "0.1.0+cc.2.1.296",
-            "config": {"effort": "high", "prompt_version": "v1"},
+            "config": config if config is not None else {"effort": "high", "prompt_version": "v1"},
         },
         "dataset_manifest_hash": manifest,
         "summary_metrics": {
@@ -47,7 +50,15 @@ def _result(
             "tokens_input_total": 1234567,
             "tokens_output_total": 89012,
         },
-        "cases": [{"case_id": f"c{i}", "status": status} for i, status in enumerate(statuses)],
+        "cases": [
+            {
+                "case_id": f"c{i}",
+                "split": "test",
+                "status": status,
+                "error": {"type": errors[i], "message": "m"} if i in errors else None,
+            }
+            for i, status in enumerate(statuses)
+        ],
     }
 
 
@@ -187,3 +198,50 @@ def test_leaderboard_configs_are_valid() -> None:
             assert set(adapter.only_cases) <= set.union(*case_ids.values())
         else:
             assert adapter.only_cases is None
+
+
+@pytest.mark.parametrize(
+    "error_type", ["ClaudeAuthError", "ClaudeRunError", "ClaudeUnexpectedModel", "WorkerCrashed"]
+)
+def test_build_rejects_harness_errors(tmp_path: Path, error_type: str) -> None:
+    _write(tmp_path, _result(statuses=("scored", "adapter_error"), errors={1: error_type}))
+    with pytest.raises(LeaderboardError, match=f"harness.*{error_type}"):
+        load_rows(tmp_path)
+
+
+def test_model_failures_are_accepted_as_failed_cases(tmp_path: Path) -> None:
+    errors = {1: "ClaudeTimeout", 2: "ClaudeRefusal", 3: "ClaudeBudgetExceeded"}
+    statuses = ("scored", "adapter_error", "adapter_error", "adapter_error", "invalid_output")
+    _write(tmp_path, _result(statuses=statuses, errors=errors))
+    [row] = load_rows(tmp_path)
+    assert row.not_scored == 4
+
+
+def test_build_rejects_runner_timeouts(tmp_path: Path) -> None:
+    _write(tmp_path, _result(statuses=("scored", "timeout"), errors={1: "TimeoutError"}))
+    with pytest.raises(LeaderboardError, match="runner's timeout"):
+        load_rows(tmp_path)
+
+
+def test_build_rejects_a_custom_cli(tmp_path: Path) -> None:
+    _write(tmp_path, _result(config={"effort": "high", "claude_command": ["fake"]}))
+    with pytest.raises(LeaderboardError, match="claude_command"):
+        load_rows(tmp_path)
+
+
+def test_build_rejects_mixed_effort(tmp_path: Path) -> None:
+    _write(tmp_path, _result("claude_direct_opus_5_5"))
+    _write(
+        tmp_path,
+        _result("claude_direct_haiku_5_5", config={"effort": "low", "prompt_version": "v1"}),
+    )
+    with pytest.raises(LeaderboardError, match="effort low"):
+        load_rows(tmp_path)
+
+
+def test_build_rejects_other_splits(tmp_path: Path) -> None:
+    result = _result()
+    result["cases"][0]["split"] = "dev"
+    _write(tmp_path, result)
+    with pytest.raises(LeaderboardError, match="split"):
+        load_rows(tmp_path)
