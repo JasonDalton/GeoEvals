@@ -176,6 +176,18 @@ def test_readme_has_citation_contributing_and_roadmap() -> None:
         assert heading in headings, heading
 
 
+def test_readme_leaderboard_is_up_to_date() -> None:
+    from geoevals.cli import main
+
+    results = REPO / "leaderboard" / "results"
+    assert (
+        main(
+            ["leaderboard", "build", "--check", "--results", str(results), "--readme", str(README)]
+        )
+        == 0
+    )
+
+
 def test_every_registered_metric_is_documented() -> None:
     from geoevals.metrics.registry import registered_metric_ids
 

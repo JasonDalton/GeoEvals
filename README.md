@@ -95,6 +95,24 @@ v0.1 ships three adapters, and none of them needs credentials or network access:
 | `access_baseline` | Deterministic `scipy.sparse.csgraph` and GeoPandas answers for `human_context_access` |
 | `mock` | Configurable failures (wrong output, exceptions, sleeps, retries, token counts) and scripted agent trajectories (`mode: mock_agent`) |
 
+Not yet released: six Claude adapters for the leaderboard (`claude_direct_<model>` and
+`claude_python_<model>`) run Claude models through the local Claude Code CLI. They need a
+signed-in Claude Code and, for the python track, Docker. See
+[`leaderboard/README.md`](leaderboard/README.md).
+
+## Leaderboard
+
+Claude models on the two v0.1.0 benchmarks, in two tracks: **direct**, where the model answers
+from the input data inlined in the prompt with no tools, and **python**, where the model can run
+Python (GeoPandas, Shapely, pyproj, NetworkX, SciPy) in a Docker container with no network. Every
+row is a complete run on the maintainer's machine, generated from the committed results in
+[`leaderboard/results/`](leaderboard/results/); these are local runs, not verified submissions.
+How to run and add a model: [`leaderboard/README.md`](leaderboard/README.md).
+
+<!-- leaderboard:start -->
+No runs have been added yet. See [`leaderboard/README.md`](leaderboard/README.md).
+<!-- leaderboard:end -->
+
 ## Add a benchmark, metric, adapter or dataset manifest
 
 [`docs/benchmark-authoring.md`](docs/benchmark-authoring.md) is the guide. It has the
