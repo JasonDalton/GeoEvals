@@ -5,7 +5,7 @@ Claude subscription.
 
 ## Goal
 
-Run the two v0.1.0 benchmarks against three Claude models in two answer modes, and publish the
+Run the two v0.2.0 benchmarks against three Claude models in two answer modes, and publish the
 results as a table in the main README with scores, timing and tokens used. Opus 5.5 is built
 and run first; Sonnet 5.5 and Haiku 5.5 follow with the same code and settings. Every run
 happens on the maintainer's machine, through the local Claude Code CLI signed in to a Claude
@@ -28,7 +28,7 @@ it is out of scope here.
 | Model access | The local `claude` CLI in print mode (`claude -p`), signed in to the maintainer's Claude subscription; `ANTHROPIC_API_KEY` is removed from its environment |
 | Python sandbox | Local Docker container, no network, built from the project's locked dependencies |
 | Models | `claude-opus-5-5` (first), `claude-sonnet-5-5`, `claude-haiku-5-5` |
-| Benchmarks | `gis_correctness` 0.1.0 (56 cases) and `human_context_access` 0.1.0 (51 cases), split `test` |
+| Benchmarks | `gis_correctness` 0.2.0 (56 cases) and `human_context_access` 0.2.0 (51 cases), split `test`. 0.2.0 recalibrated tolerances so that a correct answer given to 5 decimal places passes (approved 2026-10-10) |
 | Where results appear | A leaderboard table in `README.md`, generated from committed run results |
 
 ## Components
@@ -97,6 +97,10 @@ Each adapter reads the case's `benchmark.yaml` (from `benchmark_dir` in the case
 task statement and output schema. The model gets the case `prompt`, the `inputs.params` as
 JSON, and the input files. It never gets `expected`, `strata` (which flag trap cases),
 `tolerances`, `metric_params` or the case ID.
+
+The system prompt asks for every non-integer number, coordinates included, to 5 decimal places
+(user decision, 2026-10-10). It states no tolerance; the 0.2.0 tolerances accept a correct
+answer at that precision.
 
 Each adapter returns `TokenUsage` with input = input tokens + cache-creation tokens +
 cache-read tokens (every prompt token the model processed) and output = output tokens

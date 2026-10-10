@@ -112,6 +112,7 @@ def test_templates_exist_and_take_the_task_statement() -> None:
         template = load_template(track, "v1")
         assert template.count("{task_statement}") == 1
         assert "TASK X" in system_prompt(template, "TASK X")
+        assert "to 5 decimal places" in " ".join(template.split())
         assert "{task_statement}" not in system_prompt(template, "TASK X")
     with pytest.raises(ValueError, match="v9"):
         load_template("direct", "v9")
