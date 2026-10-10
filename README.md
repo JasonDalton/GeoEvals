@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="docs/geoevals-logo.png" alt="GeoEvals: spatial reasoning benchmarks" width="444">
+</p>
+
 # GeoEvals
 
 A reproducible, practitioner-focused framework for evaluating geospatial AI systems.
