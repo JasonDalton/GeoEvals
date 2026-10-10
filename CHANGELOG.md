@@ -9,6 +9,19 @@ metrics and schemas carry their own versions; see
 
 ## Unreleased
 
+### Added
+
+#### Adapters
+
+- `claude_direct_opus_5_5`, `claude_direct_sonnet_5_5` and `claude_direct_haiku_5_5` 0.1.0:
+  Claude models answering from the inlined input data, with no tools.
+- `claude_python_opus_5_5`, `claude_python_sonnet_5_5` and `claude_python_haiku_5_5` 0.1.0:
+  Claude models with a `run_python` tool that runs code in a per-case Docker container with no
+  network.
+
+Both tracks call the local Claude Code CLI (`claude -p`) signed in to a Claude subscription;
+no API key is used. The adapter version records the Claude Code version (`0.1.0+cc.<version>`).
+
 ## 0.1.0 - 2026-10-09
 
 The first release: the evaluation contracts, a deterministic GIS correctness benchmark and a

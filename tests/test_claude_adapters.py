@@ -1,11 +1,21 @@
 import copy
 import json
+import pickle
 from pathlib import Path
 from typing import Any
 
 import geopandas as gpd
 import pytest
 
+from claude_fakes import FAKE_COMMAND, MODEL, FakeClaude, init_event, result_event
+from geoevals.adapters import SkipCase, TokenUsage, adapter_factory, registered_adapter_names
+from geoevals.adapters.claude import (
+    MODELS,
+    ClaudeConfigError,
+    ClaudeDirectAdapter,
+    ClaudePythonAdapter,
+)
+from geoevals.leaderboard.claude_cli import ClaudeRefusal
 from geoevals.leaderboard.prompting import (
     cli_schema,
     direct_message,
@@ -14,7 +24,8 @@ from geoevals.leaderboard.prompting import (
     spec_for,
     system_prompt,
 )
-from geoevals.runner.run import Case, load_cases
+from geoevals.runner.config import parse_run_config
+from geoevals.runner.run import Case, load_cases, run_benchmark
 from geoevals.validation import load_benchmark_spec
 
 REPO = Path(__file__).parent.parent
@@ -101,3 +112,119 @@ def test_spec_for_reads_the_cases_benchmark() -> None:
     spec = load_benchmark_spec(ACCESS / "benchmark.yaml")
     assert task_statement == spec.task_statement
     assert schema == spec.output_schema
+
+
+# --- direct adapter ---------------------------------------------------------------------------
+
+
+def _direct(config: dict[str, Any] | None = None, slug: str = "haiku_5_5") -> ClaudeDirectAdapter:
+    adapter = ClaudeDirectAdapter(slug)
+    adapter.setup({"claude_command": list(FAKE_COMMAND), **(config or {})})
+    return adapter
+
+
+@pytest.fixture
+def fake(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> FakeClaude:
+    return FakeClaude(tmp_path, monkeypatch)
+
+
+def test_direct_adapter_returns_answer_and_tokens(fake: FakeClaude) -> None:
+    answer = {"status": "ok", "value": 1.5, "units": "m", "crs": "EPSG:32633"}
+    fake.set([init_event(), result_event(answer)])
+    case = _case(GIS, "distance-003")
+    response = _direct().predict(case.input)
+    assert response.output == answer
+    assert response.tokens == TokenUsage(input=2 + 1099 + 10, output=115)
+    assert response.trajectory is None
+    argv = fake.record["argv"]
+    assert argv[argv.index("--model") + 1] == MODEL
+    system = argv[argv.index("--system-prompt") + 1]
+    assert load_benchmark_spec(GIS / "benchmark.yaml").task_statement.strip() in system
+    assert fake.record["stdin"] == direct_message(case.input)
+    assert json.loads(argv[argv.index("--json-schema") + 1]) == cli_schema(
+        load_benchmark_spec(GIS / "benchmark.yaml").output_schema
+    )
+
+
+def test_adapter_name_and_version() -> None:
+    adapter = ClaudeDirectAdapter("opus_5_5")
+    assert adapter.name == "claude_direct_opus_5_5"
+    assert adapter.model == "claude-opus-5-5"
+    assert adapter.version.startswith("0.1.0+cc.")
+    assert ClaudePythonAdapter("sonnet_5_5").name == "claude_python_sonnet_5_5"
+    with pytest.raises(ValueError, match="gpt"):
+        ClaudeDirectAdapter("gpt")
+
+
+def test_only_cases_skips_other_cases(fake: FakeClaude) -> None:
+    adapter = _direct({"only_cases": ["distance-003"]})
+    with pytest.raises(SkipCase, match="only_cases"):
+        adapter.predict(_case(GIS, "distance-001").input)
+    assert not fake.called
+    adapter.predict(_case(GIS, "distance-003").input)
+    assert fake.called
+
+
+def test_usage_limit_skips_later_cases(fake: FakeClaude) -> None:
+    limit = result_event(
+        None, subtype="error_during_execution", is_error=True, api_error_status=429
+    )
+    fake.set([init_event(), limit])
+    adapter = _direct()
+    with pytest.raises(SkipCase, match="usage limit reached"):
+        adapter.predict(_case(GIS, "distance-001").input)
+    fake.record_path.unlink()
+    with pytest.raises(SkipCase, match="usage limit reached"):
+        adapter.predict(_case(GIS, "distance-003").input)
+    assert not fake.called
+
+
+def test_errors_propagate_with_their_type(fake: FakeClaude) -> None:
+    fake.set([init_event(), result_event(None, stop_reason="refusal")])
+    with pytest.raises(ClaudeRefusal):
+        _direct().predict(_case(GIS, "distance-001").input)
+
+
+def test_setup_fails_when_the_cli_is_missing() -> None:
+    with pytest.raises(RuntimeError, match="not on PATH"):
+        ClaudeDirectAdapter("haiku_5_5").setup({"claude_command": ["geoevals-no-such-claude"]})
+
+
+def test_config_rejects_unknown_keys_and_templates() -> None:
+    with pytest.raises(ClaudeConfigError, match="temperature"):
+        ClaudeDirectAdapter("haiku_5_5").setup({"temperature": 0})
+    with pytest.raises(ValueError, match="v7"):
+        ClaudeDirectAdapter("haiku_5_5").setup({"prompt_version": "v7"})
+
+
+def test_registered_names_and_factories_pickle() -> None:
+    names = {f"claude_{track}_{slug}" for track in ["direct", "python"] for slug in MODELS}
+    assert names <= set(registered_adapter_names())
+    for name in names:
+        factory = pickle.loads(pickle.dumps(adapter_factory(name)))
+        assert factory.func in (ClaudeDirectAdapter, ClaudePythonAdapter)
+
+
+@pytest.mark.integration
+def test_direct_adapter_in_a_full_run(fake: FakeClaude) -> None:
+    right = _case(GIS, "distance-003")
+    fake.set([init_event(), result_event(right.expected)])
+    config = parse_run_config(
+        {
+            "split": "test",
+            "adapter": {
+                "claude_command": list(FAKE_COMMAND),
+                "only_cases": ["distance-003", "distance-001"],
+            },
+        }
+    )
+    result = run_benchmark(GIS / "benchmark.yaml", "claude_direct_haiku_5_5", config)
+    statuses = {case["case_id"]: case["status"] for case in result["cases"]}
+    assert statuses["distance-003"] == "scored"
+    assert statuses["distance-001"] == "scored"
+    assert sum(status == "skipped" for status in statuses.values()) == len(statuses) - 2
+    record = next(case for case in result["cases"] if case["case_id"] == "distance-003")
+    assert record["metrics"]["task_success"]["passed"] is True
+    assert record["tokens"] == {"input": 2 + 1099 + 10, "output": 115}
+    assert record["cost_usd"] is None
+    assert result["adapter"]["name"] == "claude_direct_haiku_5_5"

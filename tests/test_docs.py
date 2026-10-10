@@ -133,6 +133,11 @@ def _changelog_entry(version: str) -> str:
     )[0]
 
 
+def _unreleased_entry() -> str:
+    changelog = (REPO / "CHANGELOG.md").read_text(encoding="utf-8")
+    return changelog.split("## Unreleased", 1)[1].split("\n## ", 1)[0]
+
+
 def test_changelog_lists_benchmarks_schemas_metrics_and_adapters() -> None:
     from geoevals.adapters.registry import registered_adapter_names
     from geoevals.metrics.registry import get_metric, registered_metric_ids
@@ -147,8 +152,10 @@ def test_changelog_lists_benchmarks_schemas_metrics_and_adapters() -> None:
         assert f"`schemas/{schema.name}`" in entry, schema.name
     for metric_id in registered_metric_ids():
         assert f"`{metric_id}` {get_metric(metric_id).version}" in entry, metric_id
+    unreleased = _unreleased_entry()
     for name in registered_adapter_names():
-        assert f"`{name}` 0.1.0" in entry, name
+        listed = f"`{name}` 0.1.0" in entry or re.search(rf"`{name}`[^\n]* 0\.1\.0", unreleased)
+        assert listed, name
 
 
 def test_roadmap_lists_the_phase_5_items() -> None:
