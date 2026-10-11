@@ -130,6 +130,12 @@ Run locally through Claude Code 2.1.296 on a Claude subscription, effort high, p
 Task success is the mean of `task_success` over every case, with its 95% interval; cases that were not scored (errors, invalid output, timeouts) count as failures. Latency is the wall-clock time per case, including CLI startup. Tokens in count every prompt token the model processed, cache reads included; tokens out include thinking. Runs on a subscription have no per-token charge, so there is no cost column.
 <!-- leaderboard:end -->
 
+## Graded evals (agent-graded)
+
+<!-- graded:start -->
+No graded runs have been added yet. See [`evals/README.md`](evals/README.md).
+<!-- graded:end -->
+
 ## Add a benchmark, metric, adapter or dataset manifest
 
 [`docs/benchmark-authoring.md`](docs/benchmark-authoring.md) is the guide. It has the

@@ -186,7 +186,17 @@ def test_readme_leaderboard_is_up_to_date() -> None:
     results = REPO / "leaderboard" / "results"
     assert (
         main(
-            ["leaderboard", "build", "--check", "--results", str(results), "--readme", str(README)]
+            [
+                "leaderboard",
+                "build",
+                "--check",
+                "--results",
+                str(results),
+                "--graded",
+                str(REPO / "leaderboard" / "graded"),
+                "--readme",
+                str(README),
+            ]
         )
         == 0
     )

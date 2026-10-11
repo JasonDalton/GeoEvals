@@ -26,6 +26,16 @@ from geoevals.data.fetch import (
 from geoevals.data.inventory import DEFAULT_README, InventoryError, update_inventory
 from geoevals.data.licenses import DEFAULT_REPORT, render_report, runtime_dependencies
 from geoevals.data.verify import verify_manifest
+from geoevals.graded.board import (
+    DEFAULT_GRADED,
+    GRADED_END,
+    GRADED_START,
+    GradedError,
+    add_graded_run,
+    is_graded_result,
+    load_graded,
+    render_graded,
+)
 from geoevals.graded.city import LAYERS_DIR, convert_extract, write_layers
 from geoevals.graded.grader import GRADES_FILE, GradeError, GraderConfig, grade_run
 from geoevals.graded.keys import default_data_dir, regenerate_keys
@@ -38,6 +48,7 @@ from geoevals.leaderboard.table import (
     add_run,
     load_rows,
     render,
+    replace_section,
     update_readme,
 )
 from geoevals.regenerate import RegenerateError, find_benchmark_dir, regenerate
@@ -371,6 +382,12 @@ def build_parser() -> argparse.ArgumentParser:
         default=DEFAULT_RESULTS,
         help=f"Leaderboard results directory (default: {DEFAULT_RESULTS}).",
     )
+    add.add_argument(
+        "--graded",
+        type=Path,
+        default=DEFAULT_GRADED,
+        help=f"Graded leaderboard directory (default: {DEFAULT_GRADED}).",
+    )
     board = leaderboard_commands.add_parser(
         "build",
         help="Write the leaderboard table into the README between its leaderboard markers.",
@@ -380,6 +397,12 @@ def build_parser() -> argparse.ArgumentParser:
         type=Path,
         default=DEFAULT_RESULTS,
         help=f"Leaderboard results directory (default: {DEFAULT_RESULTS}).",
+    )
+    board.add_argument(
+        "--graded",
+        type=Path,
+        default=DEFAULT_GRADED,
+        help=f"Graded leaderboard directory (default: {DEFAULT_GRADED}).",
     )
     board.add_argument(
         "--readme",
@@ -471,21 +494,30 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def _leaderboard_add(run_dir: Path, results: Path) -> int:
+def _leaderboard_add(run_dir: Path, results: Path, graded: Path) -> int:
     try:
-        target = add_run(run_dir, results)
-    except LeaderboardError as exc:
+        result_path = run_dir / "result.json" if run_dir.is_dir() else run_dir
+        document = json.loads(result_path.read_text(encoding="utf-8"))
+        if is_graded_result(document):
+            target = add_graded_run(run_dir, graded)
+        else:
+            target = add_run(run_dir, results)
+    except (LeaderboardError, GradedError, SpecValidationError, OSError, ValueError) as exc:
         print(exc, file=sys.stderr)
         return 1
     print(f"added {target}")
     return 0
 
 
-def _leaderboard_build(results: Path, readme: Path, check: bool) -> int:
+def _leaderboard_build(results: Path, readme: Path, check: bool, graded: Path) -> int:
     try:
         text = readme.read_text(encoding="utf-8")
         updated = update_readme(text, render(load_rows(results)))
-    except (OSError, LeaderboardError) as exc:
+        rows, agreements = load_graded(graded)
+        updated = replace_section(
+            updated, GRADED_START, GRADED_END, render_graded(rows, agreements)
+        )
+    except (OSError, LeaderboardError, GradedError) as exc:
         print(exc, file=sys.stderr)
         return 1
     if updated == text:
@@ -1021,9 +1053,9 @@ def main(argv: Sequence[str] | None = None) -> int:
     if args.command == "bench" and args.bench_command == "build":
         return _bench_build(args.pilot_id, args.root, args.source, args.out)
     if args.command == "leaderboard" and args.leaderboard_command == "add":
-        return _leaderboard_add(args.run_dir, args.results)
+        return _leaderboard_add(args.run_dir, args.results, args.graded)
     if args.command == "leaderboard" and args.leaderboard_command == "build":
-        return _leaderboard_build(args.results, args.readme, args.check)
+        return _leaderboard_build(args.results, args.readme, args.check, args.graded)
     if args.command == "grade":
         return _grade(args.run_dir, args.data, args.evals, args.passes)
     if args.command == "evals" and args.evals_command == "measure-town":
