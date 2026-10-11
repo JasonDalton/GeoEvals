@@ -391,6 +391,19 @@ def _resolve_metrics(spec: BenchmarkSpec) -> list[tuple[Metric, dict[str, Any]]]
     return resolved
 
 
+def summarize_metrics(
+    metrics: list[tuple[Metric, dict[str, Any]]], records: list[dict[str, Any]]
+) -> dict[str, Any]:
+    """Each metric's summary over the case records that have a value for it."""
+    summary_metrics = {}
+    for metric, _ in metrics:
+        values = [
+            MetricValue(**r["metrics"][metric.id]) for r in records if metric.id in r["metrics"]
+        ]
+        summary_metrics[metric.id] = metric.summary(metric.aggregate(values))
+    return summary_metrics
+
+
 def _efficiency(
     records: list[dict[str, Any]],
     wall_clock_s: float,
@@ -550,12 +563,7 @@ def run_benchmark(
     wall_clock_s = time.perf_counter() - clock
     finished = datetime.now(UTC)
 
-    summary_metrics = {}
-    for metric, _ in metrics:
-        values = [
-            MetricValue(**r["metrics"][metric.id]) for r in records if metric.id in r["metrics"]
-        ]
-        summary_metrics[metric.id] = metric.summary(metric.aggregate(values))
+    summary_metrics = summarize_metrics(metrics, records)
     failures = [
         {"case_id": r["case_id"], "status": r["status"], "error": r["error"]}
         for r in records

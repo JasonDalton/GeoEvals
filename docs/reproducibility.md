@@ -49,6 +49,16 @@ A change to a metric definition in [`metrics.md`](metrics.md) bumps that metric'
 and the specs that use it then ask for the new version. A change to a benchmark also needs a
 new published baseline (see the benchmark card), or `geoevals reproduce` fails.
 
+When a benchmark change touches only scoring (a metric version, a tolerance, an expected
+output) and leaves everything an adapter sees as it was (cases, prompts, inputs, fixtures and
+`output_schema`, which model adapters receive), a finished run can be scored again from its
+saved outputs instead of rerun: `geoevals rescore <run_dir>`. It rewrites `result.json` (and
+`cases.jsonl`, if present) against the current spec and adds a `limitations` line that names
+the version the run was scored against before. It refuses a run of another benchmark, with
+another dataset manifest or other case IDs, or with a saved output that no longer meets
+`output_schema`. It cannot check prompts, which a run result does not hold: whoever rescores
+checks that the change left them alone. Failed cases stay as they were.
+
 ## Run determinism
 
 With the same config, dataset and lockfile, two runs give identical per-case `status`,

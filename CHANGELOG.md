@@ -22,6 +22,12 @@ metrics and schemas carry their own versions; see
 Both tracks call the local Claude Code CLI (`claude -p`) signed in to a Claude subscription;
 no API key is used. The adapter version records the Claude Code version (`0.1.0+cc.<version>`).
 
+#### Tools
+
+- `geoevals rescore <run_dir>`: scores a run's saved outputs again with the current version of
+  its benchmark, for a change that touches only scoring. It records the rescore in the result's
+  `limitations`. See `docs/reproducibility.md`.
+
 ### Changed
 
 - `gis_correctness` 0.2.0 and `human_context_access` 0.2.0: tolerances recalibrated so that a

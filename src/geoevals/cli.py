@@ -35,9 +35,19 @@ from geoevals.regenerate import RegenerateError, find_benchmark_dir, regenerate
 from geoevals.reporting.compare import Tolerance, compare_runs, load_run
 from geoevals.reporting.report import REPORT_HTML, write_report
 from geoevals.reproduce import DEFAULT_TOLERANCE, baseline_spec, compare_reproduction
+from geoevals.rescore import RescoreError, rescore_run
 from geoevals.runner.config import RunConfigError, load_run_config
 from geoevals.runner.cost import PriceTable, PriceTableError, load_price_table
-from geoevals.runner.layout import CONFIG_FILE, LOG_FILE, RESULT_FILE, write_config, write_run_dir
+from geoevals.runner.layout import (
+    CASES_FILE,
+    CONFIG_FILE,
+    LOG_FILE,
+    RESULT_FILE,
+    write_cases,
+    write_config,
+    write_result,
+    write_run_dir,
+)
 from geoevals.runner.run import RunError, run_benchmark, run_logging
 from geoevals.validation import SpecValidationError, validate_file, validate_run_result_file
 from geoevals.validation.validate import load_yaml
@@ -255,6 +265,22 @@ def build_parser() -> argparse.ArgumentParser:
         type=str.upper,
         choices=["DEBUG", "INFO", "WARNING", "ERROR"],
         help="Log level for the rerun (default: WARNING).",
+    )
+
+    rescore = subparsers.add_parser(
+        "rescore",
+        help="Score a run's saved outputs again with the current version of its benchmark and "
+        "rewrite its result.json (and cases.jsonl, if present). Only valid when the benchmark "
+        "change left the prompts, inputs and fixtures as they were (exit 0: rescored, 1: the "
+        "run does not fit the benchmark, 2: the run could not be read).",
+    )
+    rescore.add_argument("run_dir", type=Path, help="Run directory with result.json.")
+    rescore.add_argument(
+        "--root",
+        type=Path,
+        default=DEFAULT_BENCHMARKS,
+        help="Directory of benchmark directories; the spec is "
+        f"<root>/<benchmark id>/benchmark.yaml (default: {DEFAULT_BENCHMARKS}).",
     )
 
     bench = subparsers.add_parser("bench", help="Benchmark authoring tools.")
@@ -679,6 +705,29 @@ def _reproduce_into(
     return 1
 
 
+def _rescore(run_dir: Path, root: Path) -> int:
+    try:
+        result = load_run(run_dir)
+    except SpecValidationError as exc:
+        _print_issues(exc.path, exc.issues)
+        return 2
+    try:
+        rescored = rescore_run(result, baseline_spec(result, root))
+    except RescoreError as exc:
+        print(f"{run_dir}: {exc}", file=sys.stderr)
+        return 1
+    write_result(rescored, run_dir / RESULT_FILE)
+    if (run_dir / CASES_FILE).is_file():
+        write_cases(rescored["cases"], run_dir / CASES_FILE)
+    before = result["summary_metrics"]["task_success"]["mean"]
+    after = rescored["summary_metrics"]["task_success"]["mean"]
+    print(
+        f"{run_dir}: rescored {result['benchmark']['id']} {result['benchmark']['version']} -> "
+        f"{rescored['benchmark']['version']}; task_success {before} -> {after}"
+    )
+    return 0
+
+
 def _bench_regenerate(benchmark_id: str, root: Path, check: bool) -> int:
     benchmark_dir = find_benchmark_dir(root, benchmark_id)
     try:
@@ -733,6 +782,8 @@ def main(argv: Sequence[str] | None = None) -> int:
     if args.command == "reproduce":
         tolerance = Tolerance(args.abs_tol, args.rel_tol)
         return _reproduce(args.baseline_dir, args.root, args.out, args.log_level, tolerance)
+    if args.command == "rescore":
+        return _rescore(args.run_dir, args.root)
     if args.command == "bench" and args.bench_command == "regenerate":
         return _bench_regenerate(args.benchmark_id, args.root, args.check)
     if args.command == "bench" and args.bench_command == "build":
