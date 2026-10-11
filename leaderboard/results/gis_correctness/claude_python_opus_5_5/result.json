@@ -12,7 +12,7 @@
   },
   "benchmark": {
     "id": "gis_correctness",
-    "version": "0.2.0"
+    "version": "0.3.0"
   },
   "cases": [
     {
@@ -99,7 +99,7 @@
       },
       "peak_memory_bytes": 309824,
       "retries": 0,
-      "scoring_s": 0.00029945804271847,
+      "scoring_s": 0.000114540918730199,
       "split": "test",
       "status": "scored",
       "strata": {
@@ -209,7 +209,7 @@
       },
       "peak_memory_bytes": 159161,
       "retries": 0,
-      "scoring_s": 0.00026487500872463,
+      "scoring_s": 5.16249565407634e-05,
       "split": "test",
       "status": "scored",
       "strata": {
@@ -341,7 +341,7 @@
       },
       "peak_memory_bytes": 137421,
       "retries": 0,
-      "scoring_s": 0.000254832906648517,
+      "scoring_s": 4.95000276714563e-05,
       "split": "test",
       "status": "scored",
       "strata": {
@@ -462,7 +462,7 @@
       },
       "peak_memory_bytes": 137664,
       "retries": 0,
-      "scoring_s": 0.000240417080931365,
+      "scoring_s": 5.26249641552567e-05,
       "split": "test",
       "status": "scored",
       "strata": {
@@ -583,7 +583,7 @@
       },
       "peak_memory_bytes": 133464,
       "retries": 0,
-      "scoring_s": 0.000204209005460143,
+      "scoring_s": 4.60000010207295e-05,
       "split": "test",
       "status": "scored",
       "strata": {
@@ -693,7 +693,7 @@
       },
       "peak_memory_bytes": 188632,
       "retries": 0,
-      "scoring_s": 0.000215707928873599,
+      "scoring_s": 4.49169892817736e-05,
       "split": "test",
       "status": "scored",
       "strata": {
@@ -814,7 +814,7 @@
       },
       "peak_memory_bytes": 147389,
       "retries": 0,
-      "scoring_s": 0.000256208004429936,
+      "scoring_s": 4.50420193374157e-05,
       "split": "test",
       "status": "scored",
       "strata": {
@@ -935,7 +935,7 @@
       },
       "peak_memory_bytes": 145471,
       "retries": 0,
-      "scoring_s": 0.000224916962906718,
+      "scoring_s": 4.92080580443144e-05,
       "split": "test",
       "status": "scored",
       "strata": {
@@ -1339,7 +1339,7 @@
       },
       "peak_memory_bytes": 176259,
       "retries": 0,
-      "scoring_s": 0.0654959590174258,
+      "scoring_s": 0.0511802500113845,
       "split": "test",
       "status": "scored",
       "strata": {
@@ -1801,7 +1801,7 @@
       },
       "peak_memory_bytes": 170633,
       "retries": 0,
-      "scoring_s": 0.00579550000838935,
+      "scoring_s": 0.00111050007399172,
       "split": "test",
       "status": "scored",
       "strata": {
@@ -1941,7 +1941,7 @@
       },
       "peak_memory_bytes": 135137,
       "retries": 0,
-      "scoring_s": 0.001507707987912,
+      "scoring_s": 0.000203041941858828,
       "split": "test",
       "status": "scored",
       "strata": {
@@ -2093,7 +2093,7 @@
       },
       "peak_memory_bytes": 132953,
       "retries": 0,
-      "scoring_s": 0.000826874980702996,
+      "scoring_s": 0.000278791994787753,
       "split": "test",
       "status": "scored",
       "strata": {
@@ -2252,7 +2252,7 @@
       },
       "peak_memory_bytes": 142346,
       "retries": 0,
-      "scoring_s": 0.053621375001967,
+      "scoring_s": 0.0392542920308188,
       "split": "test",
       "status": "scored",
       "strata": {
@@ -3080,7 +3080,7 @@
       },
       "peak_memory_bytes": 238997,
       "retries": 0,
-      "scoring_s": 0.0500739580020308,
+      "scoring_s": 0.0407095000846311,
       "split": "test",
       "status": "scored",
       "strata": {
@@ -3266,7 +3266,7 @@
       },
       "peak_memory_bytes": 132769,
       "retries": 0,
-      "scoring_s": 0.00142233306542039,
+      "scoring_s": 0.000286458060145378,
       "split": "test",
       "status": "scored",
       "strata": {
@@ -3393,7 +3393,7 @@
       },
       "peak_memory_bytes": 132471,
       "retries": 0,
-      "scoring_s": 0.00281924998853356,
+      "scoring_s": 0.000333833042532206,
       "split": "test",
       "status": "scored",
       "strata": {
@@ -3585,7 +3585,7 @@
       },
       "peak_memory_bytes": 167182,
       "retries": 0,
-      "scoring_s": 0.00148987502325326,
+      "scoring_s": 0.000414459034800529,
       "split": "test",
       "status": "scored",
       "strata": {
@@ -3715,7 +3715,7 @@
       },
       "peak_memory_bytes": 136171,
       "retries": 0,
-      "scoring_s": 0.00020675000268966,
+      "scoring_s": 4.7125038690865e-05,
       "split": "test",
       "status": "scored",
       "strata": {
@@ -3853,7 +3853,7 @@
       },
       "peak_memory_bytes": 132336,
       "retries": 0,
-      "scoring_s": 0.0532337909098715,
+      "scoring_s": 0.0395058749709278,
       "split": "test",
       "status": "scored",
       "strata": {
@@ -3991,7 +3991,7 @@
       },
       "peak_memory_bytes": 132382,
       "retries": 0,
-      "scoring_s": 0.0532032500486821,
+      "scoring_s": 0.0399471669225022,
       "split": "test",
       "status": "scored",
       "strata": {
@@ -4130,7 +4130,7 @@
       },
       "peak_memory_bytes": 132475,
       "retries": 0,
-      "scoring_s": 0.00449720805045217,
+      "scoring_s": 0.000443083001300693,
       "split": "test",
       "status": "scored",
       "strata": {
@@ -4269,7 +4269,7 @@
       },
       "peak_memory_bytes": 314165,
       "retries": 0,
-      "scoring_s": 0.0466377909760922,
+      "scoring_s": 0.0404208750696853,
       "split": "test",
       "status": "scored",
       "strata": {
@@ -4418,7 +4418,7 @@
       },
       "peak_memory_bytes": 132399,
       "retries": 0,
-      "scoring_s": 0.00208554207347333,
+      "scoring_s": 0.000397874973714352,
       "split": "test",
       "status": "scored",
       "strata": {
@@ -4556,7 +4556,7 @@
       },
       "peak_memory_bytes": 132339,
       "retries": 0,
-      "scoring_s": 0.003583624958992,
+      "scoring_s": 0.000587500049732625,
       "split": "test",
       "status": "scored",
       "strata": {
@@ -4694,7 +4694,7 @@
       },
       "peak_memory_bytes": 132387,
       "retries": 0,
-      "scoring_s": 0.00794150005094707,
+      "scoring_s": 0.000343790976330638,
       "split": "test",
       "status": "scored",
       "strata": {
@@ -4749,13 +4749,9 @@
           "value": null
         },
         "crs_match": {
-          "detail": {
-            "expected": "OGC:CRS84",
-            "predicted": "EPSG:4326",
-            "reason": "crs_differs"
-          },
-          "passed": false,
-          "value": 0.0
+          "detail": {},
+          "passed": true,
+          "value": 1.0
         },
         "geometry_match": {
           "detail": {
@@ -4776,12 +4772,8 @@
           "detail": {
             "checks": {
               "crs_match": {
-                "detail": {
-                  "expected": "OGC:CRS84",
-                  "predicted": "EPSG:4326",
-                  "reason": "crs_differs"
-                },
-                "passed": false
+                "detail": {},
+                "passed": true
               },
               "status_match": {
                 "detail": {
@@ -4798,13 +4790,10 @@
                 "detail": {},
                 "passed": true
               }
-            },
-            "failed": [
-              "crs_match"
-            ]
+            }
           },
-          "passed": false,
-          "value": 0.0
+          "passed": true,
+          "value": 1.0
         },
         "validity_match": {
           "detail": {
@@ -4832,7 +4821,7 @@
       },
       "peak_memory_bytes": 141324,
       "retries": 0,
-      "scoring_s": 0.00169854203704745,
+      "scoring_s": 0.000472667044959962,
       "split": "test",
       "status": "scored",
       "strata": {
@@ -4970,7 +4959,7 @@
       },
       "peak_memory_bytes": 140841,
       "retries": 0,
-      "scoring_s": 0.00061512493994087,
+      "scoring_s": 0.000105542014352977,
       "split": "test",
       "status": "scored",
       "strata": {
@@ -5036,13 +5025,9 @@
           "value": null
         },
         "crs_match": {
-          "detail": {
-            "expected": "OGC:CRS84",
-            "predicted": "EPSG:4326",
-            "reason": "crs_differs"
-          },
-          "passed": false,
-          "value": 0.0
+          "detail": {},
+          "passed": true,
+          "value": 1.0
         },
         "geometry_match": {
           "detail": {
@@ -5063,12 +5048,8 @@
           "detail": {
             "checks": {
               "crs_match": {
-                "detail": {
-                  "expected": "OGC:CRS84",
-                  "predicted": "EPSG:4326",
-                  "reason": "crs_differs"
-                },
-                "passed": false
+                "detail": {},
+                "passed": true
               },
               "status_match": {
                 "detail": {
@@ -5085,13 +5066,10 @@
                 "detail": {},
                 "passed": true
               }
-            },
-            "failed": [
-              "crs_match"
-            ]
+            }
           },
-          "passed": false,
-          "value": 0.0
+          "passed": true,
+          "value": 1.0
         },
         "validity_match": {
           "detail": {
@@ -5119,7 +5097,7 @@
       },
       "peak_memory_bytes": 142383,
       "retries": 0,
-      "scoring_s": 0.000648499932140112,
+      "scoring_s": 9.81250777840614e-05,
       "split": "test",
       "status": "scored",
       "strata": {
@@ -5185,13 +5163,9 @@
           "value": null
         },
         "crs_match": {
-          "detail": {
-            "expected": "OGC:CRS84",
-            "predicted": "EPSG:4326",
-            "reason": "crs_differs"
-          },
-          "passed": false,
-          "value": 0.0
+          "detail": {},
+          "passed": true,
+          "value": 1.0
         },
         "geometry_match": {
           "detail": {
@@ -5212,12 +5186,8 @@
           "detail": {
             "checks": {
               "crs_match": {
-                "detail": {
-                  "expected": "OGC:CRS84",
-                  "predicted": "EPSG:4326",
-                  "reason": "crs_differs"
-                },
-                "passed": false
+                "detail": {},
+                "passed": true
               },
               "status_match": {
                 "detail": {
@@ -5234,13 +5204,10 @@
                 "detail": {},
                 "passed": true
               }
-            },
-            "failed": [
-              "crs_match"
-            ]
+            }
           },
-          "passed": false,
-          "value": 0.0
+          "passed": true,
+          "value": 1.0
         },
         "validity_match": {
           "detail": {
@@ -5268,7 +5235,7 @@
       },
       "peak_memory_bytes": 142480,
       "retries": 0,
-      "scoring_s": 0.000626750057563186,
+      "scoring_s": 9.24579799175262e-05,
       "split": "test",
       "status": "scored",
       "strata": {
@@ -5334,13 +5301,9 @@
           "value": null
         },
         "crs_match": {
-          "detail": {
-            "expected": "OGC:CRS84",
-            "predicted": "EPSG:4326",
-            "reason": "crs_differs"
-          },
-          "passed": false,
-          "value": 0.0
+          "detail": {},
+          "passed": true,
+          "value": 1.0
         },
         "geometry_match": {
           "detail": {
@@ -5361,12 +5324,8 @@
           "detail": {
             "checks": {
               "crs_match": {
-                "detail": {
-                  "expected": "OGC:CRS84",
-                  "predicted": "EPSG:4326",
-                  "reason": "crs_differs"
-                },
-                "passed": false
+                "detail": {},
+                "passed": true
               },
               "status_match": {
                 "detail": {
@@ -5383,13 +5342,10 @@
                 "detail": {},
                 "passed": true
               }
-            },
-            "failed": [
-              "crs_match"
-            ]
+            }
           },
-          "passed": false,
-          "value": 0.0
+          "passed": true,
+          "value": 1.0
         },
         "validity_match": {
           "detail": {
@@ -5417,7 +5373,7 @@
       },
       "peak_memory_bytes": 132783,
       "retries": 0,
-      "scoring_s": 0.000576958991587162,
+      "scoring_s": 9.30839451029897e-05,
       "split": "test",
       "status": "scored",
       "strata": {
@@ -5544,7 +5500,7 @@
       },
       "peak_memory_bytes": 132812,
       "retries": 0,
-      "scoring_s": 0.000568917021155357,
+      "scoring_s": 8.15000385046005e-05,
       "split": "test",
       "status": "scored",
       "strata": {
@@ -5599,13 +5555,9 @@
           "value": null
         },
         "crs_match": {
-          "detail": {
-            "expected": "OGC:CRS84",
-            "predicted": "EPSG:4326",
-            "reason": "crs_differs"
-          },
-          "passed": false,
-          "value": 0.0
+          "detail": {},
+          "passed": true,
+          "value": 1.0
         },
         "geometry_match": {
           "detail": {
@@ -5626,12 +5578,8 @@
           "detail": {
             "checks": {
               "crs_match": {
-                "detail": {
-                  "expected": "OGC:CRS84",
-                  "predicted": "EPSG:4326",
-                  "reason": "crs_differs"
-                },
-                "passed": false
+                "detail": {},
+                "passed": true
               },
               "status_match": {
                 "detail": {
@@ -5648,13 +5596,10 @@
                 "detail": {},
                 "passed": true
               }
-            },
-            "failed": [
-              "crs_match"
-            ]
+            }
           },
-          "passed": false,
-          "value": 0.0
+          "passed": true,
+          "value": 1.0
         },
         "validity_match": {
           "detail": {
@@ -5682,7 +5627,7 @@
       },
       "peak_memory_bytes": 133465,
       "retries": 0,
-      "scoring_s": 0.00058787502348423,
+      "scoring_s": 8.92909010872245e-05,
       "split": "test",
       "status": "scored",
       "strata": {
@@ -5737,13 +5682,9 @@
           "value": null
         },
         "crs_match": {
-          "detail": {
-            "expected": "OGC:CRS84",
-            "predicted": "EPSG:4326",
-            "reason": "crs_differs"
-          },
-          "passed": false,
-          "value": 0.0
+          "detail": {},
+          "passed": true,
+          "value": 1.0
         },
         "geometry_match": {
           "detail": {
@@ -5764,12 +5705,8 @@
           "detail": {
             "checks": {
               "crs_match": {
-                "detail": {
-                  "expected": "OGC:CRS84",
-                  "predicted": "EPSG:4326",
-                  "reason": "crs_differs"
-                },
-                "passed": false
+                "detail": {},
+                "passed": true
               },
               "status_match": {
                 "detail": {
@@ -5786,13 +5723,10 @@
                 "detail": {},
                 "passed": true
               }
-            },
-            "failed": [
-              "crs_match"
-            ]
+            }
           },
-          "passed": false,
-          "value": 0.0
+          "passed": true,
+          "value": 1.0
         },
         "validity_match": {
           "detail": {
@@ -5820,7 +5754,7 @@
       },
       "peak_memory_bytes": 141700,
       "retries": 0,
-      "scoring_s": 0.000635916949249804,
+      "scoring_s": 9.17079159989953e-05,
       "split": "test",
       "status": "scored",
       "strata": {
@@ -5958,7 +5892,7 @@
       },
       "peak_memory_bytes": 132776,
       "retries": 0,
-      "scoring_s": 0.00309266697149724,
+      "scoring_s": 0.00084320898167789,
       "split": "test",
       "status": "scored",
       "strata": {
@@ -6011,13 +5945,9 @@
           "value": 1.0
         },
         "crs_match": {
-          "detail": {
-            "expected": "OGC:CRS84",
-            "predicted": "EPSG:4326",
-            "reason": "crs_differs"
-          },
-          "passed": false,
-          "value": 0.0
+          "detail": {},
+          "passed": true,
+          "value": 1.0
         },
         "geometry_match": {
           "detail": {
@@ -6042,12 +5972,8 @@
                 "passed": true
               },
               "crs_match": {
-                "detail": {
-                  "expected": "OGC:CRS84",
-                  "predicted": "EPSG:4326",
-                  "reason": "crs_differs"
-                },
-                "passed": false
+                "detail": {},
+                "passed": true
               },
               "feature_count": {
                 "detail": {
@@ -6073,13 +5999,10 @@
                 "detail": {},
                 "passed": true
               }
-            },
-            "failed": [
-              "crs_match"
-            ]
+            }
           },
-          "passed": false,
-          "value": 0.0
+          "passed": true,
+          "value": 1.0
         },
         "validity_match": {
           "detail": {},
@@ -6221,7 +6144,7 @@
       },
       "peak_memory_bytes": 132917,
       "retries": 0,
-      "scoring_s": 0.156250374973752,
+      "scoring_s": 0.151519791921601,
       "split": "test",
       "status": "scored",
       "strata": {
@@ -6285,13 +6208,9 @@
           "value": 1.0
         },
         "crs_match": {
-          "detail": {
-            "expected": "OGC:CRS84",
-            "predicted": "EPSG:4326",
-            "reason": "crs_differs"
-          },
-          "passed": false,
-          "value": 0.0
+          "detail": {},
+          "passed": true,
+          "value": 1.0
         },
         "geometry_match": {
           "detail": {
@@ -6316,12 +6235,8 @@
                 "passed": true
               },
               "crs_match": {
-                "detail": {
-                  "expected": "OGC:CRS84",
-                  "predicted": "EPSG:4326",
-                  "reason": "crs_differs"
-                },
-                "passed": false
+                "detail": {},
+                "passed": true
               },
               "feature_count": {
                 "detail": {
@@ -6347,13 +6262,10 @@
                 "detail": {},
                 "passed": true
               }
-            },
-            "failed": [
-              "crs_match"
-            ]
+            }
           },
-          "passed": false,
-          "value": 0.0
+          "passed": true,
+          "value": 1.0
         },
         "validity_match": {
           "detail": {},
@@ -6710,7 +6622,7 @@
       },
       "peak_memory_bytes": 215900,
       "retries": 0,
-      "scoring_s": 0.425697750062682,
+      "scoring_s": 0.327028749976307,
       "split": "test",
       "status": "scored",
       "strata": {
@@ -6774,13 +6686,9 @@
           "value": 1.0
         },
         "crs_match": {
-          "detail": {
-            "expected": "OGC:CRS84",
-            "predicted": "EPSG:4326",
-            "reason": "crs_differs"
-          },
-          "passed": false,
-          "value": 0.0
+          "detail": {},
+          "passed": true,
+          "value": 1.0
         },
         "geometry_match": {
           "detail": {
@@ -6805,12 +6713,8 @@
                 "passed": true
               },
               "crs_match": {
-                "detail": {
-                  "expected": "OGC:CRS84",
-                  "predicted": "EPSG:4326",
-                  "reason": "crs_differs"
-                },
-                "passed": false
+                "detail": {},
+                "passed": true
               },
               "feature_count": {
                 "detail": {
@@ -6836,13 +6740,10 @@
                 "detail": {},
                 "passed": true
               }
-            },
-            "failed": [
-              "crs_match"
-            ]
+            }
           },
-          "passed": false,
-          "value": 0.0
+          "passed": true,
+          "value": 1.0
         },
         "validity_match": {
           "detail": {},
@@ -7001,7 +6902,7 @@
       },
       "peak_memory_bytes": 167802,
       "retries": 0,
-      "scoring_s": 0.154397082980722,
+      "scoring_s": 0.138740249909461,
       "split": "test",
       "status": "scored",
       "strata": {
@@ -7065,13 +6966,9 @@
           "value": 1.0
         },
         "crs_match": {
-          "detail": {
-            "expected": "OGC:CRS84",
-            "predicted": "EPSG:4326",
-            "reason": "crs_differs"
-          },
-          "passed": false,
-          "value": 0.0
+          "detail": {},
+          "passed": true,
+          "value": 1.0
         },
         "geometry_match": {
           "detail": {
@@ -7096,12 +6993,8 @@
                 "passed": true
               },
               "crs_match": {
-                "detail": {
-                  "expected": "OGC:CRS84",
-                  "predicted": "EPSG:4326",
-                  "reason": "crs_differs"
-                },
-                "passed": false
+                "detail": {},
+                "passed": true
               },
               "feature_count": {
                 "detail": {
@@ -7127,13 +7020,10 @@
                 "detail": {},
                 "passed": true
               }
-            },
-            "failed": [
-              "crs_match"
-            ]
+            }
           },
-          "passed": false,
-          "value": 0.0
+          "passed": true,
+          "value": 1.0
         },
         "validity_match": {
           "detail": {},
@@ -7382,7 +7272,7 @@
       },
       "peak_memory_bytes": 170663,
       "retries": 0,
-      "scoring_s": 0.268676250008866,
+      "scoring_s": 0.200521292048506,
       "split": "test",
       "status": "scored",
       "strata": {
@@ -7435,13 +7325,9 @@
           "value": 1.0
         },
         "crs_match": {
-          "detail": {
-            "expected": "OGC:CRS84",
-            "predicted": "EPSG:4326",
-            "reason": "crs_differs"
-          },
-          "passed": false,
-          "value": 0.0
+          "detail": {},
+          "passed": true,
+          "value": 1.0
         },
         "geometry_match": {
           "detail": {
@@ -7466,12 +7352,8 @@
                 "passed": true
               },
               "crs_match": {
-                "detail": {
-                  "expected": "OGC:CRS84",
-                  "predicted": "EPSG:4326",
-                  "reason": "crs_differs"
-                },
-                "passed": false
+                "detail": {},
+                "passed": true
               },
               "feature_count": {
                 "detail": {
@@ -7497,13 +7379,10 @@
                 "detail": {},
                 "passed": true
               }
-            },
-            "failed": [
-              "crs_match"
-            ]
+            }
           },
-          "passed": false,
-          "value": 0.0
+          "passed": true,
+          "value": 1.0
         },
         "validity_match": {
           "detail": {},
@@ -7638,7 +7517,7 @@
       },
       "peak_memory_bytes": 156359,
       "retries": 0,
-      "scoring_s": 0.148210833081976,
+      "scoring_s": 0.12247583293356,
       "split": "test",
       "status": "scored",
       "strata": {
@@ -7702,13 +7581,9 @@
           "value": 1.0
         },
         "crs_match": {
-          "detail": {
-            "expected": "OGC:CRS84",
-            "predicted": "EPSG:4326",
-            "reason": "crs_differs"
-          },
-          "passed": false,
-          "value": 0.0
+          "detail": {},
+          "passed": true,
+          "value": 1.0
         },
         "geometry_match": {
           "detail": {
@@ -7733,12 +7608,8 @@
                 "passed": true
               },
               "crs_match": {
-                "detail": {
-                  "expected": "OGC:CRS84",
-                  "predicted": "EPSG:4326",
-                  "reason": "crs_differs"
-                },
-                "passed": false
+                "detail": {},
+                "passed": true
               },
               "feature_count": {
                 "detail": {
@@ -7764,13 +7635,10 @@
                 "detail": {},
                 "passed": true
               }
-            },
-            "failed": [
-              "crs_match"
-            ]
+            }
           },
-          "passed": false,
-          "value": 0.0
+          "passed": true,
+          "value": 1.0
         },
         "validity_match": {
           "detail": {},
@@ -7857,7 +7725,7 @@
       },
       "peak_memory_bytes": 157229,
       "retries": 0,
-      "scoring_s": 0.0519398750038818,
+      "scoring_s": 0.041442416026257,
       "split": "test",
       "status": "scored",
       "strata": {
@@ -7921,13 +7789,9 @@
           "value": 1.0
         },
         "crs_match": {
-          "detail": {
-            "expected": "OGC:CRS84",
-            "predicted": "EPSG:4326",
-            "reason": "crs_differs"
-          },
-          "passed": false,
-          "value": 0.0
+          "detail": {},
+          "passed": true,
+          "value": 1.0
         },
         "geometry_match": {
           "detail": {
@@ -7952,12 +7816,8 @@
                 "passed": true
               },
               "crs_match": {
-                "detail": {
-                  "expected": "OGC:CRS84",
-                  "predicted": "EPSG:4326",
-                  "reason": "crs_differs"
-                },
-                "passed": false
+                "detail": {},
+                "passed": true
               },
               "feature_count": {
                 "detail": {
@@ -7983,13 +7843,10 @@
                 "detail": {},
                 "passed": true
               }
-            },
-            "failed": [
-              "crs_match"
-            ]
+            }
           },
-          "passed": false,
-          "value": 0.0
+          "passed": true,
+          "value": 1.0
         },
         "validity_match": {
           "detail": {},
@@ -8086,7 +7943,7 @@
       },
       "peak_memory_bytes": 155146,
       "retries": 0,
-      "scoring_s": 0.198545207967982,
+      "scoring_s": 0.159910707967356,
       "split": "test",
       "status": "scored",
       "strata": {
@@ -8140,13 +7997,9 @@
           "value": 1.0
         },
         "crs_match": {
-          "detail": {
-            "expected": "OGC:CRS84",
-            "predicted": "EPSG:4326",
-            "reason": "crs_differs"
-          },
-          "passed": false,
-          "value": 0.0
+          "detail": {},
+          "passed": true,
+          "value": 1.0
         },
         "geometry_match": {
           "detail": {
@@ -8171,12 +8024,8 @@
                 "passed": true
               },
               "crs_match": {
-                "detail": {
-                  "expected": "OGC:CRS84",
-                  "predicted": "EPSG:4326",
-                  "reason": "crs_differs"
-                },
-                "passed": false
+                "detail": {},
+                "passed": true
               },
               "feature_count": {
                 "detail": {
@@ -8202,13 +8051,10 @@
                 "detail": {},
                 "passed": true
               }
-            },
-            "failed": [
-              "crs_match"
-            ]
+            }
           },
-          "passed": false,
-          "value": 0.0
+          "passed": true,
+          "value": 1.0
         },
         "validity_match": {
           "detail": {},
@@ -8385,7 +8231,7 @@
       },
       "peak_memory_bytes": 152513,
       "retries": 0,
-      "scoring_s": 0.209366833092645,
+      "scoring_s": 0.155648958054371,
       "split": "test",
       "status": "scored",
       "strata": {
@@ -8439,13 +8285,9 @@
           "value": 1.0
         },
         "crs_match": {
-          "detail": {
-            "expected": "OGC:CRS84",
-            "predicted": "EPSG:4326",
-            "reason": "crs_differs"
-          },
-          "passed": false,
-          "value": 0.0
+          "detail": {},
+          "passed": true,
+          "value": 1.0
         },
         "geometry_match": {
           "detail": {
@@ -8470,12 +8312,8 @@
                 "passed": true
               },
               "crs_match": {
-                "detail": {
-                  "expected": "OGC:CRS84",
-                  "predicted": "EPSG:4326",
-                  "reason": "crs_differs"
-                },
-                "passed": false
+                "detail": {},
+                "passed": true
               },
               "feature_count": {
                 "detail": {
@@ -8501,13 +8339,10 @@
                 "detail": {},
                 "passed": true
               }
-            },
-            "failed": [
-              "crs_match"
-            ]
+            }
           },
-          "passed": false,
-          "value": 0.0
+          "passed": true,
+          "value": 1.0
         },
         "validity_match": {
           "detail": {},
@@ -8613,7 +8448,7 @@
       },
       "peak_memory_bytes": 151956,
       "retries": 0,
-      "scoring_s": 0.0947175830369815,
+      "scoring_s": 0.0795059580123052,
       "split": "test",
       "status": "scored",
       "strata": {
@@ -8667,13 +8502,9 @@
           "value": 1.0
         },
         "crs_match": {
-          "detail": {
-            "expected": "OGC:CRS84",
-            "predicted": "EPSG:4326",
-            "reason": "crs_differs"
-          },
-          "passed": false,
-          "value": 0.0
+          "detail": {},
+          "passed": true,
+          "value": 1.0
         },
         "geometry_match": {
           "detail": {
@@ -8698,12 +8529,8 @@
                 "passed": true
               },
               "crs_match": {
-                "detail": {
-                  "expected": "OGC:CRS84",
-                  "predicted": "EPSG:4326",
-                  "reason": "crs_differs"
-                },
-                "passed": false
+                "detail": {},
+                "passed": true
               },
               "feature_count": {
                 "detail": {
@@ -8729,13 +8556,10 @@
                 "detail": {},
                 "passed": true
               }
-            },
-            "failed": [
-              "crs_match"
-            ]
+            }
           },
-          "passed": false,
-          "value": 0.0
+          "passed": true,
+          "value": 1.0
         },
         "validity_match": {
           "detail": {},
@@ -8864,7 +8688,7 @@
       },
       "peak_memory_bytes": 151565,
       "retries": 0,
-      "scoring_s": 0.276905040955171,
+      "scoring_s": 0.244014666997828,
       "split": "test",
       "status": "scored",
       "strata": {
@@ -8918,13 +8742,9 @@
           "value": 1.0
         },
         "crs_match": {
-          "detail": {
-            "expected": "OGC:CRS84",
-            "predicted": "EPSG:4326",
-            "reason": "crs_differs"
-          },
-          "passed": false,
-          "value": 0.0
+          "detail": {},
+          "passed": true,
+          "value": 1.0
         },
         "geometry_match": {
           "detail": {
@@ -8949,12 +8769,8 @@
                 "passed": true
               },
               "crs_match": {
-                "detail": {
-                  "expected": "OGC:CRS84",
-                  "predicted": "EPSG:4326",
-                  "reason": "crs_differs"
-                },
-                "passed": false
+                "detail": {},
+                "passed": true
               },
               "feature_count": {
                 "detail": {
@@ -8980,13 +8796,10 @@
                 "detail": {},
                 "passed": true
               }
-            },
-            "failed": [
-              "crs_match"
-            ]
+            }
           },
-          "passed": false,
-          "value": 0.0
+          "passed": true,
+          "value": 1.0
         },
         "validity_match": {
           "detail": {},
@@ -9121,7 +8934,7 @@
       },
       "peak_memory_bytes": 165075,
       "retries": 0,
-      "scoring_s": 0.294662750093266,
+      "scoring_s": 0.23669362498913,
       "split": "test",
       "status": "scored",
       "strata": {
@@ -9320,7 +9133,7 @@
       },
       "peak_memory_bytes": 161366,
       "retries": 0,
-      "scoring_s": 0.00167637504637241,
+      "scoring_s": 0.000404999940656126,
       "split": "test",
       "status": "scored",
       "strata": {
@@ -9385,13 +9198,9 @@
           "value": 1.0
         },
         "crs_match": {
-          "detail": {
-            "expected": "OGC:CRS84",
-            "predicted": "EPSG:4326",
-            "reason": "crs_differs"
-          },
-          "passed": false,
-          "value": 0.0
+          "detail": {},
+          "passed": true,
+          "value": 1.0
         },
         "geometry_match": {
           "detail": {
@@ -9416,12 +9225,8 @@
                 "passed": true
               },
               "crs_match": {
-                "detail": {
-                  "expected": "OGC:CRS84",
-                  "predicted": "EPSG:4326",
-                  "reason": "crs_differs"
-                },
-                "passed": false
+                "detail": {},
+                "passed": true
               },
               "feature_count": {
                 "detail": {
@@ -9447,13 +9252,10 @@
                 "detail": {},
                 "passed": true
               }
-            },
-            "failed": [
-              "crs_match"
-            ]
+            }
           },
-          "passed": false,
-          "value": 0.0
+          "passed": true,
+          "value": 1.0
         },
         "validity_match": {
           "detail": {},
@@ -9631,7 +9433,7 @@
       },
       "peak_memory_bytes": 158128,
       "retries": 0,
-      "scoring_s": 0.195148166967556,
+      "scoring_s": 0.153289832989685,
       "split": "test",
       "status": "scored",
       "strata": {
@@ -9687,13 +9489,9 @@
           "value": null
         },
         "crs_match": {
-          "detail": {
-            "expected": "OGC:CRS84",
-            "predicted": "EPSG:4326",
-            "reason": "crs_differs"
-          },
-          "passed": false,
-          "value": 0.0
+          "detail": {},
+          "passed": true,
+          "value": 1.0
         },
         "geometry_match": {
           "detail": {
@@ -9714,12 +9512,8 @@
           "detail": {
             "checks": {
               "crs_match": {
-                "detail": {
-                  "expected": "OGC:CRS84",
-                  "predicted": "EPSG:4326",
-                  "reason": "crs_differs"
-                },
-                "passed": false
+                "detail": {},
+                "passed": true
               },
               "reason_match": {
                 "detail": {},
@@ -9736,13 +9530,10 @@
                 "detail": {},
                 "passed": true
               }
-            },
-            "failed": [
-              "crs_match"
-            ]
+            }
           },
-          "passed": false,
-          "value": 0.0
+          "passed": true,
+          "value": 1.0
         },
         "validity_match": {
           "detail": {
@@ -9775,7 +9566,7 @@
       },
       "peak_memory_bytes": 133464,
       "retries": 0,
-      "scoring_s": 0.000551000004634261,
+      "scoring_s": 0.000110666966065764,
       "split": "test",
       "status": "scored",
       "strata": {
@@ -9820,13 +9611,9 @@
           "value": null
         },
         "crs_match": {
-          "detail": {
-            "expected": "OGC:CRS84",
-            "predicted": "EPSG:4326",
-            "reason": "crs_differs"
-          },
-          "passed": false,
-          "value": 0.0
+          "detail": {},
+          "passed": true,
+          "value": 1.0
         },
         "geometry_match": {
           "detail": {
@@ -9847,12 +9634,8 @@
           "detail": {
             "checks": {
               "crs_match": {
-                "detail": {
-                  "expected": "OGC:CRS84",
-                  "predicted": "EPSG:4326",
-                  "reason": "crs_differs"
-                },
-                "passed": false
+                "detail": {},
+                "passed": true
               },
               "reason_match": {
                 "detail": {},
@@ -9869,13 +9652,10 @@
                 "detail": {},
                 "passed": true
               }
-            },
-            "failed": [
-              "crs_match"
-            ]
+            }
           },
-          "passed": false,
-          "value": 0.0
+          "passed": true,
+          "value": 1.0
         },
         "validity_match": {
           "detail": {
@@ -9908,7 +9688,7 @@
       },
       "peak_memory_bytes": 132500,
       "retries": 0,
-      "scoring_s": 0.000222292030230165,
+      "scoring_s": 9.07499343156815e-05,
       "split": "test",
       "status": "scored",
       "strata": {
@@ -9953,13 +9733,9 @@
           "value": null
         },
         "crs_match": {
-          "detail": {
-            "expected": "OGC:CRS84",
-            "predicted": "EPSG:4326",
-            "reason": "crs_differs"
-          },
-          "passed": false,
-          "value": 0.0
+          "detail": {},
+          "passed": true,
+          "value": 1.0
         },
         "geometry_match": {
           "detail": {
@@ -9980,12 +9756,8 @@
           "detail": {
             "checks": {
               "crs_match": {
-                "detail": {
-                  "expected": "OGC:CRS84",
-                  "predicted": "EPSG:4326",
-                  "reason": "crs_differs"
-                },
-                "passed": false
+                "detail": {},
+                "passed": true
               },
               "reason_match": {
                 "detail": {},
@@ -10002,13 +9774,10 @@
                 "detail": {},
                 "passed": true
               }
-            },
-            "failed": [
-              "crs_match"
-            ]
+            }
           },
-          "passed": false,
-          "value": 0.0
+          "passed": true,
+          "value": 1.0
         },
         "validity_match": {
           "detail": {
@@ -10041,7 +9810,7 @@
       },
       "peak_memory_bytes": 132477,
       "retries": 0,
-      "scoring_s": 0.000192708102986217,
+      "scoring_s": 8.78749415278435e-05,
       "split": "test",
       "status": "scored",
       "strata": {
@@ -10086,13 +9855,9 @@
           "value": null
         },
         "crs_match": {
-          "detail": {
-            "expected": "OGC:CRS84",
-            "predicted": "EPSG:4326",
-            "reason": "crs_differs"
-          },
-          "passed": false,
-          "value": 0.0
+          "detail": {},
+          "passed": true,
+          "value": 1.0
         },
         "geometry_match": {
           "detail": {
@@ -10113,12 +9878,8 @@
           "detail": {
             "checks": {
               "crs_match": {
-                "detail": {
-                  "expected": "OGC:CRS84",
-                  "predicted": "EPSG:4326",
-                  "reason": "crs_differs"
-                },
-                "passed": false
+                "detail": {},
+                "passed": true
               },
               "reason_match": {
                 "detail": {},
@@ -10135,13 +9896,10 @@
                 "detail": {},
                 "passed": true
               }
-            },
-            "failed": [
-              "crs_match"
-            ]
+            }
           },
-          "passed": false,
-          "value": 0.0
+          "passed": true,
+          "value": 1.0
         },
         "validity_match": {
           "detail": {
@@ -10174,7 +9932,7 @@
       },
       "peak_memory_bytes": 133918,
       "retries": 0,
-      "scoring_s": 0.000319832935929298,
+      "scoring_s": 8.69169598445296e-05,
       "split": "test",
       "status": "scored",
       "strata": {
@@ -10219,13 +9977,9 @@
           "value": null
         },
         "crs_match": {
-          "detail": {
-            "expected": "OGC:CRS84",
-            "predicted": "EPSG:4326",
-            "reason": "crs_differs"
-          },
-          "passed": false,
-          "value": 0.0
+          "detail": {},
+          "passed": true,
+          "value": 1.0
         },
         "geometry_match": {
           "detail": {
@@ -10246,12 +10000,8 @@
           "detail": {
             "checks": {
               "crs_match": {
-                "detail": {
-                  "expected": "OGC:CRS84",
-                  "predicted": "EPSG:4326",
-                  "reason": "crs_differs"
-                },
-                "passed": false
+                "detail": {},
+                "passed": true
               },
               "reason_match": {
                 "detail": {},
@@ -10268,13 +10018,10 @@
                 "detail": {},
                 "passed": true
               }
-            },
-            "failed": [
-              "crs_match"
-            ]
+            }
           },
-          "passed": false,
-          "value": 0.0
+          "passed": true,
+          "value": 1.0
         },
         "validity_match": {
           "detail": {
@@ -10307,7 +10054,7 @@
       },
       "peak_memory_bytes": 132934,
       "retries": 0,
-      "scoring_s": 0.000253916950896382,
+      "scoring_s": 8.5500068962574e-05,
       "split": "test",
       "status": "scored",
       "strata": {
@@ -10352,13 +10099,9 @@
           "value": null
         },
         "crs_match": {
-          "detail": {
-            "expected": "OGC:CRS84",
-            "predicted": "EPSG:4326",
-            "reason": "crs_differs"
-          },
-          "passed": false,
-          "value": 0.0
+          "detail": {},
+          "passed": true,
+          "value": 1.0
         },
         "geometry_match": {
           "detail": {
@@ -10379,12 +10122,8 @@
           "detail": {
             "checks": {
               "crs_match": {
-                "detail": {
-                  "expected": "OGC:CRS84",
-                  "predicted": "EPSG:4326",
-                  "reason": "crs_differs"
-                },
-                "passed": false
+                "detail": {},
+                "passed": true
               },
               "reason_match": {
                 "detail": {
@@ -10407,7 +10146,6 @@
               }
             },
             "failed": [
-              "crs_match",
               "reason_match"
             ]
           },
@@ -10445,7 +10183,7 @@
       },
       "peak_memory_bytes": 138713,
       "retries": 0,
-      "scoring_s": 0.000671375077217817,
+      "scoring_s": 9.48330853134394e-05,
       "split": "test",
       "status": "scored",
       "strata": {
@@ -10501,13 +10239,9 @@
           "value": null
         },
         "crs_match": {
-          "detail": {
-            "expected": "OGC:CRS84",
-            "predicted": "EPSG:4326",
-            "reason": "crs_differs"
-          },
-          "passed": false,
-          "value": 0.0
+          "detail": {},
+          "passed": true,
+          "value": 1.0
         },
         "geometry_match": {
           "detail": {
@@ -10528,12 +10262,8 @@
           "detail": {
             "checks": {
               "crs_match": {
-                "detail": {
-                  "expected": "OGC:CRS84",
-                  "predicted": "EPSG:4326",
-                  "reason": "crs_differs"
-                },
-                "passed": false
+                "detail": {},
+                "passed": true
               },
               "reason_match": {
                 "detail": {
@@ -10556,7 +10286,6 @@
               }
             },
             "failed": [
-              "crs_match",
               "reason_match"
             ]
           },
@@ -10594,7 +10323,7 @@
       },
       "peak_memory_bytes": 143308,
       "retries": 0,
-      "scoring_s": 0.000563542009331286,
+      "scoring_s": 9.09169903025031e-05,
       "split": "test",
       "status": "scored",
       "strata": {
@@ -10776,7 +10505,7 @@
       },
       "peak_memory_bytes": 142105,
       "retries": 0,
-      "scoring_s": 0.0446009590523317,
+      "scoring_s": 0.0390907500404865,
       "split": "test",
       "status": "scored",
       "strata": {
@@ -10958,7 +10687,7 @@
       },
       "peak_memory_bytes": 144867,
       "retries": 0,
-      "scoring_s": 0.00142358406446874,
+      "scoring_s": 0.000400750082917511,
       "split": "test",
       "status": "scored",
       "strata": {
@@ -11042,7 +10771,8 @@
   "limitations": [
     "Small synthetic fixtures; they test operation correctness, not scale or real-world data quality.",
     "Expected outputs come from one reference workflow (Shapely, pyproj, GEOS, PROJ); an error shared by those libraries would not be caught.",
-    "Tolerances are set per case and stated in explicit units, sized to catch the smallest error of the mistake each case targets; none is tighter than a correct answer given to 5 decimal places needs."
+    "Tolerances are set per case and stated in explicit units, sized to catch the smallest error of the mistake each case targets; none is tighter than a correct answer given to 5 decimal places needs.",
+    "Rescored against gis_correctness 0.3.0 from saved outputs; previously scored against gis_correctness 0.2.0."
   ],
   "provenance": {
     "benchmark": {
@@ -11165,13 +10895,13 @@
       "version": "1.1.0"
     },
     "crs_match": {
-      "ci_high": 0.617021276595745,
-      "ci_low": 0.319148936170213,
-      "mean": 0.468085106382979,
-      "median": 0.0,
+      "ci_high": 1.0,
+      "ci_low": 1.0,
+      "mean": 1.0,
+      "median": 1.0,
       "n": 47,
-      "n_failed": 25,
-      "version": "1.0.0"
+      "n_failed": 0,
+      "version": "1.1.0"
     },
     "geometry_match": {
       "ci_high": 1.0,
@@ -11192,12 +10922,12 @@
       "version": "1.1.0"
     },
     "task_success": {
-      "ci_high": 0.678571428571429,
-      "ci_low": 0.428571428571429,
-      "mean": 0.553571428571429,
+      "ci_high": 1.0,
+      "ci_low": 0.910714285714286,
+      "mean": 0.964285714285714,
       "median": 1.0,
       "n": 56,
-      "n_failed": 25,
+      "n_failed": 2,
       "version": "1.3.0"
     },
     "validity_match": {

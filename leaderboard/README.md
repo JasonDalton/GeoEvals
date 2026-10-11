@@ -90,3 +90,9 @@ stops the CLI and removes the case's container.
 
 Model outputs are not deterministic, so a rerun gives a different result. The table can always
 be rebuilt from the committed results.
+
+When a benchmark changes only how answers are scored, the committed results are rescored from
+their saved answers (`geoevals rescore`, see
+[`docs/reproducibility.md`](../docs/reproducibility.md#version-rules)) rather than rerun; the
+result's `limitations` records it. The Opus 5.5 `gis_correctness` rows were run on 0.2.0 and
+rescored on 0.3.0, which accepts `EPSG:4326` as a label for longitude and latitude answers.
