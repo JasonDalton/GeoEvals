@@ -113,9 +113,17 @@ How to run and add a model: [`leaderboard/README.md`](leaderboard/README.md).
 | Model | Track | Benchmark | Task success (95% CI) | Not scored | Latency p50 / p90 (s) | Tokens in | Tokens out |
 | --- | --- | --- | --- | ---: | ---: | ---: | ---: |
 | Opus 5.5 | direct | `gis_correctness` 0.3.0 | 0.804 [0.70, 0.91] | 0 of 56 | 9.2 / 108.8 | 148,766 | 244,931 |
+| Sonnet 5.5 | direct | `gis_correctness` 0.3.0 | 0.691 [0.56, 0.80] | 1 of 56 | 6.6 / 90.4 | 146,410 | 210,830 |
+| Haiku 5.5 | direct | `gis_correctness` 0.3.0 | 0.800 [0.69, 0.91] | 1 of 56 | 8.9 / 325.5 | 149,465 | 1,100,530 |
 | Opus 5.5 | python | `gis_correctness` 0.3.0 | 0.964 [0.91, 1.00] | 0 of 56 | 7.0 / 13.5 | 383,637 | 34,037 |
+| Sonnet 5.5 | python | `gis_correctness` 0.3.0 | 0.929 [0.86, 0.98] | 0 of 56 | 6.9 / 12.3 | 412,122 | 32,511 |
+| Haiku 5.5 | python | `gis_correctness` 0.3.0 | 0.911 [0.84, 0.98] | 0 of 56 | 7.6 / 15.2 | 499,170 | 60,401 |
 | Opus 5.5 | direct | `human_context_access` 0.2.0 | 0.961 [0.90, 1.00] | 0 of 51 | 13.9 / 24.1 | 3,244,870 | 71,071 |
+| Sonnet 5.5 | direct | `human_context_access` 0.2.0 | 0.725 [0.61, 0.84] | 0 of 51 | 15.0 / 24.8 | 3,245,074 | 89,898 |
+| Haiku 5.5 | direct | `human_context_access` 0.2.0 | 0.882 [0.78, 0.96] | 0 of 51 | 38.3 / 75.5 | 3,244,964 | 469,903 |
 | Opus 5.5 | python | `human_context_access` 0.2.0 | 0.980 [0.94, 1.00] | 0 of 51 | 19.0 / 25.8 | 896,689 | 77,564 |
+| Sonnet 5.5 | python | `human_context_access` 0.2.0 | 0.882 [0.78, 0.96] | 0 of 51 | 17.0 / 21.7 | 839,798 | 79,134 |
+| Haiku 5.5 | python | `human_context_access` 0.2.0 | 0.745 [0.63, 0.86] | 0 of 51 | 28.4 / 39.2 | 1,808,326 | 232,847 |
 
 Run locally through Claude Code 2.1.296 on a Claude subscription, effort high, prompt version v1. Benchmarks: `gis_correctness` 0.3.0, manifest `20beb1d10b21`; `human_context_access` 0.2.0, manifest `f2d344c9051b`.
 
