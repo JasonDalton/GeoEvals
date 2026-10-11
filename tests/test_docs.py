@@ -321,6 +321,7 @@ def test_graded_eval_rules_are_written_down() -> None:
     contributing = (REPO / "CONTRIBUTING.md").read_text(encoding="utf-8")
     for rule in GRADED_RULES:
         assert rule in authoring, rule
+        assert rule in contributing, rule
     assert "docs/eval-authoring.md" in contributing
     practices = (REPO / "docs" / "best-practices.md").read_text(encoding="utf-8")
     assert "Do not use an LLM judge as the only evaluator" not in practices

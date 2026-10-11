@@ -68,6 +68,18 @@ rubric and a reference key computed from data. Graded evals follow the rules in
 [`docs/eval-authoring.md`](docs/eval-authoring.md#rules), and their scores are never combined
 with benchmark scores.
 
+The rules for a graded eval:
+
+1. Use a benchmark when a task has one checkable answer. Use a graded eval only when the answer
+   is open-ended.
+2. Every graded task has a rubric with written anchors for each score, and a
+   reference key of facts computed from the data by a committed reference script, never written
+   by hand.
+3. Graded scores are reported apart from benchmark scores and never averaged with them.
+4. Each answer is graded at least twice, and the report states the grader's agreement with
+   itself, the grader model, its effort, the grader prompt version and the Claude Code version.
+5. When the grader is one of the graded models, the report says so: its own rows may be biased.
+
 ## Benchmark definition of done
 
 A new benchmark, or a change to a benchmark, can merge only when it meets the

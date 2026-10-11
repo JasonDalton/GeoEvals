@@ -79,7 +79,7 @@ obligations, so v0.1 commits no OSM-derived data. Only synthetic fixtures are co
 Whether small derived samples may ever be committed is an open question for a qualified
 reviewer.
 
-The graded evals use a whole-town OpenStreetMap extract (`osm_city_<town>`). Its layers and the evals' reference keys are derived data, so they stay in `data/raw/osm_city_<town>/`; `tasks.jsonl` commits only each key's SHA-256. Task prompts name features by their OSM name and ID, as a citation would.
+The graded evals will use a whole-town OpenStreetMap extract (`osm_city_<town>`). Its layers and the evals' reference keys are derived data, so they stay in `data/raw/osm_city_<town>/`; `tasks.jsonl` commits only each key's SHA-256. Task prompts name features by their OSM name and ID, as a citation would. Whether such names and IDs in committed prompts count as OSM-derived data is part of the open question for a qualified reviewer noted above.
 
 ## Fixtures in the repository
 

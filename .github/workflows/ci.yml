@@ -53,7 +53,7 @@ jobs:
       - name: Pytest
         run: uv run --frozen pytest
 
-      # Test fixtures under tests/ are checked by pytest; this covers the shipped benchmarks.
+      # Test fixtures under tests/ are checked by pytest; this covers the shipped benchmarks and eval specs.
       - name: Validate benchmark specs, eval specs and dataset manifests
         run: |
           status=0
