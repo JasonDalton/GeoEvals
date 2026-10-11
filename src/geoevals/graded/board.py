@@ -98,6 +98,8 @@ def graded_row(result: dict[str, Any], grades: Grades, where: str) -> GradedRow:
     if "claude_command" in config:
         raise GradedError(f"{where}: runs with a custom claude_command are not accepted")
     tasks = result["tasks"]
+    if not tasks:
+        raise GradedError(f"{where}: the run has no tasks")
     harness = [
         t
         for t in tasks
@@ -251,12 +253,13 @@ def render_graded(rows: list[GradedRow], agreements: dict[str, Agreement]) -> st
 
 def add_graded_run(run_dir: Path, results_dir: Path) -> Path:
     """Copy an accepted graded run to ``results_dir/<eval>/<adapter>/``."""
-    result = load_graded_result(run_dir)
-    grades = load_grades(run_dir / GRADES_FILE)
-    graded_row(result, grades, str(run_dir))
+    result_path = run_dir / RESULT_FILE if run_dir.is_dir() else run_dir
+    result = load_graded_result(result_path)
+    grades = load_grades(result_path.parent / GRADES_FILE)
+    graded_row(result, grades, str(result_path.parent))
     target = results_dir / result["eval"]["id"] / result["adapter"]["name"]
     target.mkdir(parents=True, exist_ok=True)
     for name in (RESULT_FILE, GRADES_FILE, CONFIG_FILE):
-        if (run_dir / name).is_file():
-            shutil.copyfile(run_dir / name, target / name)
+        if (result_path.parent / name).is_file():
+            shutil.copyfile(result_path.parent / name, target / name)
     return target

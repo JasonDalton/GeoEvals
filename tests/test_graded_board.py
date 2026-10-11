@@ -196,3 +196,38 @@ def test_markers_are_distinct_from_the_benchmark_table() -> None:
     from geoevals.leaderboard.table import END, START
 
     assert {GRADED_START, GRADED_END}.isdisjoint({START, END})
+
+
+def test_board_rejects_a_run_without_tasks() -> None:
+    grades = Grades.model_validate(_grades([]))
+    with pytest.raises(GradedError, match="no tasks"):
+        graded_row(_result(n=0), grades, "w")
+
+
+@pytest.mark.parametrize("by_path", [False, True])
+def test_cli_add_and_build_graded(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str], by_path: bool
+) -> None:
+    from geoevals.cli import main
+    from geoevals.leaderboard.table import END, START
+
+    run = tmp_path / "run"
+    run.mkdir()
+    (run / "result.json").write_text(json.dumps(_result()))
+    (run / "grades.json").write_text(json.dumps(_grades([(4, 4), (2, 2), (0, 0), (4, 0)])))
+    graded = tmp_path / "graded"
+    argument = run / "result.json" if by_path else run
+    assert main(["leaderboard", "add", str(argument), "--graded", str(graded)]) == 0
+    added = graded / "proximity" / "claude_python_opus_5_5"
+    assert sorted(p.name for p in added.iterdir()) == ["grades.json", "result.json"]
+
+    readme = tmp_path / "README.md"
+    readme.write_text(f"{START}\n{END}\n\n{GRADED_START}\nold\n{GRADED_END}\n")
+    empty = tmp_path / "results"
+    empty.mkdir()
+    args = ["leaderboard", "build", "--results", str(empty), "--readme", str(readme)]
+    args += ["--graded", str(graded)]
+    assert main(args) == 0
+    assert "| Opus 5.5 | `proximity` 0.1.0 | 0.500 [" in readme.read_text()
+    assert main([*args, "--check"]) == 0
+    assert "up to date" in capsys.readouterr().out

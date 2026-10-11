@@ -155,7 +155,16 @@ def test_cli_build_check(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> 
     readme.write_text(GRADED_README, encoding="utf-8")
     results = tmp_path / "results"
     _write(results, _result())
-    args = ["leaderboard", "build", "--results", str(results), "--readme", str(readme)]
+    args = [
+        "leaderboard",
+        "build",
+        "--results",
+        str(results),
+        "--readme",
+        str(readme),
+        "--graded",
+        str(tmp_path / "graded"),
+    ]
     assert main([*args, "--check"]) == 1
     assert "out of date" in capsys.readouterr().out
     assert main(args) == 0
