@@ -189,7 +189,9 @@ class _Extract:
             }
         )
 
-    def relation(self, id_: int, rings: list[tuple[str, list[Point]]], tags: dict[str, str]) -> None:
+    def relation(
+        self, id_: int, rings: list[tuple[str, list[Point]]], tags: dict[str, str]
+    ) -> None:
         members = [
             {"type": "way", "ref": id_ * 10 + i, "role": role, "geometry": self._geometry(ring)}
             for i, (role, ring) in enumerate(rings)
@@ -201,7 +203,9 @@ def overpass_document() -> dict[str, Any]:
     """The synthetic city as an Overpass JSON response."""
     e = _Extract()
     e.way(100, [(-450, 0), (450, 0)], {"waterway": "river", "name": "Mill River"})
-    e.way(101, rect(-450, -10, 450, 10), {"natural": "water", "water": "river", "name": "Mill River"})
+    e.way(
+        101, rect(-450, -10, 450, 10), {"natural": "water", "water": "river", "name": "Mill River"}
+    )
     north = [(-400, 100), (-250, 100), (0, 100), (300, 100), (400, 100)]
     e.way(200, north, {"highway": "residential", "name": "North Street"})
     south = [(-400, -100), (0, -100), (300, -100), (400, -100)]
@@ -214,8 +218,16 @@ def overpass_document() -> dict[str, Any]:
     e.way(212, [(-250, 140), (-250, 100)], {"highway": "footway"})
     e.way(300, [(-450, 350), (450, 350)], {"railway": "rail", "name": "Main Line"})
     e.way(400, rect(90, 290, 110, 310), {"building": "yes", "height": "40", "name": "Clock Tower"})
-    e.way(401, rect(90, 220, 110, 230), {"building": "house", "building:levels": "2", "name": "Low House"})
-    e.way(402, rect(170, 200, 190, 220), {"building": "apartments", "height": "25 m", "name": "Tall Block"})
+    e.way(
+        401,
+        rect(90, 220, 110, 230),
+        {"building": "house", "building:levels": "2", "name": "Low House"},
+    )
+    e.way(
+        402,
+        rect(170, 200, 190, 220),
+        {"building": "apartments", "height": "25 m", "name": "Tall Block"},
+    )
     e.way(403, rect(230, 250, 250, 270), {"building": "school", "height": "8", "name": "School"})
     e.way(404, rect(15, 195, 35, 215), {"building": "shed", "name": "Shed"})
     library = {"building": "yes", "amenity": "library", "height": "12", "name": "Library"}
@@ -236,7 +248,9 @@ def overpass_document() -> dict[str, Any]:
     e.relation(701, [("outer", rect(0, -250, 450, 400))], {**district, "name": "East District"})
     conservation = {"type": "boundary", "boundary": "protected_area"}
     e.relation(
-        702, [("outer", rect(-100, 120, 100, 330))], {**conservation, "name": "Old Town Conservation Area"}
+        702,
+        [("outer", rect(-100, 120, 100, 330))],
+        {**conservation, "name": "Old Town Conservation Area"},
     )
     e.relation(
         703,
@@ -244,7 +258,13 @@ def overpass_document() -> dict[str, Any]:
         {"type": "multipolygon", "leisure": "park", "name": "Ring Park"},
     )
     e.elements.append(
-        {"type": "way", "id": 900, "nodes": [1, 2], "geometry": [None, None], "tags": {"building": "yes"}}
+        {
+            "type": "way",
+            "id": 900,
+            "nodes": [1, 2],
+            "geometry": [None, None],
+            "tags": {"building": "yes"},
+        }
     )
     e.way(901, [(-10, -150), (10, -150)], {})
     return {"version": 0.6, "elements": e.elements}
@@ -323,7 +343,14 @@ def test_layers_hold_the_expected_features() -> None:
     assert _ids(layers, "landuse") == {"way/610"}
     assert _ids(layers, "boundaries") == {"relation/700", "relation/701", "relation/702"}
     assert {"way/400", "way/404", "way/405", "way/412"} <= _ids(layers, "buildings")
-    assert _ids(layers, "pois") == {"node/500", "node/501", "node/502", "node/504", "way/405", "way/412"}
+    assert _ids(layers, "pois") == {
+        "node/500",
+        "node/501",
+        "node/502",
+        "node/504",
+        "way/405",
+        "way/412",
+    }
     assert set(layers["pois"].geom_type) == {"Point"}
     for frame in layers.values():
         assert frame.crs == ProjCRS(CRS)
@@ -349,8 +376,12 @@ def test_multipolygon_relation_keeps_its_hole() -> None:
 def test_elements_without_geometry_are_left_out() -> None:
     document = overpass_document()
     document["elements"].append(
-        {"type": "relation", "id": 999, "members": [{"type": "way", "role": "outer"}],
-         "tags": {"type": "multipolygon", "landuse": "grass"}}
+        {
+            "type": "relation",
+            "id": 999,
+            "members": [{"type": "way", "role": "outer"}],
+            "tags": {"type": "multipolygon", "landuse": "grass"},
+        }
     )
     layers = convert_extract(document)
     features = _ids(layers, "all_features")
@@ -683,7 +714,9 @@ def convert_extract(document: Mapping[str, Any]) -> dict[str, gpd.GeoDataFrame]:
             point_only = layer == "pois" and geometry.geom_type != "Point"
             shape = geometry.representative_point() if point_only else geometry
             rows[layer].append({**base, **_columns(layer, tags), "geometry": shape})
-        rows["all_features"].append({**base, **_columns("all_features", tags), "geometry": geometry})
+        rows["all_features"].append(
+            {**base, **_columns("all_features", tags), "geometry": geometry}
+        )
     return {layer: _frame(layer, rows[layer]) for layer in LAYERS}
 
 
@@ -771,7 +804,13 @@ from graded_city import BBOX, overpass_document
 from geoevals.cli import main
 from geoevals.data.fetch import city_query, fetcher_for
 from geoevals.graded.city import LAYERS, convert_extract
-from geoevals.graded.towns import EXTRACT_FILE, TownStats, fetch_candidate, measure_layers, stats_table
+from geoevals.graded.towns import (
+    EXTRACT_FILE,
+    TownStats,
+    fetch_candidate,
+    measure_layers,
+    stats_table,
+)
 
 
 def test_city_query_asks_for_every_tagged_feature_at_the_snapshot() -> None:
@@ -839,8 +878,18 @@ def test_measure_town_cli_with_a_fetched_source(
     (source / EXTRACT_FILE).write_text(json.dumps(overpass_document()), encoding="utf-8")
     bbox = ",".join(str(v) for v in BBOX)
     code = main(
-        ["evals", "measure-town", "--name", "Alpha", "--bbox", bbox, "--date", "2026-01-01",
-         "--source", str(source)]
+        [
+            "evals",
+            "measure-town",
+            "--name",
+            "Alpha",
+            "--bbox",
+            bbox,
+            "--date",
+            "2026-01-01",
+            "--source",
+            str(source),
+        ]
     )
     assert code == 0
     out = capsys.readouterr().out
@@ -1142,9 +1191,7 @@ from geoevals.graded.towns import EXTRACT_FILE, fetch_candidate, measure_layers,
 Add the handlers above `main`:
 
 ```python
-def _evals_measure_town(
-    name: str, bbox: Bbox, date: str, out: Path, source: Path | None
-) -> int:
+def _evals_measure_town(name: str, bbox: Bbox, date: str, out: Path, source: Path | None) -> int:
     try:
         directory = source or fetch_candidate(name, bbox, date, out)
         extract_path = directory / EXTRACT_FILE
@@ -1431,7 +1478,11 @@ def test_tasks_and_rubric_load() -> None:
     assert {t.key_type for t in tasks} <= set(KEY_TYPES)
     rubric = load_rubric(SAMPLE, spec)
     assert [c.id for c in rubric.criteria] == [
-        "relations", "reasoning", "assumptions", "data_use", "clarity"
+        "relations",
+        "reasoning",
+        "assumptions",
+        "data_use",
+        "clarity",
     ]
     assert all(set(c.anchors) == {"0", "1", "2", "3", "4"} for c in rubric.criteria)
 
@@ -1905,9 +1956,7 @@ def test_unreachable_places_are_reported() -> None:
     )
     assert key["walking_nearest"] is None
     assert key["unreachable"] == ["node/500", "node/501"]
-    route = module["WalkGraph"](LAYERS).route(
-        module["Point"](*far), module["Point"](*ORIGIN)
-    )
+    route = module["WalkGraph"](LAYERS).route(module["Point"](*far), module["Point"](*ORIGIN))
     assert route["reachable"] is False and route["reason"] == "too_far_from_network"
 
 
@@ -2207,7 +2256,10 @@ def _tagged(layers: Layers, category: Mapping[str, str]) -> list[tuple[str, str 
     candidates = frame[frame["tags"].str.contains(needle, regex=False)]
     found = []
     for feature_id, name, tags, geometry in zip(
-        candidates["feature_id"], candidates["name"], candidates["tags"], candidates.geometry,
+        candidates["feature_id"],
+        candidates["name"],
+        candidates["tags"],
+        candidates.geometry,
         strict=True,
     ):
         if json.loads(tags).get(key) == value:
@@ -2520,7 +2572,10 @@ from graded_city import VIEWPOINT  # noqa: E402
 def test_visibility_uses_heights_and_flags_unknown_ones() -> None:
     key = compute_key(
         "visibility",
-        {"observer": {"point": VIEWPOINT, "height_m": 1.6}, "targets": ["way/400", "way/403", "way/405"]},
+        {
+            "observer": {"point": VIEWPOINT, "height_m": 1.6},
+            "targets": ["way/400", "way/403", "way/405"],
+        },
         LAYERS,
     )
     assert key["observer_height_m"] == 1.6
@@ -2634,7 +2689,10 @@ def visibility_key(params: Mapping[str, Any], layers: Layers) -> dict[str, Any]:
             if crossing.is_empty:
                 continue
             along = [sight.project(Point(c[0], c[1])) for c in _coordinates(crossing)]
-            lowest = min(observer_height + (top - observer_height) * d / length for d in (min(along), max(along)))
+            lowest = min(
+                observer_height + (top - observer_height) * d / length
+                for d in (min(along), max(along))
+            )
             height = _height(other)
             if height is None:
                 unknown.append(other["feature_id"])
@@ -2669,7 +2727,9 @@ def _turn(before: float, after: float, threshold: float) -> str:
 
 def _landmark(pois: gpd.GeoDataFrame, node: Point, radius: float) -> dict[str, Any] | None:
     best: tuple[float, str, str | None] | None = None
-    for feature_id, name, geometry in zip(pois["feature_id"], pois["name"], pois.geometry, strict=True):
+    for feature_id, name, geometry in zip(
+        pois["feature_id"], pois["name"], pois.geometry, strict=True
+    ):
         if geometry.distance(node) > NEAR_DEG:
             continue
         distance = _distance_m(node, geometry)
@@ -2709,7 +2769,9 @@ def direction_key(params: Mapping[str, Any], layers: Layers) -> dict[str, Any]:
             steps[-1]["distance_m"] += edge["length"]
         else:
             turn = "start" if not steps else _turn(last_bearing, bearing, threshold)
-            steps.append({"street": edge["name"], "distance_m": edge["length"], "turn": turn, "_at": u})
+            steps.append(
+                {"street": edge["name"], "distance_m": edge["length"], "turn": turn, "_at": u}
+            )
         last_bearing = bearing
     pois = layers["pois"]
     for number, step in enumerate(steps):
@@ -2859,7 +2921,11 @@ def test_regenerate_writes_keys_and_hashes(tmp_path: Path) -> None:
         assert task["key_sha256"] == key_sha256(keys[task["task_id"]])
     assert regenerate_keys(spec_path, data, write=False) == []
     lines = keys_path(data, "sample").read_text(encoding="utf-8").splitlines()
-    assert [json.loads(line)["task_id"] for line in lines] == ["sample-001", "sample-002", "sample-003"]
+    assert [json.loads(line)["task_id"] for line in lines] == [
+        "sample-001",
+        "sample-002",
+        "sample-003",
+    ]
 
 
 def test_check_reports_a_changed_task(tmp_path: Path) -> None:
@@ -2940,7 +3006,9 @@ class KeysError(RuntimeError):
 
 
 def canonical_key(key: Any) -> str:
-    return json.dumps(key, sort_keys=True, separators=(",", ":"), ensure_ascii=False, allow_nan=False)
+    return json.dumps(
+        key, sort_keys=True, separators=(",", ":"), ensure_ascii=False, allow_nan=False
+    )
 
 
 def key_sha256(key: Any) -> str:
@@ -3174,8 +3242,12 @@ def test_graded_python_adapter_mounts_the_city(
     monkeypatch.setattr(sandbox, "remove_container", lambda name: None)
     adapter = ClaudePythonAdapter("haiku_5_5")
     adapter.setup(
-        {"claude_command": list(FAKE_COMMAND), "sandbox_image": "img:1", "prompt": "graded",
-         "data_mount": str(tmp_path)}
+        {
+            "claude_command": list(FAKE_COMMAND),
+            "sandbox_image": "img:1",
+            "prompt": "graded",
+            "data_mount": str(tmp_path),
+        }
     )
     response = adapter.predict(_graded_case())
     assert response.output == answer
@@ -3222,8 +3294,12 @@ def test_mcp_server_passes_the_data_mount(monkeypatch: pytest.MonkeyPatch, tmp_p
         sandbox_mcp, "exec_python", lambda *a: sandbox.ExecResult(0, "ok", "", False)
     )
     monkeypatch.setattr(sandbox_mcp, "remove_container", lambda name: None)
-    call = {"jsonrpc": "2.0", "id": 1, "method": "tools/call",
-            "params": {"name": "run_python", "arguments": {"code": "print(1)"}}}
+    call = {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "method": "tools/call",
+        "params": {"name": "run_python", "arguments": {"code": "print(1)"}},
+    }
     monkeypatch.setattr("sys.stdin", io.StringIO(json.dumps(call) + "\n"))
     sandbox_mcp.main(["--image", "img:1", "--name", "c1", "--data", str(tmp_path)])
     [(args, kwargs)] = started
@@ -3447,7 +3523,10 @@ def test_case_input_hides_params_and_keys() -> None:
     task = load_tasks(SAMPLE, spec)[0]
     case = case_input(task, SAMPLE, 4000)
     assert case["case_id"] == "sample-001"
-    assert case["inputs"] == {"files": {}, "params": {"point": [10.0, 50.000538987], "feature_ids": []}}
+    assert case["inputs"] == {
+        "files": {},
+        "params": {"point": [10.0, 50.000538987], "feature_ids": []},
+    }
     assert case["benchmark_dir"] == str(SAMPLE.parent.resolve())
     assert "Write for: a resident with no GIS background." in case["prompt"]
     assert "at most 4,000 words" in case["prompt"]
@@ -3469,8 +3548,19 @@ def test_run_eval_cli(tmp_path: Path) -> None:
     config.write_text(yaml.safe_dump({"split": "test", "adapter": {"references": ANSWERS}}))
     out = tmp_path / "runs"
     code = main(
-        ["run", "--eval", str(spec_path), "--adapter", "mock", "--config", str(config),
-         "--out", str(out), "--data", str(data)]
+        [
+            "run",
+            "--eval",
+            str(spec_path),
+            "--adapter",
+            "mock",
+            "--config",
+            str(config),
+            "--out",
+            str(out),
+            "--data",
+            str(data),
+        ]
     )
     assert code == 0
     [run_dir] = list(out.iterdir())
@@ -3786,7 +3876,9 @@ def run_eval(
     spec = load_eval_spec(spec_path)
     tasks = load_tasks(spec_path, spec)
     if config.split != SPLIT:
-        raise RunError(f"graded evals have one split, {SPLIT!r}; the config asks for {config.split!r}")
+        raise RunError(
+            f"graded evals have one split, {SPLIT!r}; the config asks for {config.split!r}"
+        )
     manifest_path = spec_file(spec_path, spec.dataset_manifest)
     load_dataset_manifest(manifest_path)
     manifest_hash = hashlib.sha256(manifest_path.read_bytes()).hexdigest()
@@ -3982,15 +4074,16 @@ In `tests/fake_claude.py`, after loading the scenario, add:
 and describe it in the docstring ("``{"sequence": [scenario, ...]}`` replays one scenario per call, repeating the last"). When `FAKE_CLAUDE_RECORD` is set, append every call to a list instead of overwriting: read the existing JSON list if the file exists, append the record, write the list back. Then in `tests/claude_fakes.py` change `FakeClaude.record` to return the last element and add:
 
 ```python
-    @property
-    def records(self) -> list[dict[str, Any]]:
-        return json.loads(self.record_path.read_text(encoding="utf-8"))
+@property
+def records(self) -> list[dict[str, Any]]:
+    return json.loads(self.record_path.read_text(encoding="utf-8"))
 
-    def set_sequence(self, scenarios: list[list[dict[str, Any]]]) -> None:
-        """One list of events per call; the last repeats."""
-        sequence = [{"events": events} for events in scenarios]
-        self.scenario_path.write_text(json.dumps({"sequence": sequence}), encoding="utf-8")
-        self.scenario_path.with_name(self.scenario_path.name + ".count").unlink(missing_ok=True)
+
+def set_sequence(self, scenarios: list[list[dict[str, Any]]]) -> None:
+    """One list of events per call; the last repeats."""
+    sequence = [{"events": events} for events in scenarios]
+    self.scenario_path.write_text(json.dumps({"sequence": sequence}), encoding="utf-8")
+    self.scenario_path.with_name(self.scenario_path.name + ".count").unlink(missing_ok=True)
 ```
 
 `set` also unlinks the counter. `record` becomes `return self.records[-1]`. Run `uv run pytest tests/test_claude_cli.py tests/test_claude_adapters.py -q` to confirm the existing fakes still work.
@@ -4138,7 +4231,9 @@ def test_grade_run_grades_answered_tasks_twice(tmp_path: Path, fake: FakeClaude)
 
 
 def test_no_answer_scores_zero_without_a_call(tmp_path: Path, fake: FakeClaude) -> None:
-    run_dir, data = graded_run_dir(tmp_path, {"sample-001": "invalid_output", "sample-003": "timeout"})
+    run_dir, data = graded_run_dir(
+        tmp_path, {"sample-001": "invalid_output", "sample-003": "timeout"}
+    )
     grades = grade_run(run_dir, data, _config(tmp_path))
     assert [(t.status, t.score) for t in grades.tasks] == [("no_answer", 0.0), ("no_answer", 0.0)]
     assert not fake.called
@@ -4209,9 +4304,7 @@ def test_grade_cli_writes_grades_json(
     run_dir, data = graded_run_dir(tmp_path, {"sample-001": "answered"})
     fake.set(events(grade()))
     monkeypatch.setattr("geoevals.cli.GRADER_COMMAND", FAKE_COMMAND)
-    code = main(
-        ["grade", str(run_dir), "--data", str(data), "--evals", str(tmp_path / "evals")]
-    )
+    code = main(["grade", str(run_dir), "--data", str(data), "--evals", str(tmp_path / "evals")])
     assert code == 0
     grades = load_grades(run_dir / "grades.json")
     assert grades.run_id == load_graded_result(run_dir)["run_id"]
@@ -4512,7 +4605,9 @@ def grade_run(run_dir: Path, data_dir: Path | None, config: GraderConfig) -> Gra
             continue
         if stopped is not None:
             graded.append(
-                TaskGrade(task_id=task.task_id, status="not_graded", score=None, passes=[], error=stopped)
+                TaskGrade(
+                    task_id=task.task_id, status="not_graded", score=None, passes=[], error=stopped
+                )
             )
             continue
         criteria = [by_id[cid] for cid in task.rubric]
@@ -4547,7 +4642,9 @@ def grade_run(run_dir: Path, data_dir: Path | None, config: GraderConfig) -> Gra
             )
         else:
             graded.append(
-                TaskGrade(task_id=task.task_id, status="not_graded", score=None, passes=[], error=error)
+                TaskGrade(
+                    task_id=task.task_id, status="not_graded", score=None, passes=[], error=error
+                )
             )
     return Grades(
         schema_version=GRADES_SCHEMA_VERSION,
@@ -4596,7 +4693,10 @@ Add a module constant `GRADER_COMMAND: tuple[str, ...] = ("claude",)` (tests rep
 ```python
 def _grade(run_dir: Path, data: Path | None, evals: Path, passes: int) -> int:
     if passes < 2:
-        print("--passes must be at least 2: the report states the grader's agreement with itself", file=sys.stderr)
+        print(
+            "--passes must be at least 2: the report states the grader's agreement with itself",
+            file=sys.stderr,
+        )
         return 1
     config = GraderConfig(passes=passes, command=GRADER_COMMAND, evals_root=evals)
     try:
@@ -4674,8 +4774,13 @@ from geoevals.graded.board import (
 )
 from geoevals.graded.grader import Grades
 
-GRADER = {"model": "claude-opus-5-5", "effort": "high", "prompt_version": "grader_v1",
-          "claude_code_version": "9.9.9", "passes": 2}
+GRADER = {
+    "model": "claude-opus-5-5",
+    "effort": "high",
+    "prompt_version": "grader_v1",
+    "claude_code_version": "9.9.9",
+    "passes": 2,
+}
 
 
 def _grades(scores_per_task: list[tuple[int, int]], statuses: list[str] | None = None) -> dict:
@@ -4683,38 +4788,87 @@ def _grades(scores_per_task: list[tuple[int, int]], statuses: list[str] | None =
     tasks = []
     for i, ((first, second), status) in enumerate(zip(scores_per_task, statuses, strict=True)):
         passes = [
-            {"criteria": {"relations": {"score": first, "justification": "key"},
-                          "clarity": {"score": first, "justification": "key"}}},
-            {"criteria": {"relations": {"score": second, "justification": "key"},
-                          "clarity": {"score": second, "justification": "key"}}},
+            {
+                "criteria": {
+                    "relations": {"score": first, "justification": "key"},
+                    "clarity": {"score": first, "justification": "key"},
+                }
+            },
+            {
+                "criteria": {
+                    "relations": {"score": second, "justification": "key"},
+                    "clarity": {"score": second, "justification": "key"},
+                }
+            },
         ]
         graded = status == "graded"
         tasks.append(
-            {"task_id": f"proximity-{i + 1:03d}", "status": status,
-             "score": (first + second) / 8 if graded else (0.0 if status == "no_answer" else None),
-             "passes": passes if graded else [], "error": None}
+            {
+                "task_id": f"proximity-{i + 1:03d}",
+                "status": status,
+                "score": (first + second) / 8
+                if graded
+                else (0.0 if status == "no_answer" else None),
+                "passes": passes if graded else [],
+                "error": None,
+            }
         )
-    return {"schema_version": "1.0.0", "run_id": "r", "eval": {"id": "proximity", "version": "0.1.0"},
-            "rubric_version": "1.0.0", "grader": GRADER, "graded_at": "2026-10-11T00:00:00Z",
-            "stopped": None, "tasks": tasks}
+    return {
+        "schema_version": "1.0.0",
+        "run_id": "r",
+        "eval": {"id": "proximity", "version": "0.1.0"},
+        "rubric_version": "1.0.0",
+        "grader": GRADER,
+        "graded_at": "2026-10-11T00:00:00Z",
+        "stopped": None,
+        "tasks": tasks,
+    }
 
 
-def _result(adapter: str = "claude_python_opus_5_5", n: int = 4, statuses: list[str] | None = None,
-            data: str = "d" * 64, errors: dict[int, str] | None = None) -> dict:
+def _result(
+    adapter: str = "claude_python_opus_5_5",
+    n: int = 4,
+    statuses: list[str] | None = None,
+    data: str = "d" * 64,
+    errors: dict[int, str] | None = None,
+) -> dict:
     statuses = statuses or ["answered"] * n
     errors = errors or {}
-    return {"run_id": "r", "schema_version": "1.0.0", "eval": {"id": "proximity", "version": "0.1.0"},
-            "adapter": {"name": adapter, "version": "0.1.0+cc.9.9.9",
-                        "config": {"effort": "high", "prompt_version": "v1"}},
-            "config_hash": "0" * 64, "dataset_manifest_hash": "1" * 64, "data_sha256": data,
-            "environment": {}, "started_at": "s", "finished_at": "f",
-            "efficiency": {"wall_clock_s": 1.0, "latency_p50_s": 1.0, "latency_p90_s": 1.0,
-                           "tokens_input_total": 1, "tokens_output_total": 1},
-            "tasks": [{"task_id": f"proximity-{i + 1:03d}", "status": s,
-                       "output": {"status": "ok", "answer": "x"} if s == "answered" else None,
-                       "latency_s": 1.0, "retries": 0, "tokens": None,
-                       "error": {"type": errors[i], "message": "m"} if i in errors else None}
-                      for i, s in enumerate(statuses)]}
+    return {
+        "run_id": "r",
+        "schema_version": "1.0.0",
+        "eval": {"id": "proximity", "version": "0.1.0"},
+        "adapter": {
+            "name": adapter,
+            "version": "0.1.0+cc.9.9.9",
+            "config": {"effort": "high", "prompt_version": "v1"},
+        },
+        "config_hash": "0" * 64,
+        "dataset_manifest_hash": "1" * 64,
+        "data_sha256": data,
+        "environment": {},
+        "started_at": "s",
+        "finished_at": "f",
+        "efficiency": {
+            "wall_clock_s": 1.0,
+            "latency_p50_s": 1.0,
+            "latency_p90_s": 1.0,
+            "tokens_input_total": 1,
+            "tokens_output_total": 1,
+        },
+        "tasks": [
+            {
+                "task_id": f"proximity-{i + 1:03d}",
+                "status": s,
+                "output": {"status": "ok", "answer": "x"} if s == "answered" else None,
+                "latency_s": 1.0,
+                "retries": 0,
+                "tokens": None,
+                "error": {"type": errors[i], "message": "m"} if i in errors else None,
+            }
+            for i, s in enumerate(statuses)
+        ],
+    }
 
 
 def _write(root: Path, result: dict, grades: dict) -> None:
@@ -4763,14 +4917,18 @@ def test_board_rejects_not_graded_tasks() -> None:
     ],
 )
 def test_board_rejects_incomplete_runs(result: dict, message: str) -> None:
-    grades = Grades.model_validate(_grades([(4, 4)], ["no_answer"] if result["tasks"][0]["status"] != "answered" else None))
+    grades = Grades.model_validate(
+        _grades([(4, 4)], ["no_answer"] if result["tasks"][0]["status"] != "answered" else None)
+    )
     with pytest.raises(GradedError, match=message):
         graded_row(result, grades, "w")
 
 
 def test_load_graded_rejects_mixed_data(tmp_path: Path) -> None:
     _write(tmp_path, _result(), _grades([(4, 4)] * 4))
-    _write(tmp_path, _result(adapter="claude_python_haiku_5_5", data="e" * 64), _grades([(2, 2)] * 4))
+    _write(
+        tmp_path, _result(adapter="claude_python_haiku_5_5", data="e" * 64), _grades([(2, 2)] * 4)
+    )
     with pytest.raises(GradedError, match="not comparable"):
         load_graded(tmp_path)
 
@@ -5558,19 +5716,33 @@ def test_run_grade_add_build(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) ->
     config = tmp_path / "config.yaml"
     references = {f"sample-00{i}": ANSWER for i in (1, 2, 3)}
     config.write_text(yaml.safe_dump({"split": "test", "adapter": {"references": references}}))
-    assert main(
-        ["run", "--eval", str(spec_path), "--adapter", "mock", "--config", str(config),
-         "--out", str(tmp_path / "runs"), "--data", str(data)]
-    ) == 0
+    assert (
+        main(
+            [
+                "run",
+                "--eval",
+                str(spec_path),
+                "--adapter",
+                "mock",
+                "--config",
+                str(config),
+                "--out",
+                str(tmp_path / "runs"),
+                "--data",
+                str(data),
+            ]
+        )
+        == 0
+    )
     [run_dir] = list((tmp_path / "runs").iterdir())
 
     fake = FakeClaude(tmp_path, monkeypatch)
     grade = {"criteria": {i: {"score": 3, "justification": "key agrees"} for i in IDS}}
     fake.set([init_event(), result_event(grade, model_usage={GRADER_MODEL: {"outputTokens": 9}})])
     monkeypatch.setattr("geoevals.cli.GRADER_COMMAND", FAKE_COMMAND)
-    assert main(
-        ["grade", str(run_dir), "--data", str(data), "--evals", str(tmp_path / "evals")]
-    ) == 0
+    assert (
+        main(["grade", str(run_dir), "--data", str(data), "--evals", str(tmp_path / "evals")]) == 0
+    )
     grades = json.loads((run_dir / "grades.json").read_text())
     assert [t["score"] for t in grades["tasks"]] == [0.75, 0.75, 0.75]
     assert len(fake.records) == 6
