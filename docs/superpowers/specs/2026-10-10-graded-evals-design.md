@@ -1,7 +1,6 @@
 # Graded spatial-reasoning evals on a real city: design
 
-Date: 2026-10-10. Status: design approved by the user in conversation; this written spec awaits
-the user's review.
+Date: 2026-10-10. Status: approved by the user on 2026-10-11.
 
 ## Goal
 
