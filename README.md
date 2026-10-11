@@ -110,7 +110,16 @@ row is a complete run on the maintainer's machine, generated from the committed 
 How to run and add a model: [`leaderboard/README.md`](leaderboard/README.md).
 
 <!-- leaderboard:start -->
-No runs have been added yet. See [`leaderboard/README.md`](leaderboard/README.md).
+| Model | Track | Benchmark | Task success (95% CI) | Not scored | Latency p50 / p90 (s) | Tokens in | Tokens out |
+| --- | --- | --- | --- | ---: | ---: | ---: | ---: |
+| Opus 5.5 | direct | `gis_correctness` 0.2.0 | 0.464 [0.34, 0.59] | 0 of 56 | 9.2 / 108.8 | 148,766 | 244,931 |
+| Opus 5.5 | python | `gis_correctness` 0.2.0 | 0.554 [0.43, 0.68] | 0 of 56 | 7.0 / 13.5 | 383,637 | 34,037 |
+| Opus 5.5 | direct | `human_context_access` 0.2.0 | 0.961 [0.90, 1.00] | 0 of 51 | 13.9 / 24.1 | 3,244,870 | 71,071 |
+| Opus 5.5 | python | `human_context_access` 0.2.0 | 0.980 [0.94, 1.00] | 0 of 51 | 19.0 / 25.8 | 896,689 | 77,564 |
+
+Run locally through Claude Code 2.1.296 on a Claude subscription, effort high, prompt version v1. Benchmarks: `gis_correctness` 0.2.0, manifest `20beb1d10b21`; `human_context_access` 0.2.0, manifest `f2d344c9051b`.
+
+Task success is the mean of `task_success` over every case, with its 95% interval; cases that were not scored (errors, invalid output, timeouts) count as failures. Latency is the wall-clock time per case, including CLI startup. Tokens in count every prompt token the model processed, cache reads included; tokens out include thinking. Runs on a subscription have no per-token charge, so there is no cost column.
 <!-- leaderboard:end -->
 
 ## Add a benchmark, metric, adapter or dataset manifest
