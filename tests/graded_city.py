@@ -47,7 +47,8 @@ def lonlat(x: float, y: float) -> list[float]:
 
 ORIGIN = lonlat(0, 60)
 VIEWPOINT = lonlat(100, 150)
-BBOX = (*lonlat(-450, -250), *lonlat(450, 400))
+_SW, _NE = lonlat(-450, -250), lonlat(450, 400)
+BBOX = (_SW[0], _SW[1], _NE[0], _NE[1])
 
 
 def rect(x0: float, y0: float, x1: float, y1: float) -> list[Point]:

@@ -4,6 +4,7 @@ import argparse
 import dataclasses
 import json
 import logging
+import os
 import sys
 import tempfile
 import webbrowser
@@ -15,7 +16,9 @@ from geoevals import __version__
 from geoevals.adapters import create_adapter, registered_adapter_names
 from geoevals.data.fetch import (
     DEFAULT_MANIFESTS,
+    Bbox,
     FetchError,
+    ensure_ignored,
     fetch_dataset,
     manifest_path,
     parse_bbox,
@@ -23,6 +26,8 @@ from geoevals.data.fetch import (
 from geoevals.data.inventory import DEFAULT_README, InventoryError, update_inventory
 from geoevals.data.licenses import DEFAULT_REPORT, render_report, runtime_dependencies
 from geoevals.data.verify import verify_manifest
+from geoevals.graded.city import LAYERS_DIR, convert_extract, write_layers
+from geoevals.graded.towns import EXTRACT_FILE, fetch_candidate, measure_layers, stats_table
 from geoevals.leaderboard.table import (
     DEFAULT_RESULTS,
     LeaderboardError,
@@ -49,7 +54,12 @@ from geoevals.runner.layout import (
     write_run_dir,
 )
 from geoevals.runner.run import RunError, run_benchmark, run_logging
-from geoevals.validation import SpecValidationError, validate_file, validate_run_result_file
+from geoevals.validation import (
+    SpecValidationError,
+    load_dataset_manifest,
+    validate_file,
+    validate_run_result_file,
+)
 from geoevals.validation.validate import load_yaml
 
 logger = logging.getLogger("geoevals.cli")
@@ -364,6 +374,46 @@ def build_parser() -> argparse.ArgumentParser:
         "--check",
         action="store_true",
         help="Write nothing; exit 1 when the README table is out of date.",
+    )
+    evals = subparsers.add_parser("evals", help="Graded eval tools (agent-graded, not benchmarks).")
+    evals_commands = evals.add_subparsers(dest="evals_command", required=True)
+    measure = evals_commands.add_parser(
+        "measure-town",
+        help="Fetch a candidate town's OpenStreetMap extract at a snapshot date into a gitignored "
+        "directory, convert it to layers and print its measurement row.",
+    )
+    measure.add_argument("--name", required=True, help="Town name, for the table.")
+    measure.add_argument(
+        "--bbox", required=True, type=parse_bbox, help="min_lon,min_lat,max_lon,max_lat."
+    )
+    measure.add_argument("--date", required=True, help="Snapshot date, YYYY-MM-DD.")
+    measure.add_argument(
+        "--out",
+        type=Path,
+        default=Path("data/raw/town_candidates"),
+        help="Parent directory of the fetch (default: data/raw/town_candidates).",
+    )
+    measure.add_argument(
+        "--source",
+        type=Path,
+        help=f"Measure an existing fetch (a directory with {EXTRACT_FILE}) instead of fetching.",
+    )
+    build_city = evals_commands.add_parser(
+        "build-city",
+        help="Convert a fetched city extract (`geoevals data fetch osm_city_<town>`) into "
+        "GeoParquet layers in <source>/layers/.",
+    )
+    build_city.add_argument("dataset_id", help="The city's dataset ID, osm_city_<town>.")
+    build_city.add_argument(
+        "--manifests",
+        type=Path,
+        default=DEFAULT_MANIFESTS,
+        help=f"Directory of dataset manifests (default: {DEFAULT_MANIFESTS}).",
+    )
+    build_city.add_argument(
+        "--source",
+        type=Path,
+        help="Directory of the fetched extract (default: the manifest asset's directory).",
     )
     return parser
 
@@ -745,6 +795,40 @@ def _bench_regenerate(benchmark_id: str, root: Path, check: bool) -> int:
     return 1 if check and stale else 0
 
 
+def _evals_measure_town(name: str, bbox: Bbox, date: str, out: Path, source: Path | None) -> int:
+    try:
+        directory = source or fetch_candidate(name, bbox, date, out)
+        extract_path = directory / EXTRACT_FILE
+        layers = convert_extract(json.loads(extract_path.read_text(encoding="utf-8")))
+        ensure_ignored(directory / LAYERS_DIR / "buildings.parquet")
+        write_layers(layers, directory / LAYERS_DIR)
+    except (OSError, ValueError, FetchError) as exc:
+        print(exc, file=sys.stderr)
+        return 1
+    print(stats_table([(name, measure_layers(layers, bbox, extract_path.stat().st_size))]))
+    return 0
+
+
+def _evals_build_city(dataset_id: str, manifests: Path, source: Path | None) -> int:
+    try:
+        path = manifest_path(dataset_id, manifests)
+        manifest = load_dataset_manifest(path)
+        asset = manifest.assets[0]
+        directory = source or Path(os.path.normpath(path.parent / asset.path)).parent
+        extract_path = directory / Path(asset.path).name
+        layers = convert_extract(json.loads(extract_path.read_text(encoding="utf-8")))
+        ensure_ignored(directory / LAYERS_DIR / "buildings.parquet")
+        written = write_layers(layers, directory / LAYERS_DIR)
+    except SpecValidationError as exc:
+        _print_issues(exc.path, exc.issues)
+        return 1
+    except (OSError, ValueError, FetchError) as exc:
+        print(exc, file=sys.stderr)
+        return 1
+    print(f"{directory / LAYERS_DIR}: wrote {len(written)} layers")
+    return 0
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
@@ -792,5 +876,9 @@ def main(argv: Sequence[str] | None = None) -> int:
         return _leaderboard_add(args.run_dir, args.results)
     if args.command == "leaderboard" and args.leaderboard_command == "build":
         return _leaderboard_build(args.results, args.readme, args.check)
+    if args.command == "evals" and args.evals_command == "measure-town":
+        return _evals_measure_town(args.name, args.bbox, args.date, args.out, args.source)
+    if args.command == "evals" and args.evals_command == "build-city":
+        return _evals_build_city(args.dataset_id, args.manifests, args.source)
     parser.print_help()
     return 0
