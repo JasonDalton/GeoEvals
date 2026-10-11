@@ -102,6 +102,7 @@ def test_usage_limit_stops_grading(tmp_path: Path, fake: FakeClaude) -> None:
     grades = grade_run(run_dir, data, _config(tmp_path))
     assert grades.stopped is not None and "usage limit" in grades.stopped
     assert [t.status for t in grades.tasks] == ["not_graded", "not_graded"]
+    assert len(fake.records) == 1
 
 
 def test_wrong_model_stops_grading(tmp_path: Path, fake: FakeClaude) -> None:
@@ -150,3 +151,15 @@ def test_grade_cli_writes_grades_json(
     grades = load_grades(run_dir / "grades.json")
     assert grades.run_id == load_graded_result(run_dir)["run_id"]
     assert json.loads((run_dir / "grades.json").read_text())["schema_version"] == "1.0.0"
+
+
+def test_grade_cli_exits_1_when_tasks_are_not_graded(
+    tmp_path: Path, fake: FakeClaude, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    run_dir, data = graded_run_dir(tmp_path, {"sample-001": "answered"})
+    fake.set(events(grade(words=61)))
+    monkeypatch.setattr("geoevals.cli.GRADER_COMMAND", FAKE_COMMAND)
+    code = main(["grade", str(run_dir), "--data", str(data), "--evals", str(tmp_path / "evals")])
+    assert code == 1
+    [task] = load_grades(run_dir / "grades.json").tasks
+    assert task.status == "not_graded"

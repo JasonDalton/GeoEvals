@@ -966,8 +966,13 @@ def _grade(run_dir: Path, data: Path | None, evals: Path, passes: int) -> int:
     print(f"{path}: " + ", ".join(f"{status} {n}" for status, n in sorted(counts.items())))
     if grades.stopped:
         print(f"grading stopped: {grades.stopped}", file=sys.stderr)
-        return 1
-    return 0
+    if counts.get("not_graded"):
+        print(
+            f"{counts['not_graded']} task(s) not graded; the run cannot go on the leaderboard "
+            "until they are",
+            file=sys.stderr,
+        )
+    return 1 if grades.stopped or counts.get("not_graded") else 0
 
 
 def main(argv: Sequence[str] | None = None) -> int:
