@@ -78,6 +78,8 @@ adapters ship; no adapter needs credentials or network access.
   with source, license, checksum, and spatial and temporal metadata for every asset.
 - Run result schema 1.0.0 (`schemas/run-result.schema.json`), with per-case status, metrics,
   timing, tokens, cost and trajectories, and the environment fingerprint.
+- Graded eval spec schema 1.0.0 (`schemas/eval-spec.schema.json`), for open-ended evals that a
+  grading agent scores against a shared rubric.
 
 #### Metrics
 

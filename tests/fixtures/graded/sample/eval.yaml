@@ -1,0 +1,20 @@
+schema_version: "1.0.0"
+id: sample
+version: 0.1.0
+title: Sample graded eval on the synthetic city
+concept: proximity, visibility and closures
+task_statement: >-
+  Answer one open-ended question about the city from its OpenStreetMap layers. Explain your
+  reasoning for the audience named in the question.
+intended_use: Tests of the graded-eval tooling only.
+tasks: tasks.jsonl
+rubric_criteria: ../../../../evals/city/rubric_criteria.yaml
+reference: ../../../../evals/city/reference.py
+dataset_manifest: manifest.yaml
+answer_word_limit: 4000
+license: MIT
+provenance:
+  authors: [GeoEvals contributors]
+  created: 2026-10-11
+limitations:
+  - A synthetic city made for tests; it says nothing about any model.
