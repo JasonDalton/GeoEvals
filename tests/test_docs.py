@@ -151,7 +151,8 @@ def test_changelog_lists_benchmarks_schemas_metrics_and_adapters() -> None:
         listed = f"`{benchmark['id']}` {benchmark['version']}"
         assert listed in entry or listed in _unreleased_entry(), benchmark["id"]
     for schema in sorted((REPO / "schemas").glob("*.schema.json")):
-        assert f"`schemas/{schema.name}`" in entry, schema.name
+        listed = f"`schemas/{schema.name}`"
+        assert listed in entry or listed in _unreleased_entry(), schema.name
     unreleased = _unreleased_entry()
     for metric_id in registered_metric_ids():
         listed = f"`{metric_id}` {get_metric(metric_id).version}"
