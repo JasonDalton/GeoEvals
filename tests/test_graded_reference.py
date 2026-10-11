@@ -426,3 +426,10 @@ def test_a_water_area_is_a_barrier() -> None:
         module["Point"](*lonlat(0, 30)), module["Point"](*lonlat(50, -20))
     )
     assert route["reason"] == "blocked_by_barrier"
+
+
+def test_a_point_observer_inside_a_building_is_not_blocked_by_it() -> None:
+    layers = _sight_layers({"way/1": 30.0, "way/3": 12.0})
+    key = _visibility(layers, {"point": lonlat(5, 0), "height_m": 1.6})  # inside way/1
+    target = key["targets"]["way/3"]
+    assert target["blocked_by"] == [] and target["visible"] is True

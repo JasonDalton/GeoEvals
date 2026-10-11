@@ -479,7 +479,8 @@ def visibility_key(params: Mapping[str, Any], layers: Layers) -> dict[str, Any]:
     still ``visible`` (a taller target only raises the line), but a blocked one is undecided
     (null), with the blockers still listed. An observer building of unknown height is taken at
     eye height above the ground (``observer_height_known`` false): targets visible from there stay
-    visible, targets blocked from there are undecided.
+    visible, targets blocked from there are undecided. A building that contains the observer point
+    never blocks (the observer looks out of it).
     """
     observer = params["observer"]
     eye = float(observer.get("height_m", 1.6))
@@ -495,6 +496,11 @@ def visibility_key(params: Mapping[str, Any], layers: Layers) -> dict[str, Any]:
     buildings = layers["buildings"].to_crs(_aeqd(origin))
     index = buildings.sindex
     eye_point = project(origin)
+    # an observer standing in a building looks out of it: that building never blocks
+    around = {
+        buildings.iloc[int(position)]["feature_id"]
+        for position in index.query(eye_point, predicate="within")
+    }
     targets: dict[str, Any] = {}
     for target_id in params["targets"]:
         target = _row(layers, target_id, "buildings")
@@ -505,7 +511,7 @@ def visibility_key(params: Mapping[str, Any], layers: Layers) -> dict[str, Any]:
         blocked, unknown = [], []
         for position in index.query(sight, predicate="intersects"):
             other = buildings.iloc[int(position)]
-            if other["feature_id"] in (target_id, observer_id):
+            if other["feature_id"] in (target_id, observer_id) or other["feature_id"] in around:
                 continue
             crossing = other.geometry.intersection(sight)
             if crossing.is_empty:
