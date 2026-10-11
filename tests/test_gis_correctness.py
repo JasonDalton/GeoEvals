@@ -60,7 +60,7 @@ def test_spec_validates_with_id_and_version() -> None:
     kind, issues = validate_file(SPEC)
     assert (kind, issues) == ("benchmark spec", [])
     spec = load_benchmark_spec(SPEC)
-    assert (spec.id, spec.version) == ("gis_correctness", "0.2.0")
+    assert (spec.id, spec.version) == ("gis_correctness", "0.3.0")
 
 
 def test_spec_lists_every_case_file() -> None:
@@ -776,9 +776,26 @@ def test_wrong_attribute_fails_only_attribute_match() -> None:
 
 
 def test_wrong_crs_label_fails_only_crs_match() -> None:
+    # ETRS89 to WGS 84 is a null transformation, so the geometry still matches.
     case = _overlay_case("intersection")
-    result = _task_success({**case.expected, "crs": "EPSG:4326"}, case.case_id)
+    result = _task_success({**case.expected, "crs": "EPSG:4258"}, case.case_id)
     assert result["detail"]["failed"] == ["crs_match"]
+
+
+def test_crs_label_in_the_other_axis_order_passes() -> None:
+    case = _overlay_case("intersection")
+    assert case.expected["crs"] == "OGC:CRS84"
+    result = _task_success({**case.expected, "crs": "EPSG:4326"}, case.case_id)
+    assert result["passed"] is True
+
+
+def test_swapped_coordinates_fail_whatever_the_label() -> None:
+    case = _loaded_case(AXIS_TRAP_CASE)
+    swapped = json.loads(json.dumps(case.expected))
+    swapped["geometry"]["coordinates"].reverse()
+    for label in ("EPSG:4326", "OGC:CRS84"):
+        result = _task_success({**swapped, "crs": label}, AXIS_TRAP_CASE)
+        assert result["detail"]["failed"] == ["geometry_match"], label
 
 
 def test_nearest_join_without_the_max_distance_fails_attributes() -> None:

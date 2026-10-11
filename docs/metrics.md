@@ -100,7 +100,7 @@ Implemented in `geoevals.metrics.spatial`. Every distance is reported in meters.
 
 | Function | Result | Units | Frame |
 | --- | --- | --- | --- |
-| `crs_equal(a, b)` | `pyproj.CRS.equals`; axis order counts (`EPSG:4326` != `OGC:CRS84`) | none | n/a |
+| `crs_equal(a, b, ignore_axis_order=False)` | `pyproj.CRS.equals`; axis order counts unless `ignore_axis_order` (`EPSG:4326` != `OGC:CRS84`) | none | n/a |
 | `detect_axis_swap(pred, ref, tol_m, crs)` | true when `crs` is geographic, `pred` misses `ref` by more than `tol_m` and `pred` with x and y exchanged is within `tol_m` | meters | geodesic or projected |
 | `geometry_equal(pred, ref, tol_m, crs, measure_crs=None)` | `hausdorff_m <= tol_m` | meters | geodesic or projected |
 | `hausdorff_m(pred, ref, crs, measure_crs=None)` | Hausdorff distance (shapely `hausdorff_distance` in the frame) | meters | geodesic (AEQD) or projected |
@@ -177,13 +177,17 @@ distance) is written as `null`.
 
 ### `crs_match`
 
-- **Definition:** 1.0 when `crs_equal(pred.crs, ref.crs)`, else 0.0.
+- **Definition:** 1.0 when `crs_equal(pred.crs, ref.crs, ignore_axis_order=True)`, else 0.0.
+- **Version:** 1.1.0 ignores axis order: `EPSG:4326` and `OGC:CRS84` match. In 1.0.0 they
+  differed. Coordinates are always x then y, so a label's axis order cannot change them; a
+  swapped answer fails `geometry_match` (`axis_order_swapped`) whatever its label.
 - **Units:** fraction. Higher is better.
 - **Implementation:** `geoevals.metrics.gis.check_crs`.
 - **Reasons:** `missing_crs`, `unreadable_crs` (with the pyproj `error`), `crs_differs` (with
   `predicted`, `expected`).
-- **Edge cases:** axis order counts, so `EPSG:4326` and `OGC:CRS84` differ. Spelling does not
-  (`epsg:4326` equals `EPSG:4326`, and a PROJ string equals its EPSG code when pyproj says so).
+- **Edge cases:** spelling does not count (`epsg:4326` equals `EPSG:4326`, and a PROJ string
+  equals its EPSG code when pyproj says so). The datum does: `EPSG:4258` (ETRS89) does not
+  match `OGC:CRS84`.
 
 ### `attribute_match`
 

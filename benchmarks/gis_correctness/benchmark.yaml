@@ -1,6 +1,6 @@
 schema_version: "1.1.0"
 id: gis_correctness
-version: 0.2.0
+version: 0.3.0
 title: GIS correctness
 pillar: spatial_reasoning
 task_statement: >-
@@ -112,7 +112,9 @@ output_schema:
       type: string
       minLength: 1
     crs:
-      description: CRS of the answer; anything pyproj.CRS.from_user_input accepts.
+      description: >-
+        CRS of the answer; anything pyproj.CRS.from_user_input accepts. Its axis order is not
+        compared: coordinates are always (x, y), longitude first, as in GeoJSON.
       type: string
       minLength: 1
   if:
@@ -143,7 +145,7 @@ metrics:
     version: 1.1.0
     params: {}
   - id: crs_match
-    version: 1.0.0
+    version: 1.1.0
     params: {}
   - id: geometry_match
     version: 1.1.0

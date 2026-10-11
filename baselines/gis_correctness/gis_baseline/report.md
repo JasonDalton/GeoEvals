@@ -1,21 +1,21 @@
-# GeoEvals report: gis_correctness 0.2.0 / gis_baseline
+# GeoEvals report: gis_correctness 0.3.0 / gis_baseline
 
 ## 1. Summary
 
 | Field | Value |
 | --- | --- |
-| Run ID | gis_correctness-gis_baseline-20261010T232143Z-1fadf0a0 |
-| Benchmark | gis_correctness 0.2.0 |
+| Run ID | gis_correctness-gis_baseline-20261011T164829Z-1fadf0a0 |
+| Benchmark | gis_correctness 0.3.0 |
 | Split | test |
 | Adapter | gis_baseline 0.1.0 |
 | Model | none recorded (the adapter config has no model) |
 | Adapter config | {} |
-| Metric versions | attribute_match 1.1.0, crs_match 1.0.0, geometry_match 1.1.0, status_match 1.1.0, task_success 1.3.0, validity_match 1.1.0, value_abs_error 1.0.0, value_rel_error 1.0.0 |
+| Metric versions | attribute_match 1.1.0, crs_match 1.1.0, geometry_match 1.1.0, status_match 1.1.0, task_success 1.3.0, validity_match 1.1.0, value_abs_error 1.0.0, value_rel_error 1.0.0 |
 | Config hash | 1fadf0a0380009519a4a65492cfd2d1547306df17984ec49975a58dfa39f62fc |
 | Dataset manifest hash | 20beb1d10b212eaa1728803d1606fe42ed65c8f75496eced72d0ba5663d2f2ea |
 | Run result schema | 1.0.0 |
-| Started | 2026-10-10T23:21:43.333784Z |
-| Finished | 2026-10-10T23:21:47.790541Z |
+| Started | 2026-10-11T16:48:29.704211Z |
+| Finished | 2026-10-11T16:48:34.216290Z |
 | Cases | 56 (56 scored, 0 not scored) |
 
 Comparisons are valid only between runs with the same benchmark version, metric versions, split, and dataset manifest hash.
@@ -25,7 +25,7 @@ Comparisons are valid only between runs with the same benchmark version, metric 
 | Metric | Version | Mean | Median | 95% CI | n | n failed |
 | --- | --- | --- | --- | --- | --- | --- |
 | attribute_match | 1.1.0 | 1 | 1 | [1, 1] | 14 | 0 |
-| crs_match | 1.0.0 | 1 | 1 | [1, 1] | 47 | 0 |
+| crs_match | 1.1.0 | 1 | 1 | [1, 1] | 47 | 0 |
 | geometry_match | 1.1.0 | 1 | 1 | [1, 1] | 31 | 0 |
 | status_match | 1.1.0 | 1 | 1 | [1, 1] | 56 | 0 |
 | task_success | 1.3.0 | 1 | 1 | [1, 1] | 56 | 0 |
@@ -190,17 +190,17 @@ Abstention precision 1, recall 1. A case abstains when its status is needs_clari
 
 | Measure | Value |
 | --- | --- |
-| Wall clock (s) | 4.45574 |
+| Wall clock (s) | 4.51105 |
 | Cases | 56 |
-| Throughput (cases/s) | 12.5681 |
-| Latency p50 (s) | 0.00627617 |
-| Latency p90 (s) | 0.0399228 |
-| Latency p99 (s) | 0.407021 |
-| Latency max (s) | 0.764896 |
+| Throughput (cases/s) | 12.414 |
+| Latency p50 (s) | 0.00543896 |
+| Latency p90 (s) | 0.0380362 |
+| Latency p99 (s) | 0.481815 |
+| Latency max (s) | 0.906678 |
 | Timeout rate | 0 |
 | Failure rate | 0 |
 | Retries | 0 |
-| Peak RSS (bytes) | 264404992 |
+| Peak RSS (bytes) | 257720320 |
 | Input tokens | 0 |
 | Output tokens | 0 |
 | Cost, total (USD) | 0 |
@@ -226,7 +226,7 @@ No case recorded an agent trajectory.
 | geoevals_version | 0.1.0 |
 | geopandas_version | 1.2.0 |
 | geos_version | 3.14.1 |
-| git_commit | cb6b336e3ee1a3bb0142f14e3ce3a4bc48ad1a27 |
+| git_commit | 4ea674eb0ffc18aac87393e382af46744bbc925d |
 | git_dirty | true |
 | machine | arm64 |
 | os | Darwin |
