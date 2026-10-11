@@ -68,7 +68,7 @@ Use a metric only where its assumptions hold:
 | Activity | Count error, MAE and RMSE, temporal profile error | A proxy is not the same as observed pedestrian activity. |
 | Ranking and suitability | NDCG, pairwise agreement, preference satisfaction | The ground truth depends on the context and the user. |
 | Calibration and uncertainty | Brier score, ECE, interval coverage | Use only when predictions have a real probabilistic meaning. |
-| Agent success | Exact output checks, task completion, valid artifact rate | Do not use an LLM judge as the only evaluator. |
+| Agent success | Exact output checks, task completion, valid artifact rate | Use deterministic checks when there is one checkable answer. An LLM grader is allowed only in a graded eval that follows the graded-eval rules ([eval-authoring.md](eval-authoring.md#rules)). |
 | Efficiency | Latency, throughput, cost per case, failure rate | Include setup, retries and the hardware or API context. |
 
 v0.1 implements the geometry, network, access, agent-success and efficiency families. The

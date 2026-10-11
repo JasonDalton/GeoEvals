@@ -54,11 +54,11 @@ jobs:
         run: uv run --frozen pytest
 
       # Test fixtures under tests/ are checked by pytest; this covers the shipped benchmarks.
-      - name: Validate benchmark specs and dataset manifests
+      - name: Validate benchmark specs, eval specs and dataset manifests
         run: |
           status=0
-          files=$(find benchmarks datasets -type f \
-            \( -name 'benchmark.yaml' -o -name 'manifest.yaml' \
+          files=$(find benchmarks datasets evals -type f \
+            \( -name 'benchmark.yaml' -o -name 'eval.yaml' -o -name 'manifest.yaml' \
                -o -path 'datasets/manifests/*.yaml' -o -path 'datasets/manifests/*.jsonl' \) \
             | sort -u)
           if [ -z "$files" ]; then echo "no benchmark specs or manifests found"; exit 1; fi

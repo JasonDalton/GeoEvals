@@ -19,6 +19,7 @@ REQUIRED_DOCS = [
     "metrics.md",
     "data-governance.md",
     "benchmark-authoring.md",
+    "eval-authoring.md",
     "reproducibility.md",
     "human-context.md",
     "release-checklist.md",
@@ -43,6 +44,14 @@ RELEASE_CHECKLIST_ITEMS = 12
 HUMAN_REVIEWS = {"license compatibility review", "privacy review", "final scope approval"}
 
 MAX_QUICKSTART_COMMANDS = 3
+
+GRADED_RULES = [
+    "Use a benchmark when a task has one checkable answer",
+    "reference key of facts computed from the data",
+    "never averaged with them",
+    "graded at least twice",
+    "its own rows may be biased",
+]
 
 BRITISH_SPELLINGS = re.compile(
     r"\b("
@@ -305,3 +314,21 @@ def test_readme_quickstart_runs_verbatim(tmp_path: Path) -> None:
     finally:
         for path in new:
             shutil.rmtree(path)
+
+
+def test_graded_eval_rules_are_written_down() -> None:
+    authoring = (REPO / "docs" / "eval-authoring.md").read_text(encoding="utf-8")
+    contributing = (REPO / "CONTRIBUTING.md").read_text(encoding="utf-8")
+    for rule in GRADED_RULES:
+        assert rule in authoring, rule
+    assert "docs/eval-authoring.md" in contributing
+    practices = (REPO / "docs" / "best-practices.md").read_text(encoding="utf-8")
+    assert "Do not use an LLM judge as the only evaluator" not in practices
+    assert "graded eval" in practices
+
+
+def test_readme_separates_benchmarks_and_graded_evals() -> None:
+    headings = re.findall(r"^## (.+)$", README.read_text(encoding="utf-8"), re.M)
+    assert "Benchmarks (deterministic)" in headings
+    assert "Graded evals (agent-graded)" in headings
+    assert headings.index("Graded evals (agent-graded)") > headings.index("Leaderboard")

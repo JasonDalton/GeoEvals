@@ -21,7 +21,13 @@ manifest and downloaded, never committed, as the
 [data governance rules](docs/data-governance.md) require. Open questions: which extracts and
 snapshot dates to pin, and how a reference output stays stable when OSM is edited.
 
+The graded evals already pin and fetch a whole-town OpenStreetMap snapshot (`geoevals data fetch osm_city_<town>`, `geoevals evals build-city`); this benchmark reuses that fetch.
+
 Feature extraction from imagery is not planned. Many benchmarks already cover it.
+
+### Graded evals on a real city
+
+Five agent-graded evals (proximity, adjacency, visibility, containment, direction) on one pinned town, 12 tasks each, graded by Claude Opus 5.5; see `docs/eval-authoring.md`.
 
 ### LLM and hosted-API adapters
 

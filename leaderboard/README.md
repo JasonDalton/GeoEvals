@@ -77,6 +77,38 @@ the table matches the committed results.
 The CLI runs under a small watchdog: if the adapter's worker process is killed, the watchdog
 stops the CLI and removes the case's container.
 
+## Graded evals
+
+Graded evals (`evals/`, see [`docs/eval-authoring.md`](../docs/eval-authoring.md)) are open-ended
+tasks scored by a grading agent. They have their own table in the README and their own
+directory, `leaderboard/graded/`, and are never combined with the benchmark rows.
+
+```sh
+uv run geoevals run --eval evals/<id>/eval.yaml --adapter claude_python_opus_5_5 \
+  --config leaderboard/configs/python.yaml --out runs/graded
+uv run geoevals grade runs/graded/<run_id>
+uv run geoevals leaderboard add runs/graded/<run_id>
+uv run geoevals leaderboard build
+```
+
+`leaderboard add` puts a graded run in `leaderboard/graded/<eval>/<adapter>/` with its
+`result.json`, `grades.json` and `config.yaml`. `leaderboard build` writes the graded section of
+the README and the box plot `leaderboard/graded/plots/<eval>.svg` (it needs the `plots` extra).
+
+A graded run is accepted only if:
+
+- it comes from a `claude_python_<model>` adapter with the default CLI;
+- no task was skipped, stopped by the runner's timeout or failed in the harness;
+- its grades belong to it, grading did not stop, every answered task was graded, and there are
+  at least two passes;
+- all runs of an eval share its version, the city layers, the dataset manifest, the answering
+  effort and prompt version, the rubric version, and the grader (model, effort, prompt version,
+  Claude Code version, passes). Runs graded by different versions are not comparable, so the
+  build rejects a mix.
+
+Tasks that were not answered score 0. A full graded run of one model is 60 answers and 120
+grading sessions on the subscription.
+
 ## What the numbers mean
 
 - **Task success** is the mean of `task_success` over every case, with its 95% interval.

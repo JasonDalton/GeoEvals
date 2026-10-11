@@ -59,6 +59,15 @@ check the Markdown files for common British spellings.
 
 Use the issue templates to report a bug, propose a benchmark or propose a new adapter.
 
+## Benchmark or graded eval?
+
+Contribute a **benchmark** when every task has one checkable answer: code scores it, and it is
+the default. Contribute a **graded eval** only when the answer is open-ended (an explanation,
+directions, a judgment about what can be seen or reached); a grading agent scores it against a
+rubric and a reference key computed from data. Graded evals follow the rules in
+[`docs/eval-authoring.md`](docs/eval-authoring.md#rules), and their scores are never combined
+with benchmark scores.
+
 ## Benchmark definition of done
 
 A new benchmark, or a change to a benchmark, can merge only when it meets the
