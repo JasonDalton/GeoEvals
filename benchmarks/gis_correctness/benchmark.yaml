@@ -112,9 +112,7 @@ output_schema:
       type: string
       minLength: 1
     crs:
-      description: >-
-        CRS of the answer; anything pyproj.CRS.from_user_input accepts. Its axis order is not
-        compared: coordinates are always (x, y), longitude first, as in GeoJSON.
+      description: CRS of the answer; anything pyproj.CRS.from_user_input accepts.
       type: string
       minLength: 1
   if:
