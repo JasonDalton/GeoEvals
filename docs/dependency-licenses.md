@@ -17,20 +17,27 @@ and the permissive licenses below are.
 | `annotated-types` | 0.8.0 | MIT |
 | `attrs` | 26.1.0 | MIT |
 | `certifi` | 2026.7.22 | MPL-2.0; Mozilla Public License 2.0 (MPL 2.0) |
+| `contourpy` | 1.3.3 | BSD License |
+| `cycler` | 0.12.1 | BSD License |
+| `fonttools` | 4.66.1 | MIT |
 | `geopandas` | 1.2.0 | BSD-3-Clause |
 | `Jinja2` | 3.1.6 | BSD License |
 | `jsonschema` | 4.26.0 | MIT |
 | `jsonschema-specifications` | 2025.9.1 | MIT |
+| `kiwisolver` | 1.5.1 | BSD License |
 | `MarkupSafe` | 3.0.4 | BSD-3-Clause |
+| `matplotlib` | 3.11.2 | Python Software Foundation License |
 | `networkx` | 3.6.1 | BSD-3-Clause |
 | `numpy` | 2.4.6 | BSD-3-Clause AND 0BSD AND MIT AND Zlib AND CC0-1.0 |
 | `packaging` | 26.3 | Apache-2.0 OR BSD-2-Clause |
 | `pandas` | 3.0.6 | BSD License |
+| `pillow` | 12.3.0 | MIT-CMU |
 | `psutil` | 7.2.2 | BSD-3-Clause |
 | `pyarrow` | 26.0.0 | Apache-2.0 |
 | `pydantic` | 2.14.0 | MIT |
 | `pydantic_core` | 2.50.0 | MIT |
 | `pyogrio` | 0.13.0 | MIT License |
+| `pyparsing` | 3.3.3 | MIT |
 | `pyproj` | 3.7.2 | MIT |
 | `python-dateutil` | 2.9.0.post0 | Dual License; BSD License; Apache Software License |
 | `PyYAML` | 6.0.3 | MIT; MIT License |

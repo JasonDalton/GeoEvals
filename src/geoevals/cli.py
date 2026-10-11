@@ -520,13 +520,31 @@ def _leaderboard_build(results: Path, readme: Path, check: bool, graded: Path) -
     except (OSError, LeaderboardError, GradedError) as exc:
         print(exc, file=sys.stderr)
         return 1
-    if updated == text:
+    plots: dict[Path, str] = {}
+    if rows:
+        try:
+            from geoevals.graded.plots import plot_files
+        except ImportError:
+            print("the graded box plots need matplotlib: uv sync --extra plots", file=sys.stderr)
+            return 1
+        plots = plot_files(rows, graded)
+    stale = [
+        path for path, svg in plots.items()
+        if not path.is_file() or path.read_text(encoding="utf-8") != svg
+    ]  # fmt: skip
+    if updated == text and not stale:
         print(f"{readme}: leaderboard is up to date")
         return 0
     if check:
-        print(f"{readme}: leaderboard is out of date; run `geoevals leaderboard build`")
+        if updated != text:
+            print(f"{readme}: leaderboard is out of date; run `geoevals leaderboard build`")
+        for path in stale:
+            print(f"{path}: plot is out of date")
         return 1
     readme.write_text(updated, encoding="utf-8")
+    for path in stale:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(plots[path], encoding="utf-8")
     print(f"{readme}: leaderboard written")
     return 0
 
