@@ -1,21 +1,21 @@
-# GeoEvals report: gis_correctness 0.2.0 / mock
+# GeoEvals report: gis_correctness 0.3.0 / mock
 
 ## 1. Summary
 
 | Field | Value |
 | --- | --- |
-| Run ID | gis_correctness-mock-20261010T232149Z-fbbb6181 |
-| Benchmark | gis_correctness 0.2.0 |
+| Run ID | gis_correctness-mock-20261011T164835Z-fbbb6181 |
+| Benchmark | gis_correctness 0.3.0 |
 | Split | test |
 | Adapter | mock 0.1.0 |
 | Model | none recorded (the adapter config has no model) |
 | Adapter config | {"cases": {"abstention-001": {"behavior": "wrong", "output": {"crs": "OGC:CRS84", "status": "ok", "units": "m", "value": 1}}, "abstention-002": {"behavior": "wrong", "output": {"status": "needs_clarification"}}, "buffer-001": {"behavior": "sleep", "seconds": 10}, "crs_transform-003": {"behavior": "wrong", "output": {"crs": "EPSG:3857", "geometry": {"coordinates": [0, 0], "type": "Point"}, "status": "ok"}}, "distance-001": {"behavior": "wrong", "output": {"crs": "OGC:CRS84", "status": "ok", "units": "km", "value": 980}}, "distance-002": {"behavior": "raise", "message": "mock adapter failure"}, "overlay-001": {"behavior": "malformed"}, "spatial_join-001": {"behavior": "skip", "message": "mock adapter declines spatial_join cases"}, "validity-001": {"behavior": "fail_then_succeed", "failures": 1, "message": "transient mock failure"}}, "seed": 0, "tokens": {"input": 100, "output": 20}} |
-| Metric versions | attribute_match 1.1.0, crs_match 1.0.0, geometry_match 1.1.0, status_match 1.1.0, task_success 1.3.0, validity_match 1.1.0, value_abs_error 1.0.0, value_rel_error 1.0.0 |
+| Metric versions | attribute_match 1.1.0, crs_match 1.1.0, geometry_match 1.1.0, status_match 1.1.0, task_success 1.3.0, validity_match 1.1.0, value_abs_error 1.0.0, value_rel_error 1.0.0 |
 | Config hash | fbbb6181df48f103fde9ce99e548adc101738dec0b0804f78c35471edf6b71dc |
 | Dataset manifest hash | 20beb1d10b212eaa1728803d1606fe42ed65c8f75496eced72d0ba5663d2f2ea |
 | Run result schema | 1.0.0 |
-| Started | 2026-10-10T23:21:49.116833Z |
-| Finished | 2026-10-10T23:21:53.903944Z |
+| Started | 2026-10-11T16:48:35.480477Z |
+| Finished | 2026-10-11T16:48:40.149103Z |
 | Cases | 56 (52 scored, 4 not scored) |
 
 Comparisons are valid only between runs with the same benchmark version, metric versions, split, and dataset manifest hash.
@@ -25,7 +25,7 @@ Comparisons are valid only between runs with the same benchmark version, metric 
 | Metric | Version | Mean | Median | 95% CI | n | n failed |
 | --- | --- | --- | --- | --- | --- | --- |
 | attribute_match | 1.1.0 | 1 | 1 | [1, 1] | 12 | 0 |
-| crs_match | 1.0.0 | 1 | 1 | [1, 1] | 43 | 0 |
+| crs_match | 1.1.0 | 1 | 1 | [1, 1] | 43 | 0 |
 | geometry_match | 1.1.0 | 1 | 1 | [1, 1] | 28 | 0 |
 | status_match | 1.1.0 | 0.942308 | 1 | [0.865385, 1] | 52 | 3 |
 | task_success | 1.3.0 | 0.923077 | 1 | [0.846154, 0.980769] | 52 | 4 |
@@ -190,17 +190,17 @@ Abstention precision 1, recall 0.777778. A case abstains when its status is need
 
 | Measure | Value |
 | --- | --- |
-| Wall clock (s) | 4.78504 |
+| Wall clock (s) | 4.66691 |
 | Cases | 56 |
-| Throughput (cases/s) | 11.7031 |
-| Latency p50 (s) | 5.27295e-05 |
-| Latency p90 (s) | 0.000196104 |
-| Latency p99 (s) | 0.900807 |
-| Latency max (s) | 2.00105 |
+| Throughput (cases/s) | 11.9994 |
+| Latency p50 (s) | 4.95415e-05 |
+| Latency p90 (s) | 0.000199021 |
+| Latency p99 (s) | 0.901139 |
+| Latency max (s) | 2.00173 |
 | Timeout rate | 0.0178571 |
 | Failure rate | 0.0714286 |
 | Retries | 2 |
-| Peak RSS (bytes) | 155746304 |
+| Peak RSS (bytes) | 160088064 |
 | Input tokens | 5300 |
 | Output tokens | 1060 |
 | Cost, total (USD) | 0 |
@@ -240,7 +240,7 @@ No case recorded an agent trajectory.
 | geoevals_version | 0.1.0 |
 | geopandas_version | 1.2.0 |
 | geos_version | 3.14.1 |
-| git_commit | cb6b336e3ee1a3bb0142f14e3ce3a4bc48ad1a27 |
+| git_commit | 4ea674eb0ffc18aac87393e382af46744bbc925d |
 | git_dirty | true |
 | machine | arm64 |
 | os | Darwin |

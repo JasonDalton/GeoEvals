@@ -3,7 +3,7 @@
 | Field | Value |
 | --- | --- |
 | Benchmark ID | `gis_correctness` |
-| Version | 0.2.0 (`benchmark.yaml`) |
+| Version | 0.3.0 (`benchmark.yaml`) |
 | Cases | 56, one split (`test`) |
 | License | MIT (spec, cases and fixtures) |
 | Reference workflow | [`reference.py`](reference.py) (Shapely, pyproj, GEOS, PROJ) |
@@ -58,6 +58,11 @@ The headline metric is `task_success`. A case passes only if every check that ap
 The checks are `status_match`, `crs_match`, `geometry_match`, `validity_match`,
 `attribute_match`, `value_abs_error` and `value_rel_error`.
 [`docs/metrics.md`](../../docs/metrics.md) defines each metric.
+
+`crs_match` (1.1.0, from benchmark 0.3.0) compares the answer's CRS label up to axis order, so
+`EPSG:4326` passes where `OGC:CRS84` is expected. Coordinates are always longitude first, as
+in GeoJSON. The axis-order trap (`crs_transform-005`) is a test of the coordinates: an answer
+written latitude first fails `geometry_match`, whatever its label.
 
 Each case sets its own tolerances, always with explicit units. The spec sets none.
 

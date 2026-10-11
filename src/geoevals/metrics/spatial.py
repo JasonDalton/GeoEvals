@@ -42,13 +42,14 @@ def to_crs(value: CRSLike) -> CRS:
     return CRS.from_user_input(value)
 
 
-def crs_equal(a: CRSLike, b: CRSLike) -> bool:
+def crs_equal(a: CRSLike, b: CRSLike, *, ignore_axis_order: bool = False) -> bool:
     """Whether two CRSs are the same, by ``pyproj.CRS.equals``.
 
-    Unitless. Axis order counts: ``EPSG:4326`` (lat, lon) does not equal ``OGC:CRS84``
-    (lon, lat). Raises ``pyproj.exceptions.CRSError`` if either CRS cannot be parsed.
+    Unitless. Axis order counts unless ``ignore_axis_order``: ``EPSG:4326`` (lat, lon) does not
+    equal ``OGC:CRS84`` (lon, lat). Raises ``pyproj.exceptions.CRSError`` if either CRS cannot
+    be parsed.
     """
-    return to_crs(a).equals(to_crs(b))
+    return to_crs(a).equals(to_crs(b), ignore_axis_order=ignore_axis_order)
 
 
 def swap_axes(geometry: BaseGeometry) -> BaseGeometry:

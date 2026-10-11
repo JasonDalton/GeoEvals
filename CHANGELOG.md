@@ -18,6 +18,10 @@ metrics and schemas carry their own versions; see
   is 8.3 m off. `network_detour-001` to `-006`: `abs_tol` and `stretch_tol` 1e-6 to 1e-4; a
   haversine straight-line distance is at least 1.0e-3 off. Expected outputs are unchanged.
   Scores are not comparable with 0.1.0.
+- `crs_match` 1.1.0 and `gis_correctness` 0.3.0: the CRS label is compared up to axis order,
+  so `EPSG:4326` passes where `OGC:CRS84` is expected, and the reverse. Coordinates are always
+  longitude first; a swapped answer still fails `geometry_match`. Another datum (for example
+  `EPSG:4258`) still fails `crs_match`. Scores are not comparable with 0.2.0.
 
 ## 0.1.0 - 2026-10-09
 

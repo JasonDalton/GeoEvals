@@ -282,7 +282,9 @@ def check_feature_count(
 def check_crs(
     pred: Mapping[str, Any], ref: Mapping[str, Any], params: Mapping[str, Any]
 ) -> MetricValue | None:
-    """``crs_match``: the predicted ``crs`` equals the reference ``crs`` (``crs_equal``)."""
+    """``crs_match``: the predicted ``crs`` equals the reference ``crs`` up to axis order
+    (``crs_equal`` with ``ignore_axis_order``). Coordinates are always (x, y), so a label's
+    axis order cannot change them; ``geometry_match`` catches swapped coordinates."""
     if ref.get("crs") is None:
         return None
     expected = ref["crs"]
@@ -290,7 +292,7 @@ def check_crs(
     if predicted is None:
         return _failed("missing_crs", expected=expected)
     try:
-        equal = crs_equal(predicted, expected)
+        equal = crs_equal(predicted, expected, ignore_axis_order=True)
     except CRSError as error:
         return _failed("unreadable_crs", predicted=predicted, expected=expected, error=str(error))
     if equal:
@@ -472,10 +474,10 @@ class GeometryMatch(_CheckMetric):
 
 
 class CrsMatch(_CheckMetric):
-    """1.0 when the predicted CRS equals the reference CRS (``pyproj.CRS.equals``)."""
+    """1.0 when the predicted CRS equals the reference CRS up to axis order."""
 
     id = "crs_match"
-    version = "1.0.0"
+    version = "1.1.0"
     units = "fraction"
     higher_is_better = True
     check = staticmethod(check_crs)

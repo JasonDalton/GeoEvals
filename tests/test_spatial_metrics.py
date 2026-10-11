@@ -160,6 +160,8 @@ def test_crs_equal():
     assert crs_equal("EPSG:32633", "+proj=utm +zone=33 +datum=WGS84 +units=m +no_defs +type=crs")
     assert not crs_equal("EPSG:4326", "EPSG:3857")
     assert not crs_equal("EPSG:4326", "OGC:CRS84")  # axis order differs
+    assert crs_equal("EPSG:4326", "OGC:CRS84", ignore_axis_order=True)
+    assert not crs_equal("EPSG:4258", "OGC:CRS84", ignore_axis_order=True)  # another datum
     with pytest.raises(CRSError):
         crs_equal("EPSG:999999", "EPSG:4326")
 
@@ -173,6 +175,16 @@ def test_crs_match_metric():
     assert metric.score({}, {"crs": "EPSG:4326"}, {}).detail["reason"] == "missing_crs"
     bad = metric.score({"crs": "EPSG:999999"}, {"crs": "EPSG:4326"}, {})
     assert bad.detail["reason"] == "unreadable_crs"
+
+
+def test_crs_match_ignores_axis_order():
+    # Coordinates are always (x, y); geometry_match catches a swap, not the label.
+    metric = get_metric("crs_match")
+    assert metric.version == "1.1.0"
+    assert metric.score({"crs": "EPSG:4326"}, {"crs": "OGC:CRS84"}, {}).passed is True
+    assert metric.score({"crs": "OGC:CRS84"}, {"crs": "EPSG:4326"}, {}).passed is True
+    other_datum = metric.score({"crs": "EPSG:4258"}, {"crs": "OGC:CRS84"}, {})
+    assert other_datum.detail["reason"] == "crs_differs"
 
 
 def test_geometry_match_reprojects_a_prediction_in_another_crs():
