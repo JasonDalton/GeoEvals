@@ -365,6 +365,148 @@ def closure_key(params: Mapping[str, Any], layers: Layers) -> dict[str, Any]:
     }
 
 
+# --- visibility ------------------------------------------------------------------------------
+
+
+def _height(row: Any) -> float | None:
+    value = row["height_m"]
+    if value is None or (isinstance(value, float) and math.isnan(value)):
+        return None
+    return float(value)
+
+
+def _coordinates(geometry: BaseGeometry) -> list[tuple[float, ...]]:
+    if hasattr(geometry, "geoms"):
+        return [c for part in geometry.geoms for c in _coordinates(part)]
+    return list(geometry.coords)
+
+
+def visibility_key(params: Mapping[str, Any], layers: Layers) -> dict[str, Any]:
+    """Lines of sight from an eye point to the top of each target building.
+
+    A building on the line blocks it when its height exceeds the line's height where the line
+    crosses it (the lower of the entry and exit heights, as the line is straight). A building of
+    unknown height on the line leaves the target undecided (``visible`` null). A target of
+    unknown height is sighted at ground level.
+    """
+    observer = params["observer"]
+    eye = float(observer.get("height_m", 1.6))
+    observer_id = observer.get("feature_id")
+    origin = _place(layers, observer)
+    observer_height = eye
+    if observer_id is not None:
+        observer_height += _height(_row(layers, observer_id, "buildings")) or 0.0
+    project = _projector(origin)
+    buildings = layers["buildings"].to_crs(_aeqd(origin))
+    index = buildings.sindex
+    eye_point = project(origin)
+    targets: dict[str, Any] = {}
+    for target_id in params["targets"]:
+        target = _row(layers, target_id, "buildings")
+        target_height = _height(target)
+        top = target_height if target_height is not None else 0.0
+        sight = LineString([eye_point, project(target.geometry.representative_point())])
+        length = sight.length
+        blocked, unknown = [], []
+        for position in index.query(sight, predicate="intersects"):
+            other = buildings.iloc[int(position)]
+            if other["feature_id"] in (target_id, observer_id):
+                continue
+            crossing = other.geometry.intersection(sight)
+            if crossing.is_empty:
+                continue
+            along = [sight.project(Point(c[0], c[1])) for c in _coordinates(crossing)]
+            lowest = min(
+                observer_height + (top - observer_height) * d / length
+                for d in (min(along), max(along))
+            )
+            height = _height(other)
+            if height is None:
+                unknown.append(other["feature_id"])
+            elif height > lowest:
+                blocked.append(other["feature_id"])
+        visible = False if blocked else (None if unknown else True)
+        targets[target_id] = {
+            "visible": visible,
+            "distance_m": length,
+            "target_height_m": target_height,
+            "blocked_by": sorted(blocked),
+            "unknown_height_on_path": sorted(unknown),
+        }
+    return {"observer_height_m": observer_height, "targets": targets}
+
+
+# --- directions ------------------------------------------------------------------------------
+
+
+def _bearing(a: Node, b: Node) -> float:
+    return float(GEOD.inv(a[0], a[1], b[0], b[1])[0]) % 360
+
+
+def _turn(before: float, after: float, threshold: float) -> str:
+    delta = (after - before + 540) % 360 - 180
+    if delta > threshold:
+        return "right"
+    if delta < -threshold:
+        return "left"
+    return "straight"
+
+
+def _landmark(pois: gpd.GeoDataFrame, node: Point, radius: float) -> dict[str, Any] | None:
+    best: tuple[float, str, str | None] | None = None
+    for feature_id, name, geometry in zip(
+        pois["feature_id"], pois["name"], pois.geometry, strict=True
+    ):
+        if geometry.distance(node) > NEAR_DEG:
+            continue
+        distance = _distance_m(node, geometry)
+        if distance <= radius and (best is None or (distance, feature_id) < best[:2]):
+            best = (distance, feature_id, _text(name))
+    if best is None:
+        return None
+    return {"feature_id": best[1], "name": best[2], "distance_m": best[0]}
+
+
+def direction_key(params: Mapping[str, Any], layers: Layers) -> dict[str, Any]:
+    """Turn-by-turn directions along the shortest walk, with the nearest landmark (a POI within
+    ``landmark_radius_m``) where each step after the first begins, and the straight-line bearing
+    from start to end."""
+    start, end = _place(layers, params["from"]), _place(layers, params["to"])
+    radius = float(params.get("landmark_radius_m", 30.0))
+    threshold = float(params.get("turn_threshold_deg", 30.0))
+    graph = WalkGraph(layers)
+    route = graph.route(start, end)
+    azimuth = float(GEOD.inv(start.x, start.y, end.x, end.y)[0]) % 360
+    result: dict[str, Any] = {
+        "bearing_deg": azimuth,
+        "compass": COMPASS[round(azimuth / 45) % 8],
+        "straight_line_m": _distance_m(start, end),
+        "reachable": route["reachable"],
+        "walking_m": route["walking_m"],
+        "steps": [],
+    }
+    if not route["reachable"]:
+        return {**result, "reason": route["reason"]}
+    steps: list[dict[str, Any]] = []
+    last_bearing = 0.0
+    for u, v in itertools.pairwise(route["nodes"]):
+        edge = graph.graph.edges[u, v]
+        bearing = _bearing(u, v)
+        if steps and steps[-1]["street"] == edge["name"]:
+            steps[-1]["distance_m"] += edge["length"]
+        else:
+            turn = "start" if not steps else _turn(last_bearing, bearing, threshold)
+            steps.append(
+                {"street": edge["name"], "distance_m": edge["length"], "turn": turn, "_at": u}
+            )
+        last_bearing = bearing
+    pois = layers["pois"]
+    for number, step in enumerate(steps):
+        at = step.pop("_at")
+        step["landmark"] = _landmark(pois, Point(at), radius) if number else None
+    return {**result, "steps": steps}
+
+
 # --- dispatch --------------------------------------------------------------------------------
 
 KEY_FUNCTIONS: dict[str, Callable[[Mapping[str, Any], Layers], dict[str, Any]]] = {
@@ -372,6 +514,8 @@ KEY_FUNCTIONS: dict[str, Callable[[Mapping[str, Any], Layers], dict[str, Any]]] 
     "containment": containment_key,
     "adjacency": adjacency_key,
     "closure": closure_key,
+    "visibility": visibility_key,
+    "direction": direction_key,
 }
 
 

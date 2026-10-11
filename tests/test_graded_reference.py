@@ -7,7 +7,7 @@ from shapely.geometry import Polygon
 from geoevals.graded.city import convert_extract
 from geoevals.graded.reference import load_reference
 from geoevals.validation import load_eval_spec
-from graded_city import ORIGIN, lonlat, overpass_document
+from graded_city import ORIGIN, VIEWPOINT, lonlat, overpass_document
 
 REPO = Path(__file__).parent.parent
 SAMPLE = REPO / "tests" / "fixtures" / "graded" / "sample" / "eval.yaml"
@@ -189,3 +189,60 @@ def test_adjacency_snap_tolerance_is_symmetric(gap_m: float, relation: str) -> N
     assert pair["relation"] == relation
     if relation == "shared_edge":
         assert pair["shared_m"] == pytest.approx(20, abs=0.5)
+
+
+def test_visibility_uses_heights_and_flags_unknown_ones() -> None:
+    key = compute_key(
+        "visibility",
+        {
+            "observer": {"point": VIEWPOINT, "height_m": 1.6},
+            "targets": ["way/400", "way/403", "way/405"],
+        },
+        LAYERS,
+    )
+    assert key["observer_height_m"] == 1.6
+    tower, school, library = (key["targets"][t] for t in ("way/400", "way/403", "way/405"))
+    assert tower["visible"] is True and tower["blocked_by"] == []
+    assert tower["distance_m"] == pytest.approx(150, rel=0.01)
+    assert school["visible"] is False and school["blocked_by"] == ["way/402"]
+    assert library["visible"] is None
+    assert library["unknown_height_on_path"] == ["way/404"]
+    assert library["target_height_m"] == 12.0
+
+
+def test_visibility_from_a_roof() -> None:
+    key = compute_key(
+        "visibility",
+        {"observer": {"feature_id": "way/402", "height_m": 1.6}, "targets": ["way/403"]},
+        LAYERS,
+    )
+    assert key["observer_height_m"] == 26.6
+    assert key["targets"]["way/403"]["visible"] is True
+
+
+def test_directions_give_turns_landmarks_and_a_misleading_bearing() -> None:
+    key = compute_key(
+        "direction", {"from": {"point": ORIGIN}, "to": {"feature_id": "node/501"}}, LAYERS
+    )
+    assert key["compass"] == "S"
+    assert key["walking_m"] == pytest.approx(880, rel=0.01)
+    steps = [(s["street"], s["turn"]) for s in key["steps"]]
+    assert steps == [
+        (None, "start"),
+        ("North Street", "right"),
+        ("Bridge Road", "right"),
+        ("South Street", "right"),
+        (None, "right"),
+    ]
+    assert [round(s["distance_m"] / 10) * 10 for s in key["steps"]] == [40, 300, 200, 300, 40]
+    landmarks = [s["landmark"] and s["landmark"]["feature_id"] for s in key["steps"]]
+    assert landmarks == [None, None, "node/502", None, "node/504"]
+
+
+def test_directions_without_a_route_say_why() -> None:
+    key = compute_key(
+        "direction", {"from": {"point": lonlat(0, 1000)}, "to": {"feature_id": "node/501"}}, LAYERS
+    )
+    assert key["reachable"] is False
+    assert key["reason"] == "too_far_from_network"
+    assert key["steps"] == []
