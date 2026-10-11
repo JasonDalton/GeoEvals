@@ -1,3 +1,4 @@
+from collections.abc import Sequence
 from pathlib import Path
 
 import geopandas as gpd
@@ -329,3 +330,99 @@ def test_unknown_observer_building_height_is_flagged() -> None:
     key = _visibility(layers, {"feature_id": "way/1", "height_m": 1.6})
     assert key["observer_height_known"] is False and key["observer_height_m"] == 1.6
     assert key["targets"]["way/3"]["visible"] is None
+
+
+def _town(
+    ways: Sequence[tuple[int, Sequence[tuple[float, float]], dict[str, str]]],
+    nodes: Sequence[tuple[int, float, float, dict[str, str]]] = (),
+) -> dict[str, gpd.GeoDataFrame]:
+    """Layers of a small extract laid out in meters on the synthetic city's grid."""
+    elements = [
+        {"type": "node", "id": id_, "lon": lonlat(x, y)[0], "lat": lonlat(x, y)[1], "tags": tags}
+        for id_, x, y, tags in nodes
+    ]
+    elements += [
+        {
+            "type": "way",
+            "id": id_,
+            "geometry": [{"lon": lonlat(x, y)[0], "lat": lonlat(x, y)[1]} for x, y in points],
+            "tags": tags,
+        }
+        for id_, points, tags in ways
+    ]
+    return convert_extract({"elements": elements})
+
+
+def test_a_place_beside_a_fragment_joins_the_connected_street() -> None:
+    layers = _town(
+        [
+            (1, [(-100, 0), (0, 0), (100, 0), (200, 0)], {"highway": "residential"}),
+            (2, [(0, 23), (5, 23)], {"highway": "footway"}),  # an unconnected 5 m fragment
+        ],
+        [(9, 100, 0, {"amenity": "pharmacy", "name": "Street Pharmacy"})],
+    )
+    key = compute_key(
+        "proximity", {"from": {"point": lonlat(0, 20)}, "category": {"amenity": "pharmacy"}}, layers
+    )
+    assert key["unreachable"] == []
+    assert key["walking_nearest"] == "node/9"
+    assert key["by_walking"][0]["walking_m"] == pytest.approx(120, rel=0.02)
+    route = module["WalkGraph"](layers).route(
+        module["Point"](*lonlat(0, 20)), module["Point"](*lonlat(100, 0))
+    )
+    assert route["snap_from_m"] == pytest.approx(20, abs=0.5)
+    assert route["snap_to_m"] == pytest.approx(0, abs=0.5)
+    assert all(isinstance(node, tuple) and len(node) == 2 for node in route["nodes"])
+
+
+def _river_town(with_river: bool) -> dict[str, gpd.GeoDataFrame]:
+    """North Street 60 m north of the place, a footway 50 m south; they meet 150 m west."""
+    ways: list[tuple[int, Sequence[tuple[float, float]], dict[str, str]]] = [
+        (1, [(-150, 90), (0, 90), (100, 90)], {"highway": "residential"}),
+        (2, [(-150, -20), (0, -20), (50, -20)], {"highway": "footway"}),
+        (3, [(-150, 90), (-150, -20)], {"highway": "residential", "bridge": "yes"}),
+    ]
+    if with_river:
+        ways.append((4, [(-200, 0), (200, 0)], {"waterway": "river", "name": "Mill River"}))
+    return _town(ways)
+
+
+@pytest.mark.parametrize(
+    ("with_river", "snap_m", "walking_m"), [(False, 50, 100), (True, 60, 60 + 150 + 110 + 200)]
+)
+def test_a_place_does_not_snap_across_a_river(
+    with_river: bool, snap_m: float, walking_m: float
+) -> None:
+    graph = module["WalkGraph"](_river_town(with_river))
+    place = module["Point"](*lonlat(0, 30))
+    assert graph.snap(place)[1] == pytest.approx(50, abs=0.5)  # the footway is nearest
+    route = graph.route(place, module["Point"](*lonlat(50, -20)))
+    assert route["reachable"] is True
+    assert route["snap_from_m"] == pytest.approx(snap_m, abs=0.5)
+    assert route["walking_m"] == pytest.approx(walking_m, rel=0.02)
+
+
+def test_a_place_with_only_barred_vertices_is_blocked() -> None:
+    layers = _town(
+        [
+            (1, [(-50, -20), (50, -20)], {"highway": "footway"}),
+            (2, [(-200, 0), (200, 0)], {"railway": "rail", "name": "Main Line"}),
+        ]
+    )
+    graph = module["WalkGraph"](layers)
+    route = graph.route(module["Point"](*lonlat(0, 30)), module["Point"](*lonlat(50, -20)))
+    assert route["reachable"] is False and route["reason"] == "blocked_by_barrier"
+
+
+def test_a_water_area_is_a_barrier() -> None:
+    lake = [(-200, -10), (200, -10), (200, 10), (-200, 10), (-200, -10)]
+    layers = _town(
+        [
+            (1, [(-50, -20), (50, -20)], {"highway": "footway"}),
+            (2, lake, {"natural": "water"}),
+        ]
+    )
+    route = module["WalkGraph"](layers).route(
+        module["Point"](*lonlat(0, 30)), module["Point"](*lonlat(50, -20))
+    )
+    assert route["reason"] == "blocked_by_barrier"

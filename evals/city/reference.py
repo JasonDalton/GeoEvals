@@ -5,13 +5,17 @@ must agree with. The grader sees the key; the model never does. Keys are compute
 by hand (``geoevals evals regenerate``), and are not committed (OpenStreetMap-derived data).
 
 Distances are geodesic meters on WGS 84. Walking distances use the ``streets`` and ``paths``
-layers as an undirected graph whose nodes are the lines' shared vertices; a place joins the
-network at its nearest vertex after the lines are densified to ``NETWORK_STEP_M``, so the snap
-distance is within a few meters of the distance to the network; a place more than ``MAX_SNAP_M``
-from every vertex is unreachable. Local geometry (shared edges, lines of sight, distance to a
-boundary) is measured in an azimuthal equidistant projection centered on the features involved.
-Every float in a key is rounded to 0.1 (meters, degrees), so the key and its hash are the same on
-every platform.
+layers as an undirected graph whose nodes are the lines' shared vertices, densified to
+``NETWORK_STEP_M``. A place joins the network by a straight snap leg to one of its nearest
+vertices (up to ``MAX_SNAP_CANDIDATES`` within ``MAX_SNAP_M``); a leg that crosses a ``railways``
+line or a ``water`` line or area is not used, and only the nearest usable vertex of each connected
+part of the network is a candidate. The shortest walk picks the best leg at each end, so a place
+beside an isolated fragment still joins the connected street behind it. A place with no
+vertex within ``MAX_SNAP_M`` is unreachable (``too_far_from_network``), as is one whose every
+candidate leg crosses a barrier (``blocked_by_barrier``). Local geometry (shared edges, lines of
+sight, distance to a boundary) is measured in an azimuthal equidistant projection centered on the
+features involved. Every float in a key is rounded to 0.1 (meters, degrees), so the key and its
+hash are the same on every platform.
 
 Key types and their params:
 
@@ -47,10 +51,14 @@ from shapely.geometry.base import BaseGeometry
 WGS84 = "OGC:CRS84"
 GEOD = Geod(ellps="WGS84")
 MAX_SNAP_M = 100.0
+MAX_SNAP_CANDIDATES = 20
 NETWORK_STEP_M = 10.0
 NEAR_DEG = 0.001
 """Prefilter: features farther than this (about 70 to 110 m) cannot be within a tolerance."""
 NETWORK_LAYERS = ("streets", "paths")
+BARRIER_LAYERS = ("railways", "water")
+SOURCE, SINK = "source", "sink"
+"""The virtual end nodes of a route; network nodes are (lon, lat) tuples."""
 COMPASS = ("N", "NE", "E", "SE", "S", "SW", "W", "NW")
 
 Layers = Mapping[str, gpd.GeoDataFrame]
@@ -147,6 +155,19 @@ class WalkGraph:
         self._nodes: list[Node] = list(self.graph.nodes)
         self._lons = np.array([node[0] for node in self._nodes])
         self._lats = np.array([node[1] for node in self._nodes])
+        self._component = {
+            node: number
+            for number, members in enumerate(nx.connected_components(self.graph))
+            for node in members
+        }
+        barriers = [
+            geometry
+            for layer in BARRIER_LAYERS
+            if layer in layers
+            for geometry in layers[layer].geometry
+            if geometry is not None and not geometry.is_empty
+        ]
+        self._barriers = shapely.STRtree(barriers)
 
     def _add_segment(self, a: Any, b: Any, feature_id: str, name: str | None) -> None:
         """Add the segment a-b, split into pieces of at most ``NETWORK_STEP_M``."""
@@ -162,36 +183,103 @@ class WalkGraph:
             if length > 0 and (existing is None or existing["length"] > length):
                 self.graph.add_edge(u, v, length=length, feature_id=feature_id, name=name)
 
-    def snap(self, point: Point) -> tuple[Node | None, float]:
-        """The nearest network vertex and its distance in meters."""
-        if not self._nodes:
-            return None, math.inf
+    def _distances(self, point: Point) -> np.ndarray:
         n = len(self._nodes)
         _, _, distances = GEOD.inv(np.full(n, point.x), np.full(n, point.y), self._lons, self._lats)
+        return np.asarray(distances)
+
+    def snap(self, point: Point) -> tuple[Node | None, float]:
+        """The nearest network vertex and its distance in meters, barriers ignored."""
+        if not self._nodes:
+            return None, math.inf
+        distances = self._distances(point)
         index = int(np.argmin(distances))
         return self._nodes[index], float(distances[index])
 
+    def _crosses_barrier(self, point: Point, node: Node) -> bool:
+        """Whether the straight leg from ``point`` to ``node`` crosses a railway or water."""
+        if (point.x, point.y) == node:
+            return False
+        leg = LineString([(point.x, point.y), node])
+        for position in self._barriers.query(leg):
+            barrier = self._barriers.geometries[int(position)]
+            if barrier.geom_type in ("Polygon", "MultiPolygon"):
+                if barrier.relate_pattern(leg, "T********"):  # the leg enters the area
+                    return True
+            elif leg.relate_pattern(barrier, "T********") or leg.relate_pattern(
+                barrier, "*T*******"
+            ):  # the leg's interior meets the line
+                return True
+        return False
+
+    def candidates(self, point: Point) -> tuple[list[tuple[Node, float]], str | None]:
+        """The vertices a place can snap to, nearest first, and why there are none.
+
+        At most ``MAX_SNAP_CANDIDATES`` vertices within ``MAX_SNAP_M`` are tried; those whose
+        snap leg crosses a barrier are dropped, and of the rest only the nearest vertex of each
+        connected part of the network is kept (a straight leg to a farther vertex of the same
+        part would cut across the block). The reason is None when a candidate is left, else
+        ``too_far_from_network`` or ``blocked_by_barrier``.
+        """
+        distances = self._distances(point)
+        order = sorted(
+            (float(d), self._nodes[i]) for i, d in enumerate(distances) if d <= MAX_SNAP_M
+        )[:MAX_SNAP_CANDIDATES]
+        if not order:
+            return [], "too_far_from_network"
+        found: dict[int, tuple[Node, float]] = {}
+        blocked = True
+        for d, node in order:
+            component = self._component[node]
+            if component in found or self._crosses_barrier(point, node):
+                continue
+            blocked = False
+            found[component] = (node, d)  # the nearest unblocked vertex of each component
+        return list(found.values()), "blocked_by_barrier" if blocked else None
+
     def route(self, start: Point, end: Point) -> dict[str, Any]:
-        """The shortest walk from ``start`` to ``end``, snap distances included."""
-        a, snap_a = self.snap(start)
-        b, snap_b = self.snap(end)
+        """The shortest walk from ``start`` to ``end``, snap legs included.
+
+        A virtual source joins every candidate vertex of ``start``, and a virtual sink every
+        candidate of ``end``, by edges as long as the snap legs; one shortest path picks the
+        best pair. ``snap_from_m`` and ``snap_to_m`` are the legs the walk uses (the nearest
+        vertex distances when there is no walk); ``nodes`` is the walk on the network.
+        """
         result: dict[str, Any] = {
             "reachable": False,
             "walking_m": None,
-            "snap_from_m": snap_a if math.isfinite(snap_a) else None,
-            "snap_to_m": snap_b if math.isfinite(snap_b) else None,
+            "snap_from_m": None,
+            "snap_to_m": None,
             "nodes": [],
         }
-        if a is None or b is None:
+        if not self._nodes:
             return {**result, "reason": "no_network"}
-        if snap_a > MAX_SNAP_M or snap_b > MAX_SNAP_M:
-            return {**result, "reason": "too_far_from_network"}
+        result["snap_from_m"] = self.snap(start)[1]
+        result["snap_to_m"] = self.snap(end)[1]
+        sources, source_reason = self.candidates(start)
+        sinks, sink_reason = self.candidates(end)
+        reasons = {source_reason, sink_reason}
+        for reason in ("too_far_from_network", "blocked_by_barrier"):
+            if reason in reasons:
+                return {**result, "reason": reason}
+        graph = self.graph  # the virtual ends are removed again below
+        graph.add_edges_from((SOURCE, node, {"length": d}) for node, d in sources)
+        graph.add_edges_from((node, SINK, {"length": d}) for node, d in sinks)
         try:
-            nodes = nx.shortest_path(self.graph, a, b, weight="length")
+            path = nx.shortest_path(graph, SOURCE, SINK, weight="length")
+            lengths = [graph.edges[u, v]["length"] for u, v in itertools.pairwise(path)]
         except nx.NetworkXNoPath:
             return {**result, "reason": "not_connected"}
-        length = sum(self.graph.edges[u, v]["length"] for u, v in itertools.pairwise(nodes))
-        return {**result, "reachable": True, "walking_m": snap_a + length + snap_b, "nodes": nodes}
+        finally:
+            graph.remove_nodes_from((SOURCE, SINK))
+        return {
+            **result,
+            "reachable": True,
+            "walking_m": sum(lengths),
+            "snap_from_m": lengths[0],
+            "snap_to_m": lengths[-1],
+            "nodes": path[1:-1],
+        }
 
 
 # --- proximity -------------------------------------------------------------------------------
