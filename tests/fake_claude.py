@@ -22,6 +22,16 @@ def main() -> int:
         return 0
     with open(os.environ["FAKE_CLAUDE_SCENARIO"], encoding="utf-8") as file:
         scenario = json.load(file)
+    sequence = scenario.get("sequence")
+    if sequence is not None:
+        counter = os.environ["FAKE_CLAUDE_SCENARIO"] + ".count"
+        calls = 0
+        if os.path.exists(counter):
+            with open(counter, encoding="utf-8") as file:
+                calls = int(file.read())
+        with open(counter, "w", encoding="utf-8") as file:
+            file.write(str(calls + 1))
+        scenario = sequence[min(calls, len(sequence) - 1)]
     stdin = sys.stdin.read()
     record_path = os.environ.get("FAKE_CLAUDE_RECORD")
     if record_path:
@@ -39,8 +49,13 @@ def main() -> int:
             "ppid": os.getppid(),
             "pid": os.getpid(),
         }
+        records = []
+        if os.path.exists(record_path):
+            with open(record_path, encoding="utf-8") as file:
+                records = json.load(file)
+        records.append(record)
         with open(record_path, "w", encoding="utf-8") as file:
-            json.dump(record, file)
+            json.dump(records, file)
     time.sleep(scenario.get("sleep_s", 0))
     for event in scenario.get("events", []):
         print(json.dumps(event), flush=True)

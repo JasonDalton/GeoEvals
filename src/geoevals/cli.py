@@ -27,6 +27,7 @@ from geoevals.data.inventory import DEFAULT_README, InventoryError, update_inven
 from geoevals.data.licenses import DEFAULT_REPORT, render_report, runtime_dependencies
 from geoevals.data.verify import verify_manifest
 from geoevals.graded.city import LAYERS_DIR, convert_extract, write_layers
+from geoevals.graded.grader import GRADES_FILE, GradeError, GraderConfig, grade_run
 from geoevals.graded.keys import default_data_dir, regenerate_keys
 from geoevals.graded.run import run_eval
 from geoevals.graded.spec import find_eval_spec
@@ -67,6 +68,7 @@ from geoevals.validation.validate import load_yaml
 
 logger = logging.getLogger("geoevals.cli")
 
+GRADER_COMMAND: tuple[str, ...] = ("claude",)
 DEFAULT_PRICES = Path("examples/prices.example.yaml")
 """Relative to the working directory, like the other paths on the command line."""
 
@@ -389,6 +391,23 @@ def build_parser() -> argparse.ArgumentParser:
         "--check",
         action="store_true",
         help="Write nothing; exit 1 when the README table is out of date.",
+    )
+    grade = subparsers.add_parser(
+        "grade",
+        help="Grade a graded run's answers with Claude Opus 5.5 (two passes per answer, on the "
+        "local Claude subscription) and write grades.json into the run directory.",
+    )
+    grade.add_argument("run_dir", type=Path, help="Graded run directory (with result.json).")
+    grade.add_argument(
+        "--data",
+        type=Path,
+        help="Data directory with keys/ (default: the city manifest asset's directory).",
+    )
+    grade.add_argument(
+        "--evals", type=Path, default=Path("evals"), help="Directory of evals (default: evals)."
+    )
+    grade.add_argument(
+        "--passes", type=int, default=2, help="Grading passes per answer (default: 2)."
     )
     evals = subparsers.add_parser("evals", help="Graded eval tools (agent-graded, not benchmarks).")
     evals_commands = evals.add_subparsers(dest="evals_command", required=True)
@@ -923,6 +942,34 @@ def _evals_build_city(dataset_id: str, manifests: Path, source: Path | None) -> 
     return 0
 
 
+def _grade(run_dir: Path, data: Path | None, evals: Path, passes: int) -> int:
+    if passes < 2:
+        print(
+            "--passes must be at least 2: the report states the grader's agreement with itself",
+            file=sys.stderr,
+        )
+        return 1
+    config = GraderConfig(passes=passes, command=GRADER_COMMAND, evals_root=evals)
+    try:
+        grades = grade_run(run_dir, data, config)
+    except SpecValidationError as exc:
+        _print_issues(exc.path, exc.issues)
+        return 1
+    except (GradeError, OSError, ValueError) as exc:
+        print(exc, file=sys.stderr)
+        return 1
+    path = run_dir / GRADES_FILE
+    path.write_text(json.dumps(grades.model_dump(mode="json"), indent=2) + "\n", encoding="utf-8")
+    counts: dict[str, int] = {}
+    for task in grades.tasks:
+        counts[task.status] = counts.get(task.status, 0) + 1
+    print(f"{path}: " + ", ".join(f"{status} {n}" for status, n in sorted(counts.items())))
+    if grades.stopped:
+        print(f"grading stopped: {grades.stopped}", file=sys.stderr)
+        return 1
+    return 0
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
@@ -972,6 +1019,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         return _leaderboard_add(args.run_dir, args.results)
     if args.command == "leaderboard" and args.leaderboard_command == "build":
         return _leaderboard_build(args.results, args.readme, args.check)
+    if args.command == "grade":
+        return _grade(args.run_dir, args.data, args.evals, args.passes)
     if args.command == "evals" and args.evals_command == "measure-town":
         return _evals_measure_town(args.name, args.bbox, args.date, args.out, args.source)
     if args.command == "evals" and args.evals_command == "build-city":
