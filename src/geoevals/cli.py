@@ -524,10 +524,11 @@ def _leaderboard_build(results: Path, readme: Path, check: bool, graded: Path) -
     if rows:
         try:
             from geoevals.graded.plots import plot_files
+
+            plots = plot_files(rows, graded)
         except ImportError:
             print("the graded box plots need matplotlib: uv sync --extra plots", file=sys.stderr)
             return 1
-        plots = plot_files(rows, graded)
     stale = [
         path for path, svg in plots.items()
         if not path.is_file() or path.read_text(encoding="utf-8") != svg
