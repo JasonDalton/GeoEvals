@@ -27,6 +27,8 @@ from geoevals.data.inventory import DEFAULT_README, InventoryError, update_inven
 from geoevals.data.licenses import DEFAULT_REPORT, render_report, runtime_dependencies
 from geoevals.data.verify import verify_manifest
 from geoevals.graded.city import LAYERS_DIR, convert_extract, write_layers
+from geoevals.graded.keys import default_data_dir, regenerate_keys
+from geoevals.graded.spec import find_eval_spec
 from geoevals.graded.towns import EXTRACT_FILE, fetch_candidate, measure_layers, stats_table
 from geoevals.leaderboard.table import (
     DEFAULT_RESULTS,
@@ -414,6 +416,25 @@ def build_parser() -> argparse.ArgumentParser:
         "--source",
         type=Path,
         help="Directory of the fetched extract (default: the manifest asset's directory).",
+    )
+    regen_keys = evals_commands.add_parser(
+        "regenerate",
+        help="Compute an eval's reference keys from the city layers, write them to the gitignored "
+        "data directory and update key_sha256 in its tasks.jsonl.",
+    )
+    regen_keys.add_argument("eval_id", help="The eval ID (a directory under --root).")
+    regen_keys.add_argument(
+        "--root", type=Path, default=Path("evals"), help="Directory of evals (default: evals)."
+    )
+    regen_keys.add_argument(
+        "--data",
+        type=Path,
+        help="Data directory with layers/ (default: the city manifest asset's directory).",
+    )
+    regen_keys.add_argument(
+        "--check",
+        action="store_true",
+        help="Write nothing; exit 1 when a committed key_sha256 is out of date.",
     )
     return parser
 
@@ -809,6 +830,24 @@ def _evals_measure_town(name: str, bbox: Bbox, date: str, out: Path, source: Pat
     return 0
 
 
+def _evals_regenerate(eval_id: str, root: Path, data: Path | None, check: bool) -> int:
+    spec_path = find_eval_spec(root, eval_id)
+    try:
+        data_dir = data or default_data_dir(spec_path)
+        stale = regenerate_keys(spec_path, data_dir, write=not check)
+    except SpecValidationError as exc:
+        _print_issues(exc.path, exc.issues)
+        return 1
+    except (OSError, ValueError, RuntimeError) as exc:
+        print(exc, file=sys.stderr)
+        return 1
+    for task_id in stale:
+        print(f"{task_id}: {'out of date' if check else 'key_sha256 written'}")
+    if not stale:
+        print(f"{spec_path}: keys are up to date")
+    return 1 if check and stale else 0
+
+
 def _evals_build_city(dataset_id: str, manifests: Path, source: Path | None) -> int:
     try:
         path = manifest_path(dataset_id, manifests)
@@ -880,5 +919,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         return _evals_measure_town(args.name, args.bbox, args.date, args.out, args.source)
     if args.command == "evals" and args.evals_command == "build-city":
         return _evals_build_city(args.dataset_id, args.manifests, args.source)
+    if args.command == "evals" and args.evals_command == "regenerate":
+        return _evals_regenerate(args.eval_id, args.root, args.data, args.check)
     parser.print_help()
     return 0
