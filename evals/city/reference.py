@@ -387,15 +387,22 @@ def visibility_key(params: Mapping[str, Any], layers: Layers) -> dict[str, Any]:
     A building on the line blocks it when its height exceeds the line's height where the line
     crosses it (the lower of the entry and exit heights, as the line is straight). A building of
     unknown height on the line leaves the target undecided (``visible`` null). A target of
-    unknown height is sighted at ground level.
+    unknown height is sighted at ground level (``target_height_known`` false): a clear line is
+    still ``visible`` (a taller target only raises the line), but a blocked one is undecided
+    (null), with the blockers still listed. An observer building of unknown height is taken at
+    eye height above the ground (``observer_height_known`` false): targets visible from there stay
+    visible, targets blocked from there are undecided.
     """
     observer = params["observer"]
     eye = float(observer.get("height_m", 1.6))
     observer_id = observer.get("feature_id")
     origin = _place(layers, observer)
     observer_height = eye
+    observer_known = True
     if observer_id is not None:
-        observer_height += _height(_row(layers, observer_id, "buildings")) or 0.0
+        roof = _height(_row(layers, observer_id, "buildings"))
+        observer_known = roof is not None
+        observer_height += roof or 0.0
     project = _projector(origin)
     buildings = layers["buildings"].to_crs(_aeqd(origin))
     index = buildings.sindex
@@ -425,15 +432,25 @@ def visibility_key(params: Mapping[str, Any], layers: Layers) -> dict[str, Any]:
                 unknown.append(other["feature_id"])
             elif height > lowest:
                 blocked.append(other["feature_id"])
-        visible = False if blocked else (None if unknown else True)
+        if unknown:
+            visible = None
+        elif blocked:
+            visible = False if observer_known and target_height is not None else None
+        else:
+            visible = True
         targets[target_id] = {
             "visible": visible,
             "distance_m": length,
             "target_height_m": target_height,
+            "target_height_known": target_height is not None,
             "blocked_by": sorted(blocked),
             "unknown_height_on_path": sorted(unknown),
         }
-    return {"observer_height_m": observer_height, "targets": targets}
+    return {
+        "observer_height_m": observer_height,
+        "observer_height_known": observer_known,
+        "targets": targets,
+    }
 
 
 # --- directions ------------------------------------------------------------------------------
@@ -489,17 +506,21 @@ def direction_key(params: Mapping[str, Any], layers: Layers) -> dict[str, Any]:
         return {**result, "reason": route["reason"]}
     steps: list[dict[str, Any]] = []
     last_bearing = 0.0
+    last_group: tuple[str, Any] | None = None
     for u, v in itertools.pairwise(route["nodes"]):
         edge = graph.graph.edges[u, v]
         bearing = _bearing(u, v)
-        if steps and steps[-1]["street"] == edge["name"]:
+        # a step is one named street, or one unnamed way, without a turn beyond the threshold
+        group = ("name", edge["name"]) if edge["name"] else ("way", edge["feature_id"])
+        bend = steps and _turn(last_bearing, bearing, threshold) != "straight"
+        if steps and group == last_group and not bend:
             steps[-1]["distance_m"] += edge["length"]
         else:
             turn = "start" if not steps else _turn(last_bearing, bearing, threshold)
             steps.append(
                 {"street": edge["name"], "distance_m": edge["length"], "turn": turn, "_at": u}
             )
-        last_bearing = bearing
+        last_group, last_bearing = group, bearing
     pois = layers["pois"]
     for number, step in enumerate(steps):
         at = step.pop("_at")

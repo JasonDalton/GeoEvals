@@ -2,7 +2,7 @@ from pathlib import Path
 
 import geopandas as gpd
 import pytest
-from shapely.geometry import Polygon
+from shapely.geometry import LineString, Polygon
 
 from geoevals.graded.city import convert_extract
 from geoevals.graded.reference import load_reference
@@ -224,6 +224,7 @@ def test_directions_give_turns_landmarks_and_a_misleading_bearing() -> None:
     key = compute_key(
         "direction", {"from": {"point": ORIGIN}, "to": {"feature_id": "node/501"}}, LAYERS
     )
+    assert key["bearing_deg"] == 180.0
     assert key["compass"] == "S"
     assert key["walking_m"] == pytest.approx(880, rel=0.01)
     steps = [(s["street"], s["turn"]) for s in key["steps"]]
@@ -246,3 +247,85 @@ def test_directions_without_a_route_say_why() -> None:
     assert key["reachable"] is False
     assert key["reason"] == "too_far_from_network"
     assert key["steps"] == []
+
+
+def _frame(rows: list[dict]) -> gpd.GeoDataFrame:
+    frame = gpd.GeoDataFrame(rows, crs="OGC:CRS84")
+    return frame
+
+
+def _line_layers(lines: list[tuple[str, str | None, list[tuple[float, float]]]]) -> dict:
+    streets = _frame(
+        [
+            {"feature_id": fid, "name": name, "geometry": LineString([lonlat(*p) for p in pts])}
+            for fid, name, pts in lines
+        ]
+    )
+    empty = gpd.GeoDataFrame(
+        {"feature_id": [], "name": [], "geometry": []}, geometry="geometry", crs="OGC:CRS84"
+    )
+    return {"streets": streets, "paths": empty, "pois": empty}
+
+
+def test_bend_in_a_same_named_street_is_a_turn() -> None:
+    layers = _line_layers([("way/1", "Elm", [(0, 0), (100, 0), (100, 100)])])
+    key = compute_key(
+        "direction", {"from": {"point": lonlat(0, 0)}, "to": {"point": lonlat(100, 100)}}, layers
+    )
+    assert [(s["street"], s["turn"]) for s in key["steps"]] == [("Elm", "start"), ("Elm", "left")]
+
+
+def test_turn_between_unnamed_paths_is_a_step() -> None:
+    layers = _line_layers(
+        [("way/1", None, [(0, 0), (100, 0)]), ("way/2", None, [(100, 0), (100, 100)])]
+    )
+    key = compute_key(
+        "direction", {"from": {"point": lonlat(0, 0)}, "to": {"point": lonlat(100, 100)}}, layers
+    )
+    assert [(s["street"], s["turn"]) for s in key["steps"]] == [(None, "start"), (None, "left")]
+
+
+def _sight_layers(heights: dict[str, float | None]) -> dict:
+    boxes = {
+        "way/1": (0, 0),  # observer
+        "way/2": (50, 0),  # blocker
+        "way/3": (100, 0),  # target
+    }
+    rows = [
+        {
+            "feature_id": fid,
+            "name": None,
+            "height_m": heights[fid],
+            "geometry": Polygon(
+                [lonlat(x, -5), lonlat(x + 10, -5), lonlat(x + 10, 5), lonlat(x, 5)]
+            ),
+        }
+        for fid, (x, _) in boxes.items()
+        if fid in heights
+    ]
+    buildings = _frame(rows)
+    return {"buildings": buildings, "all_features": buildings}
+
+
+def _visibility(layers: dict, observer: dict) -> dict:
+    return compute_key("visibility", {"observer": observer, "targets": ["way/3"]}, layers)
+
+
+def test_unknown_target_height_is_undecided_when_blocked() -> None:
+    layers = _sight_layers({"way/2": 30.0, "way/3": None})
+    target = _visibility(layers, {"point": lonlat(-20, 0), "height_m": 1.6})["targets"]["way/3"]
+    assert target["visible"] is None and target["target_height_known"] is False
+    assert target["blocked_by"] == ["way/2"]
+
+
+def test_unknown_target_height_is_visible_when_clear() -> None:
+    layers = _sight_layers({"way/3": None})
+    target = _visibility(layers, {"point": lonlat(-20, 0), "height_m": 1.6})["targets"]["way/3"]
+    assert target["visible"] is True and target["target_height_known"] is False
+
+
+def test_unknown_observer_building_height_is_flagged() -> None:
+    layers = _sight_layers({"way/1": None, "way/2": 30.0, "way/3": 12.0})
+    key = _visibility(layers, {"feature_id": "way/1", "height_m": 1.6})
+    assert key["observer_height_known"] is False and key["observer_height_m"] == 1.6
+    assert key["targets"]["way/3"]["visible"] is None
