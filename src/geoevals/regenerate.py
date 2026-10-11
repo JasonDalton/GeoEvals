@@ -12,6 +12,11 @@ Files are written in one canonical form: case lines as ``json.dumps`` in the lin
 expected files as indented JSON with sorted keys, and every float rounded as in the run
 directory (``runner.layout.stable``). So regenerating twice gives the same bytes, and the
 committed outputs can be checked with ``regenerate(..., write=False)``.
+
+A committed file counts as current when its JSON matches the regenerated JSON with every number
+within ``NUMBER_TOLERANCE`` (5 decimal places), even if the bytes differ: PROJ and GEOS give
+results that differ in the last digits between platforms (macOS, Linux arm64 and x86_64), and
+such a file is neither reported nor rewritten.
 """
 
 import importlib.util
@@ -27,6 +32,8 @@ from geoevals.validation import load_benchmark_spec
 from geoevals.validation.validate import load_yaml
 
 SPEC_FILE = "benchmark.yaml"
+NUMBER_TOLERANCE = 1e-5
+"""Largest absolute difference between a committed and a regenerated number (5 decimal places)."""
 REFERENCE_FILE = "reference.py"
 
 ReferenceOutput = Callable[[dict[str, Any], Path], dict[str, Any]]
@@ -112,12 +119,55 @@ def expected_outputs(benchmark_dir: Path, benchmark_id: str) -> dict[Path, str]:
     return files
 
 
+def _parse(text: str) -> list[Any] | None:
+    """Every JSON document of ``text`` (one, or one per line), or None if it is not JSON."""
+    try:
+        return [json.loads(text)]
+    except json.JSONDecodeError:
+        pass
+    try:
+        return [json.loads(line) for line in text.splitlines() if line.strip()]
+    except json.JSONDecodeError:
+        return None
+
+
+def _close(committed: Any, regenerated: Any) -> bool:
+    """Whether two JSON values are equal, with numbers within ``NUMBER_TOLERANCE``."""
+    if isinstance(committed, bool) or isinstance(regenerated, bool):
+        return committed is regenerated
+    if isinstance(committed, int | float) and isinstance(regenerated, int | float):
+        return abs(committed - regenerated) <= NUMBER_TOLERANCE
+    if isinstance(committed, dict) and isinstance(regenerated, dict):
+        return list(committed) == list(regenerated) and all(
+            _close(committed[key], regenerated[key]) for key in committed
+        )
+    if isinstance(committed, list) and isinstance(regenerated, list):
+        return len(committed) == len(regenerated) and all(
+            _close(a, b) for a, b in zip(committed, regenerated, strict=True)
+        )
+    return committed == regenerated
+
+
+def same_within_tolerance(committed: str, regenerated: str) -> bool:
+    """Whether two files' contents are equal, or are JSON that is equal with every number
+    within ``NUMBER_TOLERANCE``."""
+    if committed == regenerated:
+        return True
+    committed_json, regenerated_json = _parse(committed), _parse(regenerated)
+    return (
+        committed_json is not None
+        and regenerated_json is not None
+        and _close(committed_json, regenerated_json)
+    )
+
+
 def regenerate(benchmark_dir: Path, benchmark_id: str, write: bool = True) -> list[Path]:
     """Return the files whose committed content differs from the reference workflow's output
-    (missing files included), and rewrite them when ``write`` is true."""
+    beyond ``NUMBER_TOLERANCE`` (missing files included), and rewrite them when ``write`` is
+    true."""
     stale = []
     for path, content in expected_outputs(benchmark_dir, benchmark_id).items():
-        if path.is_file() and path.read_text(encoding="utf-8") == content:
+        if path.is_file() and same_within_tolerance(path.read_text(encoding="utf-8"), content):
             continue
         stale.append(path)
         if write:

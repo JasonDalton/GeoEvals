@@ -78,8 +78,8 @@ uv run geoevals validate <benchmark.yaml | manifest.yaml | result.json>
 
 | Benchmark | Pillar | Cases | Data | Card |
 | --- | --- | --- | --- | --- |
-| `gis_correctness` 0.1.0 | Spatial reasoning | 56: CRS transformation, distance, buffer, validity, spatial join, overlay, abstention | 13 synthetic GeoJSON fixtures (MIT) | [`benchmarks/gis_correctness/README.md`](benchmarks/gis_correctness/README.md) |
-| `human_context_access` 0.1.0 | Human context | 51: travel time, amenity counts, detour ratio, opening hours, abstention | A seeded synthetic town (MIT); the real-geography pilot uses OpenStreetMap (ODbL-1.0, never committed) | [`benchmarks/human_context/README.md`](benchmarks/human_context/README.md) |
+| `gis_correctness` 0.3.0 | Spatial reasoning | 56: CRS transformation, distance, buffer, validity, spatial join, overlay, abstention | 13 synthetic GeoJSON fixtures (MIT) | [`benchmarks/gis_correctness/README.md`](benchmarks/gis_correctness/README.md) |
+| `human_context_access` 0.2.0 | Human context | 51: travel time, amenity counts, detour ratio, opening hours, abstention | A seeded synthetic town (MIT); the real-geography pilot uses OpenStreetMap (ODbL-1.0, never committed) | [`benchmarks/human_context/README.md`](benchmarks/human_context/README.md) |
 | `smoke` 0.1.0 | (CI only) | 5 | Synthetic | [`benchmarks/smoke/benchmark.yaml`](benchmarks/smoke/benchmark.yaml) |
 
 Each card states the purpose, the operations and case counts, the tolerances, the data
@@ -94,6 +94,41 @@ v0.1 ships three adapters, and none of them needs credentials or network access:
 | `gis_baseline` | Deterministic Shapely, pyproj and GeoPandas answers for `gis_correctness` |
 | `access_baseline` | Deterministic `scipy.sparse.csgraph` and GeoPandas answers for `human_context_access` |
 | `mock` | Configurable failures (wrong output, exceptions, sleeps, retries, token counts) and scripted agent trajectories (`mode: mock_agent`) |
+
+Not yet released: six Claude adapters for the leaderboard (`claude_direct_<model>` and
+`claude_python_<model>`) run Claude models through the local Claude Code CLI. They need a
+signed-in Claude Code and, for the python track, Docker. See
+[`leaderboard/README.md`](leaderboard/README.md).
+
+## Leaderboard
+
+Claude models on the two v0.1.0 benchmarks, in two tracks: **direct**, where the model answers
+from the input data inlined in the prompt with no tools, and **python**, where the model can run
+Python (GeoPandas, Shapely, pyproj, NetworkX, SciPy) in a Docker container with no network. Every
+row is a complete run on the maintainer's machine, generated from the committed results in
+[`leaderboard/results/`](leaderboard/results/); these are local runs, not verified submissions.
+How to run and add a model: [`leaderboard/README.md`](leaderboard/README.md).
+
+<!-- leaderboard:start -->
+| Model | Track | Benchmark | Task success (95% CI) | Not scored | Latency p50 / p90 (s) | Tokens in | Tokens out |
+| --- | --- | --- | --- | ---: | ---: | ---: | ---: |
+| Opus 5.5 | direct | `gis_correctness` 0.3.0 | 0.804 [0.70, 0.91] | 0 of 56 | 9.2 / 108.8 | 148,766 | 244,931 |
+| Sonnet 5.5 | direct | `gis_correctness` 0.3.0 | 0.691 [0.56, 0.80] | 1 of 56 | 6.6 / 90.4 | 146,410 | 210,830 |
+| Haiku 5.5 | direct | `gis_correctness` 0.3.0 | 0.800 [0.69, 0.91] | 1 of 56 | 8.9 / 325.5 | 149,465 | 1,100,530 |
+| Opus 5.5 | python | `gis_correctness` 0.3.0 | 0.964 [0.91, 1.00] | 0 of 56 | 7.0 / 13.5 | 383,637 | 34,037 |
+| Sonnet 5.5 | python | `gis_correctness` 0.3.0 | 0.929 [0.86, 0.98] | 0 of 56 | 6.9 / 12.3 | 412,122 | 32,511 |
+| Haiku 5.5 | python | `gis_correctness` 0.3.0 | 0.911 [0.84, 0.98] | 0 of 56 | 7.6 / 15.2 | 499,170 | 60,401 |
+| Opus 5.5 | direct | `human_context_access` 0.2.0 | 0.961 [0.90, 1.00] | 0 of 51 | 13.9 / 24.1 | 3,244,870 | 71,071 |
+| Sonnet 5.5 | direct | `human_context_access` 0.2.0 | 0.725 [0.61, 0.84] | 0 of 51 | 15.0 / 24.8 | 3,245,074 | 89,898 |
+| Haiku 5.5 | direct | `human_context_access` 0.2.0 | 0.882 [0.78, 0.96] | 0 of 51 | 38.3 / 75.5 | 3,244,964 | 469,903 |
+| Opus 5.5 | python | `human_context_access` 0.2.0 | 0.980 [0.94, 1.00] | 0 of 51 | 19.0 / 25.8 | 896,689 | 77,564 |
+| Sonnet 5.5 | python | `human_context_access` 0.2.0 | 0.882 [0.78, 0.96] | 0 of 51 | 17.0 / 21.7 | 839,798 | 79,134 |
+| Haiku 5.5 | python | `human_context_access` 0.2.0 | 0.745 [0.63, 0.86] | 0 of 51 | 28.4 / 39.2 | 1,808,326 | 232,847 |
+
+Run locally through Claude Code 2.1.296 on a Claude subscription, effort high, prompt version v1. Benchmarks: `gis_correctness` 0.3.0, manifest `20beb1d10b21`; `human_context_access` 0.2.0, manifest `f2d344c9051b`.
+
+Task success is the mean of `task_success` over every case, with its 95% interval; cases that were not scored (errors, invalid output, timeouts) count as failures. Latency is the wall-clock time per case, including CLI startup. Tokens in count every prompt token the model processed, cache reads included; tokens out include thinking. Runs on a subscription have no per-token charge, so there is no cost column.
+<!-- leaderboard:end -->
 
 ## Add a benchmark, metric, adapter or dataset manifest
 

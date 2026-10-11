@@ -1,0 +1,5035 @@
+{
+  "adapter": {
+    "config": {
+      "case_timeout_s": 840,
+      "effort": "high",
+      "max_case_usd": 5,
+      "prompt_version": "v1"
+    },
+    "name": "claude_direct_sonnet_5_5",
+    "version": "0.1.0+cc.2.1.296"
+  },
+  "benchmark": {
+    "id": "human_context_access",
+    "version": "0.2.0"
+  },
+  "cases": [
+    {
+      "case_id": "abstention-001",
+      "cost_usd": null,
+      "error": null,
+      "latency_s": 25.0326614159858,
+      "metrics": {
+        "reachable_count_error": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        },
+        "reachable_set_jaccard": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        },
+        "route_stretch_abs_error": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        },
+        "status_match": {
+          "detail": {
+            "expected": "insufficient_data",
+            "predicted": "ok",
+            "reason": "answered_when_should_abstain"
+          },
+          "passed": false,
+          "value": 0.0
+        },
+        "task_success": {
+          "detail": {
+            "checks": {
+              "status_match": {
+                "detail": {
+                  "expected": "insufficient_data",
+                  "predicted": "ok",
+                  "reason": "answered_when_should_abstain"
+                },
+                "passed": false
+              }
+            },
+            "failed": [
+              "status_match"
+            ]
+          },
+          "passed": false,
+          "value": 0.0
+        },
+        "travel_time_abs_error_s": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        },
+        "unknown_set_jaccard": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        }
+      },
+      "output": {
+        "ids": [
+          "poi-027"
+        ],
+        "status": "ok",
+        "units": "s",
+        "value": 947.98
+      },
+      "peak_memory_bytes": 2481543,
+      "retries": 0,
+      "scoring_s": 0.00111079204361886,
+      "split": "test",
+      "status": "scored",
+      "strata": {
+        "abstention": "origin_off_network",
+        "amenity_category": "grocery",
+        "expected_status": "insufficient_data",
+        "neighborhood_type": "outside_network",
+        "operation": "abstention",
+        "request_operation": "nearest_amenity",
+        "time_of_day": "none"
+      },
+      "tokens": {
+        "input": 63582,
+        "output": 2836
+      }
+    },
+    {
+      "case_id": "abstention-002",
+      "cost_usd": null,
+      "error": null,
+      "latency_s": 12.3882928750245,
+      "metrics": {
+        "reachable_count_error": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        },
+        "reachable_set_jaccard": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        },
+        "route_stretch_abs_error": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        },
+        "status_match": {
+          "detail": {
+            "expected": "insufficient_data",
+            "predicted": "insufficient_data"
+          },
+          "passed": true,
+          "value": 1.0
+        },
+        "task_success": {
+          "detail": {
+            "checks": {
+              "status_match": {
+                "detail": {
+                  "expected": "insufficient_data",
+                  "predicted": "insufficient_data"
+                },
+                "passed": true
+              }
+            }
+          },
+          "passed": true,
+          "value": 1.0
+        },
+        "travel_time_abs_error_s": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        },
+        "unknown_set_jaccard": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        }
+      },
+      "output": {
+        "status": "insufficient_data"
+      },
+      "peak_memory_bytes": 1156157,
+      "retries": 0,
+      "scoring_s": 0.000181667041033506,
+      "split": "test",
+      "status": "scored",
+      "strata": {
+        "abstention": "destination_off_network",
+        "amenity_category": "none",
+        "expected_status": "insufficient_data",
+        "neighborhood_type": "grid",
+        "operation": "abstention",
+        "request_operation": "network_detour",
+        "time_of_day": "none"
+      },
+      "tokens": {
+        "input": 63587,
+        "output": 1279
+      }
+    },
+    {
+      "case_id": "abstention-003",
+      "cost_usd": null,
+      "error": null,
+      "latency_s": 6.54940604197327,
+      "metrics": {
+        "reachable_count_error": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        },
+        "reachable_set_jaccard": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        },
+        "route_stretch_abs_error": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        },
+        "status_match": {
+          "detail": {
+            "expected": "insufficient_data",
+            "predicted": "insufficient_data"
+          },
+          "passed": true,
+          "value": 1.0
+        },
+        "task_success": {
+          "detail": {
+            "checks": {
+              "status_match": {
+                "detail": {
+                  "expected": "insufficient_data",
+                  "predicted": "insufficient_data"
+                },
+                "passed": true
+              }
+            }
+          },
+          "passed": true,
+          "value": 1.0
+        },
+        "travel_time_abs_error_s": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        },
+        "unknown_set_jaccard": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        }
+      },
+      "output": {
+        "status": "insufficient_data"
+      },
+      "peak_memory_bytes": 1155600,
+      "retries": 0,
+      "scoring_s": 0.000144875026308,
+      "split": "test",
+      "status": "scored",
+      "strata": {
+        "abstention": "no_path",
+        "amenity_category": "clinic",
+        "expected_status": "insufficient_data",
+        "neighborhood_type": "rural_fringe",
+        "operation": "abstention",
+        "request_operation": "nearest_amenity",
+        "time_of_day": "none"
+      },
+      "tokens": {
+        "input": 63582,
+        "output": 454
+      }
+    },
+    {
+      "case_id": "abstention-004",
+      "cost_usd": null,
+      "error": null,
+      "latency_s": 7.10810479091015,
+      "metrics": {
+        "reachable_count_error": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        },
+        "reachable_set_jaccard": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        },
+        "route_stretch_abs_error": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        },
+        "status_match": {
+          "detail": {
+            "expected": "insufficient_data",
+            "predicted": "insufficient_data"
+          },
+          "passed": true,
+          "value": 1.0
+        },
+        "task_success": {
+          "detail": {
+            "checks": {
+              "status_match": {
+                "detail": {
+                  "expected": "insufficient_data",
+                  "predicted": "insufficient_data"
+                },
+                "passed": true
+              }
+            }
+          },
+          "passed": true,
+          "value": 1.0
+        },
+        "travel_time_abs_error_s": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        },
+        "unknown_set_jaccard": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        }
+      },
+      "output": {
+        "status": "insufficient_data"
+      },
+      "peak_memory_bytes": 1155438,
+      "retries": 0,
+      "scoring_s": 0.000311958021484315,
+      "split": "test",
+      "status": "scored",
+      "strata": {
+        "abstention": "no_path",
+        "amenity_category": "none",
+        "expected_status": "insufficient_data",
+        "neighborhood_type": "rural_fringe",
+        "operation": "abstention",
+        "request_operation": "network_detour",
+        "time_of_day": "none"
+      },
+      "tokens": {
+        "input": 63588,
+        "output": 544
+      }
+    },
+    {
+      "case_id": "abstention-005",
+      "cost_usd": null,
+      "error": null,
+      "latency_s": 6.80172833404504,
+      "metrics": {
+        "reachable_count_error": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        },
+        "reachable_set_jaccard": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        },
+        "route_stretch_abs_error": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        },
+        "status_match": {
+          "detail": {
+            "expected": "insufficient_data",
+            "predicted": "insufficient_data"
+          },
+          "passed": true,
+          "value": 1.0
+        },
+        "task_success": {
+          "detail": {
+            "checks": {
+              "status_match": {
+                "detail": {
+                  "expected": "insufficient_data",
+                  "predicted": "insufficient_data"
+                },
+                "passed": true
+              }
+            }
+          },
+          "passed": true,
+          "value": 1.0
+        },
+        "travel_time_abs_error_s": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        },
+        "unknown_set_jaccard": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        }
+      },
+      "output": {
+        "status": "insufficient_data"
+      },
+      "peak_memory_bytes": 1155629,
+      "retries": 0,
+      "scoring_s": 0.000132416025735438,
+      "split": "test",
+      "status": "scored",
+      "strata": {
+        "abstention": "category_not_in_data",
+        "amenity_category": "library",
+        "expected_status": "insufficient_data",
+        "neighborhood_type": "grid",
+        "operation": "abstention",
+        "request_operation": "amenity_count",
+        "time_of_day": "none"
+      },
+      "tokens": {
+        "input": 63585,
+        "output": 157
+      }
+    },
+    {
+      "case_id": "abstention-006",
+      "cost_usd": null,
+      "error": null,
+      "latency_s": 4.23095612507313,
+      "metrics": {
+        "reachable_count_error": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        },
+        "reachable_set_jaccard": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        },
+        "route_stretch_abs_error": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        },
+        "status_match": {
+          "detail": {
+            "expected": "invalid_request",
+            "predicted": "invalid_request"
+          },
+          "passed": true,
+          "value": 1.0
+        },
+        "task_success": {
+          "detail": {
+            "checks": {
+              "status_match": {
+                "detail": {
+                  "expected": "invalid_request",
+                  "predicted": "invalid_request"
+                },
+                "passed": true
+              }
+            }
+          },
+          "passed": true,
+          "value": 1.0
+        },
+        "travel_time_abs_error_s": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        },
+        "unknown_set_jaccard": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        }
+      },
+      "output": {
+        "status": "invalid_request"
+      },
+      "peak_memory_bytes": 1155495,
+      "retries": 0,
+      "scoring_s": 0.000382666010409594,
+      "split": "test",
+      "status": "scored",
+      "strata": {
+        "abstention": "negative_threshold",
+        "amenity_category": "pharmacy",
+        "expected_status": "invalid_request",
+        "neighborhood_type": "mixed_use_core",
+        "operation": "abstention",
+        "request_operation": "amenity_count",
+        "time_of_day": "none"
+      },
+      "tokens": {
+        "input": 63590,
+        "output": 89
+      }
+    },
+    {
+      "case_id": "abstention-007",
+      "cost_usd": null,
+      "error": null,
+      "latency_s": 4.7726186249638,
+      "metrics": {
+        "reachable_count_error": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        },
+        "reachable_set_jaccard": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        },
+        "route_stretch_abs_error": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        },
+        "status_match": {
+          "detail": {
+            "expected": "invalid_request",
+            "predicted": "invalid_request"
+          },
+          "passed": true,
+          "value": 1.0
+        },
+        "task_success": {
+          "detail": {
+            "checks": {
+              "status_match": {
+                "detail": {
+                  "expected": "invalid_request",
+                  "predicted": "invalid_request"
+                },
+                "passed": true
+              }
+            }
+          },
+          "passed": true,
+          "value": 1.0
+        },
+        "travel_time_abs_error_s": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        },
+        "unknown_set_jaccard": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        }
+      },
+      "output": {
+        "status": "invalid_request"
+      },
+      "peak_memory_bytes": 1155542,
+      "retries": 0,
+      "scoring_s": 0.000151290907524526,
+      "split": "test",
+      "status": "scored",
+      "strata": {
+        "abstention": "coincident_points",
+        "amenity_category": "none",
+        "expected_status": "invalid_request",
+        "neighborhood_type": "grid",
+        "operation": "abstention",
+        "request_operation": "network_detour",
+        "time_of_day": "none"
+      },
+      "tokens": {
+        "input": 63590,
+        "output": 156
+      }
+    },
+    {
+      "case_id": "abstention-008",
+      "cost_usd": null,
+      "error": null,
+      "latency_s": 45.4904261250049,
+      "metrics": {
+        "reachable_count_error": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        },
+        "reachable_set_jaccard": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        },
+        "route_stretch_abs_error": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        },
+        "status_match": {
+          "detail": {
+            "expected": "needs_clarification",
+            "predicted": "ok",
+            "reason": "answered_when_should_abstain"
+          },
+          "passed": false,
+          "value": 0.0
+        },
+        "task_success": {
+          "detail": {
+            "checks": {
+              "status_match": {
+                "detail": {
+                  "expected": "needs_clarification",
+                  "predicted": "ok",
+                  "reason": "answered_when_should_abstain"
+                },
+                "passed": false
+              }
+            },
+            "failed": [
+              "status_match"
+            ]
+          },
+          "passed": false,
+          "value": 0.0
+        },
+        "travel_time_abs_error_s": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        },
+        "unknown_set_jaccard": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        }
+      },
+      "output": {
+        "ids": [
+          "poi-003",
+          "poi-005",
+          "poi-007",
+          "poi-012",
+          "poi-013",
+          "poi-014",
+          "poi-015",
+          "poi-016",
+          "poi-018",
+          "poi-019",
+          "poi-020",
+          "poi-021",
+          "poi-022",
+          "poi-023",
+          "poi-024",
+          "poi-025",
+          "poi-026",
+          "poi-031",
+          "poi-032"
+        ],
+        "status": "ok",
+        "units": "count",
+        "value": 19
+      },
+      "peak_memory_bytes": 1155649,
+      "retries": 0,
+      "scoring_s": 0.000434041023254395,
+      "split": "test",
+      "status": "scored",
+      "strata": {
+        "abstention": "category_missing",
+        "amenity_category": "none",
+        "expected_status": "needs_clarification",
+        "neighborhood_type": "grid",
+        "operation": "abstention",
+        "request_operation": "amenity_count",
+        "time_of_day": "none"
+      },
+      "tokens": {
+        "input": 63577,
+        "output": 5734
+      }
+    },
+    {
+      "case_id": "abstention-009",
+      "cost_usd": null,
+      "error": null,
+      "latency_s": 6.66593241598457,
+      "metrics": {
+        "reachable_count_error": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        },
+        "reachable_set_jaccard": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        },
+        "route_stretch_abs_error": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        },
+        "status_match": {
+          "detail": {
+            "expected": "needs_clarification",
+            "predicted": "needs_clarification"
+          },
+          "passed": true,
+          "value": 1.0
+        },
+        "task_success": {
+          "detail": {
+            "checks": {
+              "status_match": {
+                "detail": {
+                  "expected": "needs_clarification",
+                  "predicted": "needs_clarification"
+                },
+                "passed": true
+              }
+            }
+          },
+          "passed": true,
+          "value": 1.0
+        },
+        "travel_time_abs_error_s": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        },
+        "unknown_set_jaccard": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        }
+      },
+      "output": {
+        "status": "needs_clarification"
+      },
+      "peak_memory_bytes": 1155240,
+      "retries": 0,
+      "scoring_s": 0.000121792079880834,
+      "split": "test",
+      "status": "scored",
+      "strata": {
+        "abstention": "threshold_missing",
+        "amenity_category": "pharmacy",
+        "expected_status": "needs_clarification",
+        "neighborhood_type": "cul_de_sac_suburban",
+        "operation": "abstention",
+        "request_operation": "amenity_count",
+        "time_of_day": "none"
+      },
+      "tokens": {
+        "input": 63559,
+        "output": 109
+      }
+    },
+    {
+      "case_id": "abstention-010",
+      "cost_usd": null,
+      "error": null,
+      "latency_s": 9.10986045806203,
+      "metrics": {
+        "reachable_count_error": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        },
+        "reachable_set_jaccard": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        },
+        "route_stretch_abs_error": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        },
+        "status_match": {
+          "detail": {
+            "expected": "needs_clarification",
+            "predicted": "needs_clarification"
+          },
+          "passed": true,
+          "value": 1.0
+        },
+        "task_success": {
+          "detail": {
+            "checks": {
+              "status_match": {
+                "detail": {
+                  "expected": "needs_clarification",
+                  "predicted": "needs_clarification"
+                },
+                "passed": true
+              }
+            }
+          },
+          "passed": true,
+          "value": 1.0
+        },
+        "travel_time_abs_error_s": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        },
+        "unknown_set_jaccard": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        }
+      },
+      "output": {
+        "status": "needs_clarification"
+      },
+      "peak_memory_bytes": 1155420,
+      "retries": 0,
+      "scoring_s": 0.000333375064656138,
+      "split": "test",
+      "status": "scored",
+      "strata": {
+        "abstention": "no_time",
+        "amenity_category": "transit_stop",
+        "day_type": "weekend",
+        "expected_status": "needs_clarification",
+        "hours_feature": "regular",
+        "neighborhood_type": "grid",
+        "operation": "abstention",
+        "request_operation": "open_amenities",
+        "threshold_min": 10,
+        "time_of_day": "none"
+      },
+      "tokens": {
+        "input": 63696,
+        "output": 919
+      }
+    },
+    {
+      "case_id": "abstention-011",
+      "cost_usd": null,
+      "error": null,
+      "latency_s": 4.12573700002395,
+      "metrics": {
+        "reachable_count_error": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        },
+        "reachable_set_jaccard": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        },
+        "route_stretch_abs_error": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        },
+        "status_match": {
+          "detail": {
+            "expected": "invalid_request",
+            "predicted": "invalid_request"
+          },
+          "passed": true,
+          "value": 1.0
+        },
+        "task_success": {
+          "detail": {
+            "checks": {
+              "status_match": {
+                "detail": {
+                  "expected": "invalid_request",
+                  "predicted": "invalid_request"
+                },
+                "passed": true
+              }
+            }
+          },
+          "passed": true,
+          "value": 1.0
+        },
+        "travel_time_abs_error_s": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        },
+        "unknown_set_jaccard": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        }
+      },
+      "output": {
+        "status": "invalid_request"
+      },
+      "peak_memory_bytes": 1155507,
+      "retries": 0,
+      "scoring_s": 0.000167125021107495,
+      "split": "test",
+      "status": "scored",
+      "strata": {
+        "abstention": "unknown_timezone",
+        "amenity_category": "transit_stop",
+        "day_type": "weekend",
+        "expected_status": "invalid_request",
+        "hours_feature": "regular",
+        "neighborhood_type": "grid",
+        "operation": "abstention",
+        "request_operation": "open_amenities",
+        "threshold_min": 10,
+        "time_of_day": "night"
+      },
+      "tokens": {
+        "input": 63718,
+        "output": 158
+      }
+    },
+    {
+      "case_id": "abstention-012",
+      "cost_usd": null,
+      "error": null,
+      "latency_s": 3.5664021250559,
+      "metrics": {
+        "reachable_count_error": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        },
+        "reachable_set_jaccard": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        },
+        "route_stretch_abs_error": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        },
+        "status_match": {
+          "detail": {
+            "expected": "invalid_request",
+            "predicted": "invalid_request"
+          },
+          "passed": true,
+          "value": 1.0
+        },
+        "task_success": {
+          "detail": {
+            "checks": {
+              "status_match": {
+                "detail": {
+                  "expected": "invalid_request",
+                  "predicted": "invalid_request"
+                },
+                "passed": true
+              }
+            }
+          },
+          "passed": true,
+          "value": 1.0
+        },
+        "travel_time_abs_error_s": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        },
+        "unknown_set_jaccard": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        }
+      },
+      "output": {
+        "status": "invalid_request"
+      },
+      "peak_memory_bytes": 1155569,
+      "retries": 0,
+      "scoring_s": 8.77080019563437e-05,
+      "split": "test",
+      "status": "scored",
+      "strata": {
+        "abstention": "invalid_date",
+        "amenity_category": "pharmacy",
+        "day_type": "invalid",
+        "expected_status": "invalid_request",
+        "hours_feature": "regular",
+        "neighborhood_type": "mixed_use_core",
+        "operation": "abstention",
+        "request_operation": "open_amenities",
+        "threshold_min": 15,
+        "time_of_day": "evening"
+      },
+      "tokens": {
+        "input": 63707,
+        "output": 80
+      }
+    },
+    {
+      "case_id": "abstention-013",
+      "cost_usd": null,
+      "error": null,
+      "latency_s": 11.7311102499953,
+      "metrics": {
+        "reachable_count_error": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        },
+        "reachable_set_jaccard": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        },
+        "route_stretch_abs_error": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        },
+        "status_match": {
+          "detail": {
+            "expected": "insufficient_data",
+            "predicted": "ok",
+            "reason": "answered_when_should_abstain"
+          },
+          "passed": false,
+          "value": 0.0
+        },
+        "task_success": {
+          "detail": {
+            "checks": {
+              "status_match": {
+                "detail": {
+                  "expected": "insufficient_data",
+                  "predicted": "ok",
+                  "reason": "answered_when_should_abstain"
+                },
+                "passed": false
+              }
+            },
+            "failed": [
+              "status_match"
+            ]
+          },
+          "passed": false,
+          "value": 0.0
+        },
+        "travel_time_abs_error_s": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        },
+        "unknown_set_jaccard": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        }
+      },
+      "output": {
+        "ids": [],
+        "status": "ok",
+        "units": "count",
+        "unknown_ids": [
+          "poi-036"
+        ],
+        "value": 0
+      },
+      "peak_memory_bytes": 1155634,
+      "retries": 0,
+      "scoring_s": 0.000345709035173059,
+      "split": "test",
+      "status": "scored",
+      "strata": {
+        "abstention": "hours_missing",
+        "amenity_category": "grocery",
+        "day_type": "weekday",
+        "expected_status": "insufficient_data",
+        "hours_feature": "missing_hours",
+        "neighborhood_type": "rural_fringe",
+        "operation": "abstention",
+        "request_operation": "open_amenities",
+        "threshold_min": 10,
+        "time_of_day": "afternoon"
+      },
+      "tokens": {
+        "input": 63710,
+        "output": 859
+      }
+    },
+    {
+      "case_id": "amenity_count-001",
+      "cost_usd": null,
+      "error": null,
+      "latency_s": 15.1832475420088,
+      "metrics": {
+        "reachable_count_error": {
+          "detail": {
+            "signed_error": 0.0
+          },
+          "passed": true,
+          "value": 0.0
+        },
+        "reachable_set_jaccard": {
+          "detail": {},
+          "passed": true,
+          "value": 1.0
+        },
+        "route_stretch_abs_error": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        },
+        "status_match": {
+          "detail": {
+            "expected": "ok",
+            "predicted": "ok"
+          },
+          "passed": true,
+          "value": 1.0
+        },
+        "task_success": {
+          "detail": {
+            "checks": {
+              "status_match": {
+                "detail": {
+                  "expected": "ok",
+                  "predicted": "ok"
+                },
+                "passed": true
+              },
+              "value_abs_error": {
+                "detail": {},
+                "passed": true
+              }
+            }
+          },
+          "passed": true,
+          "value": 1.0
+        },
+        "travel_time_abs_error_s": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        },
+        "unknown_set_jaccard": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        }
+      },
+      "output": {
+        "ids": [
+          "poi-013",
+          "poi-014"
+        ],
+        "status": "ok",
+        "units": "count",
+        "value": 2
+      },
+      "peak_memory_bytes": 1155904,
+      "retries": 0,
+      "scoring_s": 0.000491457991302013,
+      "split": "test",
+      "status": "scored",
+      "strata": {
+        "amenity_category": "grocery",
+        "neighborhood_type": "grid",
+        "operation": "amenity_count",
+        "threshold_min": 10,
+        "time_of_day": "none"
+      },
+      "tokens": {
+        "input": 63581,
+        "output": 1648
+      }
+    },
+    {
+      "case_id": "amenity_count-002",
+      "cost_usd": null,
+      "error": null,
+      "latency_s": 22.5213344580261,
+      "metrics": {
+        "reachable_count_error": {
+          "detail": {
+            "signed_error": 0.0
+          },
+          "passed": true,
+          "value": 0.0
+        },
+        "reachable_set_jaccard": {
+          "detail": {},
+          "passed": true,
+          "value": 1.0
+        },
+        "route_stretch_abs_error": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        },
+        "status_match": {
+          "detail": {
+            "expected": "ok",
+            "predicted": "ok"
+          },
+          "passed": true,
+          "value": 1.0
+        },
+        "task_success": {
+          "detail": {
+            "checks": {
+              "status_match": {
+                "detail": {
+                  "expected": "ok",
+                  "predicted": "ok"
+                },
+                "passed": true
+              },
+              "value_abs_error": {
+                "detail": {},
+                "passed": true
+              }
+            }
+          },
+          "passed": true,
+          "value": 1.0
+        },
+        "travel_time_abs_error_s": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        },
+        "unknown_set_jaccard": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        }
+      },
+      "output": {
+        "ids": [
+          "poi-001",
+          "poi-002",
+          "poi-003",
+          "poi-013",
+          "poi-014"
+        ],
+        "status": "ok",
+        "units": "count",
+        "value": 5
+      },
+      "peak_memory_bytes": 1155551,
+      "retries": 0,
+      "scoring_s": 0.00047312502283603,
+      "split": "test",
+      "status": "scored",
+      "strata": {
+        "amenity_category": "grocery",
+        "neighborhood_type": "grid",
+        "operation": "amenity_count",
+        "threshold_min": 15,
+        "time_of_day": "none"
+      },
+      "tokens": {
+        "input": 63581,
+        "output": 2610
+      }
+    },
+    {
+      "case_id": "amenity_count-003",
+      "cost_usd": null,
+      "error": null,
+      "latency_s": 21.6573603339493,
+      "metrics": {
+        "reachable_count_error": {
+          "detail": {
+            "signed_error": 0.0
+          },
+          "passed": true,
+          "value": 0.0
+        },
+        "reachable_set_jaccard": {
+          "detail": {},
+          "passed": true,
+          "value": 1.0
+        },
+        "route_stretch_abs_error": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        },
+        "status_match": {
+          "detail": {
+            "expected": "ok",
+            "predicted": "ok"
+          },
+          "passed": true,
+          "value": 1.0
+        },
+        "task_success": {
+          "detail": {
+            "checks": {
+              "status_match": {
+                "detail": {
+                  "expected": "ok",
+                  "predicted": "ok"
+                },
+                "passed": true
+              },
+              "value_abs_error": {
+                "detail": {},
+                "passed": true
+              }
+            }
+          },
+          "passed": true,
+          "value": 1.0
+        },
+        "travel_time_abs_error_s": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        },
+        "unknown_set_jaccard": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        }
+      },
+      "output": {
+        "ids": [
+          "poi-022",
+          "poi-023",
+          "poi-024",
+          "poi-025"
+        ],
+        "status": "ok",
+        "units": "count",
+        "value": 4
+      },
+      "peak_memory_bytes": 1155382,
+      "retries": 0,
+      "scoring_s": 0.000422375043854117,
+      "split": "test",
+      "status": "scored",
+      "strata": {
+        "amenity_category": "transit_stop",
+        "neighborhood_type": "grid",
+        "operation": "amenity_count",
+        "threshold_min": 10,
+        "time_of_day": "none"
+      },
+      "tokens": {
+        "input": 63584,
+        "output": 2538
+      }
+    },
+    {
+      "case_id": "amenity_count-004",
+      "cost_usd": null,
+      "error": null,
+      "latency_s": 18.7502336250618,
+      "metrics": {
+        "reachable_count_error": {
+          "detail": {
+            "signed_error": 0.0
+          },
+          "passed": true,
+          "value": 0.0
+        },
+        "reachable_set_jaccard": {
+          "detail": {},
+          "passed": true,
+          "value": 1.0
+        },
+        "route_stretch_abs_error": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        },
+        "status_match": {
+          "detail": {
+            "expected": "ok",
+            "predicted": "ok"
+          },
+          "passed": true,
+          "value": 1.0
+        },
+        "task_success": {
+          "detail": {
+            "checks": {
+              "status_match": {
+                "detail": {
+                  "expected": "ok",
+                  "predicted": "ok"
+                },
+                "passed": true
+              },
+              "value_abs_error": {
+                "detail": {},
+                "passed": true
+              }
+            }
+          },
+          "passed": true,
+          "value": 1.0
+        },
+        "travel_time_abs_error_s": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        },
+        "unknown_set_jaccard": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        }
+      },
+      "output": {
+        "ids": [
+          "poi-004",
+          "poi-005",
+          "poi-015"
+        ],
+        "status": "ok",
+        "units": "count",
+        "value": 3
+      },
+      "peak_memory_bytes": 1155358,
+      "retries": 0,
+      "scoring_s": 0.000440333969891071,
+      "split": "test",
+      "status": "scored",
+      "strata": {
+        "amenity_category": "pharmacy",
+        "neighborhood_type": "mixed_use_core",
+        "operation": "amenity_count",
+        "threshold_min": 10,
+        "time_of_day": "none"
+      },
+      "tokens": {
+        "input": 63585,
+        "output": 2186
+      }
+    },
+    {
+      "case_id": "amenity_count-005",
+      "cost_usd": null,
+      "error": null,
+      "latency_s": 19.491123334039,
+      "metrics": {
+        "reachable_count_error": {
+          "detail": {
+            "signed_error": 0.0
+          },
+          "passed": true,
+          "value": 0.0
+        },
+        "reachable_set_jaccard": {
+          "detail": {},
+          "passed": true,
+          "value": 1.0
+        },
+        "route_stretch_abs_error": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        },
+        "status_match": {
+          "detail": {
+            "expected": "ok",
+            "predicted": "ok"
+          },
+          "passed": true,
+          "value": 1.0
+        },
+        "task_success": {
+          "detail": {
+            "checks": {
+              "status_match": {
+                "detail": {
+                  "expected": "ok",
+                  "predicted": "ok"
+                },
+                "passed": true
+              },
+              "value_abs_error": {
+                "detail": {},
+                "passed": true
+              }
+            }
+          },
+          "passed": true,
+          "value": 1.0
+        },
+        "travel_time_abs_error_s": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        },
+        "unknown_set_jaccard": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        }
+      },
+      "output": {
+        "ids": [
+          "poi-001",
+          "poi-002",
+          "poi-003",
+          "poi-013",
+          "poi-014"
+        ],
+        "status": "ok",
+        "units": "count",
+        "unknown_ids": [],
+        "value": 5
+      },
+      "peak_memory_bytes": 1155486,
+      "retries": 0,
+      "scoring_s": 0.000579291023313999,
+      "split": "test",
+      "status": "scored",
+      "strata": {
+        "amenity_category": "grocery",
+        "neighborhood_type": "mixed_use_core",
+        "operation": "amenity_count",
+        "threshold_min": 15,
+        "time_of_day": "none"
+      },
+      "tokens": {
+        "input": 63581,
+        "output": 2163
+      }
+    },
+    {
+      "case_id": "amenity_count-006",
+      "cost_usd": null,
+      "error": null,
+      "latency_s": 24.7648333329707,
+      "metrics": {
+        "reachable_count_error": {
+          "detail": {
+            "signed_error": 0.0
+          },
+          "passed": true,
+          "value": 0.0
+        },
+        "reachable_set_jaccard": {
+          "detail": {},
+          "passed": true,
+          "value": 1.0
+        },
+        "route_stretch_abs_error": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        },
+        "status_match": {
+          "detail": {
+            "expected": "ok",
+            "predicted": "ok"
+          },
+          "passed": true,
+          "value": 1.0
+        },
+        "task_success": {
+          "detail": {
+            "checks": {
+              "status_match": {
+                "detail": {
+                  "expected": "ok",
+                  "predicted": "ok"
+                },
+                "passed": true
+              },
+              "value_abs_error": {
+                "detail": {},
+                "passed": true
+              }
+            }
+          },
+          "passed": true,
+          "value": 1.0
+        },
+        "travel_time_abs_error_s": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        },
+        "unknown_set_jaccard": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        }
+      },
+      "output": {
+        "ids": [
+          "poi-021",
+          "poi-031",
+          "poi-032",
+          "poi-033"
+        ],
+        "status": "ok",
+        "units": "count",
+        "value": 4
+      },
+      "peak_memory_bytes": 1155280,
+      "retries": 0,
+      "scoring_s": 0.000312957912683487,
+      "split": "test",
+      "status": "scored",
+      "strata": {
+        "amenity_category": "park",
+        "neighborhood_type": "cul_de_sac_suburban",
+        "operation": "amenity_count",
+        "threshold_min": 10,
+        "time_of_day": "none"
+      },
+      "tokens": {
+        "input": 63579,
+        "output": 2984
+      }
+    },
+    {
+      "case_id": "amenity_count-007",
+      "cost_usd": null,
+      "error": null,
+      "latency_s": 15.7540529159596,
+      "metrics": {
+        "reachable_count_error": {
+          "detail": {
+            "signed_error": 0.0
+          },
+          "passed": true,
+          "value": 0.0
+        },
+        "reachable_set_jaccard": {
+          "detail": {},
+          "passed": true,
+          "value": 1.0
+        },
+        "route_stretch_abs_error": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        },
+        "status_match": {
+          "detail": {
+            "expected": "ok",
+            "predicted": "ok"
+          },
+          "passed": true,
+          "value": 1.0
+        },
+        "task_success": {
+          "detail": {
+            "checks": {
+              "status_match": {
+                "detail": {
+                  "expected": "ok",
+                  "predicted": "ok"
+                },
+                "passed": true
+              },
+              "value_abs_error": {
+                "detail": {},
+                "passed": true
+              }
+            }
+          },
+          "passed": true,
+          "value": 1.0
+        },
+        "travel_time_abs_error_s": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        },
+        "unknown_set_jaccard": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        }
+      },
+      "output": {
+        "ids": [
+          "poi-018",
+          "poi-029",
+          "poi-030"
+        ],
+        "status": "ok",
+        "units": "count",
+        "value": 3
+      },
+      "peak_memory_bytes": 1155420,
+      "retries": 0,
+      "scoring_s": 0.000464832992292941,
+      "split": "test",
+      "status": "scored",
+      "strata": {
+        "amenity_category": "school",
+        "neighborhood_type": "cul_de_sac_suburban",
+        "operation": "amenity_count",
+        "threshold_min": 15,
+        "time_of_day": "none"
+      },
+      "tokens": {
+        "input": 63578,
+        "output": 1901
+      }
+    },
+    {
+      "case_id": "amenity_count-008",
+      "cost_usd": null,
+      "error": null,
+      "latency_s": 12.6672900000121,
+      "metrics": {
+        "reachable_count_error": {
+          "detail": {
+            "signed_error": 0.0
+          },
+          "passed": true,
+          "value": 0.0
+        },
+        "reachable_set_jaccard": {
+          "detail": {},
+          "passed": true,
+          "value": 1.0
+        },
+        "route_stretch_abs_error": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        },
+        "status_match": {
+          "detail": {
+            "expected": "ok",
+            "predicted": "ok"
+          },
+          "passed": true,
+          "value": 1.0
+        },
+        "task_success": {
+          "detail": {
+            "checks": {
+              "status_match": {
+                "detail": {
+                  "expected": "ok",
+                  "predicted": "ok"
+                },
+                "passed": true
+              },
+              "value_abs_error": {
+                "detail": {},
+                "passed": true
+              }
+            }
+          },
+          "passed": true,
+          "value": 1.0
+        },
+        "travel_time_abs_error_s": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        },
+        "unknown_set_jaccard": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        }
+      },
+      "output": {
+        "ids": [
+          "poi-039"
+        ],
+        "status": "ok",
+        "units": "count",
+        "unknown_ids": [],
+        "value": 1
+      },
+      "peak_memory_bytes": 1153972,
+      "retries": 0,
+      "scoring_s": 0.000245707924477756,
+      "split": "test",
+      "status": "scored",
+      "strata": {
+        "amenity_category": "park",
+        "neighborhood_type": "rural_fringe",
+        "operation": "amenity_count",
+        "threshold_min": 15,
+        "time_of_day": "none"
+      },
+      "tokens": {
+        "input": 63578,
+        "output": 1396
+      }
+    },
+    {
+      "case_id": "amenity_count-009",
+      "cost_usd": null,
+      "error": null,
+      "latency_s": 14.1676777079701,
+      "metrics": {
+        "reachable_count_error": {
+          "detail": {
+            "signed_error": 0.0
+          },
+          "passed": true,
+          "value": 0.0
+        },
+        "reachable_set_jaccard": {
+          "detail": {},
+          "passed": true,
+          "value": 1.0
+        },
+        "route_stretch_abs_error": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        },
+        "status_match": {
+          "detail": {
+            "expected": "ok",
+            "predicted": "ok"
+          },
+          "passed": true,
+          "value": 1.0
+        },
+        "task_success": {
+          "detail": {
+            "checks": {
+              "status_match": {
+                "detail": {
+                  "expected": "ok",
+                  "predicted": "ok"
+                },
+                "passed": true
+              },
+              "value_abs_error": {
+                "detail": {},
+                "passed": true
+              }
+            }
+          },
+          "passed": true,
+          "value": 1.0
+        },
+        "travel_time_abs_error_s": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        },
+        "unknown_set_jaccard": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        }
+      },
+      "output": {
+        "ids": [
+          "poi-037",
+          "poi-006"
+        ],
+        "status": "ok",
+        "units": "count",
+        "value": 2
+      },
+      "peak_memory_bytes": 1153493,
+      "retries": 0,
+      "scoring_s": 0.000417125062085688,
+      "split": "test",
+      "status": "scored",
+      "strata": {
+        "amenity_category": "school",
+        "neighborhood_type": "rural_fringe",
+        "operation": "amenity_count",
+        "threshold_min": 10,
+        "time_of_day": "none"
+      },
+      "tokens": {
+        "input": 63578,
+        "output": 1377
+      }
+    },
+    {
+      "case_id": "nearest_amenity-001",
+      "cost_usd": null,
+      "error": null,
+      "latency_s": 12.237460208009,
+      "metrics": {
+        "reachable_count_error": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        },
+        "reachable_set_jaccard": {
+          "detail": {},
+          "passed": true,
+          "value": 1.0
+        },
+        "route_stretch_abs_error": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        },
+        "status_match": {
+          "detail": {
+            "expected": "ok",
+            "predicted": "ok"
+          },
+          "passed": true,
+          "value": 1.0
+        },
+        "task_success": {
+          "detail": {
+            "checks": {
+              "status_match": {
+                "detail": {
+                  "expected": "ok",
+                  "predicted": "ok"
+                },
+                "passed": true
+              },
+              "value_abs_error": {
+                "detail": {
+                  "abs_tol": 0.001,
+                  "expected": 225.563909774436,
+                  "predicted": 234.18
+                },
+                "passed": false
+              }
+            },
+            "failed": [
+              "value_abs_error"
+            ]
+          },
+          "passed": false,
+          "value": 0.0
+        },
+        "travel_time_abs_error_s": {
+          "detail": {
+            "expected": 225.563909774436,
+            "predicted": 234.18,
+            "signed_error": 8.61609022556399,
+            "tolerance": 0.001
+          },
+          "passed": false,
+          "value": 8.61609022556399
+        },
+        "unknown_set_jaccard": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        }
+      },
+      "output": {
+        "ids": [
+          "poi-016"
+        ],
+        "status": "ok",
+        "units": "s",
+        "value": 234.18
+      },
+      "peak_memory_bytes": 1153553,
+      "retries": 0,
+      "scoring_s": 0.000300792045891285,
+      "split": "test",
+      "status": "scored",
+      "strata": {
+        "amenity_category": "pharmacy",
+        "neighborhood_type": "grid",
+        "operation": "nearest_amenity",
+        "time_of_day": "none"
+      },
+      "tokens": {
+        "input": 63583,
+        "output": 1321
+      }
+    },
+    {
+      "case_id": "nearest_amenity-002",
+      "cost_usd": null,
+      "error": null,
+      "latency_s": 17.0128105420154,
+      "metrics": {
+        "reachable_count_error": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        },
+        "reachable_set_jaccard": {
+          "detail": {},
+          "passed": true,
+          "value": 1.0
+        },
+        "route_stretch_abs_error": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        },
+        "status_match": {
+          "detail": {
+            "expected": "ok",
+            "predicted": "ok"
+          },
+          "passed": true,
+          "value": 1.0
+        },
+        "task_success": {
+          "detail": {
+            "checks": {
+              "status_match": {
+                "detail": {
+                  "expected": "ok",
+                  "predicted": "ok"
+                },
+                "passed": true
+              },
+              "value_abs_error": {
+                "detail": {
+                  "abs_tol": 0.001,
+                  "expected": 225.563909774436,
+                  "predicted": 235.48556
+                },
+                "passed": false
+              }
+            },
+            "failed": [
+              "value_abs_error"
+            ]
+          },
+          "passed": false,
+          "value": 0.0
+        },
+        "travel_time_abs_error_s": {
+          "detail": {
+            "expected": 225.563909774436,
+            "predicted": 235.48556,
+            "signed_error": 9.92165022556398,
+            "tolerance": 0.001
+          },
+          "passed": false,
+          "value": 9.92165022556398
+        },
+        "unknown_set_jaccard": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        }
+      },
+      "output": {
+        "ids": [
+          "poi-014"
+        ],
+        "status": "ok",
+        "units": "s",
+        "value": 235.48556
+      },
+      "peak_memory_bytes": 1153642,
+      "retries": 0,
+      "scoring_s": 0.000255833962000906,
+      "split": "test",
+      "status": "scored",
+      "strata": {
+        "amenity_category": "grocery",
+        "neighborhood_type": "grid",
+        "operation": "nearest_amenity",
+        "time_of_day": "none"
+      },
+      "tokens": {
+        "input": 63578,
+        "output": 1983
+      }
+    },
+    {
+      "case_id": "nearest_amenity-003",
+      "cost_usd": null,
+      "error": null,
+      "latency_s": 20.515623333049,
+      "metrics": {
+        "reachable_count_error": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        },
+        "reachable_set_jaccard": {
+          "detail": {
+            "extra": [
+              "poi-011"
+            ],
+            "min_jaccard": 1.0,
+            "missing": [
+              "poi-026"
+            ]
+          },
+          "passed": false,
+          "value": 0.0
+        },
+        "route_stretch_abs_error": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        },
+        "status_match": {
+          "detail": {
+            "expected": "ok",
+            "predicted": "ok"
+          },
+          "passed": true,
+          "value": 1.0
+        },
+        "task_success": {
+          "detail": {
+            "checks": {
+              "status_match": {
+                "detail": {
+                  "expected": "ok",
+                  "predicted": "ok"
+                },
+                "passed": true
+              },
+              "value_abs_error": {
+                "detail": {
+                  "abs_tol": 0.001,
+                  "expected": 195.488721804511,
+                  "predicted": 233.17293
+                },
+                "passed": false
+              }
+            },
+            "failed": [
+              "value_abs_error"
+            ]
+          },
+          "passed": false,
+          "value": 0.0
+        },
+        "travel_time_abs_error_s": {
+          "detail": {
+            "expected": 195.488721804511,
+            "predicted": 233.17293,
+            "signed_error": 37.684208195489,
+            "tolerance": 0.001
+          },
+          "passed": false,
+          "value": 37.684208195489
+        },
+        "unknown_set_jaccard": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        }
+      },
+      "output": {
+        "ids": [
+          "poi-011"
+        ],
+        "status": "ok",
+        "units": "s",
+        "value": 233.17293
+      },
+      "peak_memory_bytes": 1153873,
+      "retries": 0,
+      "scoring_s": 0.000457708025351167,
+      "split": "test",
+      "status": "scored",
+      "strata": {
+        "amenity_category": "clinic",
+        "neighborhood_type": "mixed_use_core",
+        "operation": "nearest_amenity",
+        "time_of_day": "none"
+      },
+      "tokens": {
+        "input": 63577,
+        "output": 2485
+      }
+    },
+    {
+      "case_id": "nearest_amenity-004",
+      "cost_usd": null,
+      "error": null,
+      "latency_s": 19.5371888750233,
+      "metrics": {
+        "reachable_count_error": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        },
+        "reachable_set_jaccard": {
+          "detail": {
+            "min_jaccard": 1.0,
+            "missing": [
+              "poi-009"
+            ]
+          },
+          "passed": false,
+          "value": 0.5
+        },
+        "route_stretch_abs_error": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        },
+        "status_match": {
+          "detail": {
+            "expected": "ok",
+            "predicted": "ok"
+          },
+          "passed": true,
+          "value": 1.0
+        },
+        "task_success": {
+          "detail": {
+            "checks": {
+              "status_match": {
+                "detail": {
+                  "expected": "ok",
+                  "predicted": "ok"
+                },
+                "passed": true
+              },
+              "value_abs_error": {
+                "detail": {
+                  "abs_tol": 0.001,
+                  "expected": 135.338345864662,
+                  "predicted": 143.16
+                },
+                "passed": false
+              }
+            },
+            "failed": [
+              "value_abs_error"
+            ]
+          },
+          "passed": false,
+          "value": 0.0
+        },
+        "travel_time_abs_error_s": {
+          "detail": {
+            "expected": 135.338345864662,
+            "predicted": 143.16,
+            "signed_error": 7.82165413533801,
+            "tolerance": 0.001
+          },
+          "passed": false,
+          "value": 7.82165413533801
+        },
+        "unknown_set_jaccard": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        }
+      },
+      "output": {
+        "ids": [
+          "poi-010"
+        ],
+        "status": "ok",
+        "units": "s",
+        "value": 143.16
+      },
+      "peak_memory_bytes": 1153448,
+      "retries": 0,
+      "scoring_s": 0.00025416596326977,
+      "split": "test",
+      "status": "scored",
+      "strata": {
+        "amenity_category": "transit_stop",
+        "neighborhood_type": "mixed_use_core",
+        "operation": "nearest_amenity",
+        "time_of_day": "none"
+      },
+      "tokens": {
+        "input": 63580,
+        "output": 2437
+      }
+    },
+    {
+      "case_id": "nearest_amenity-005",
+      "cost_usd": null,
+      "error": null,
+      "latency_s": 17.6859334999463,
+      "metrics": {
+        "reachable_count_error": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        },
+        "reachable_set_jaccard": {
+          "detail": {},
+          "passed": true,
+          "value": 1.0
+        },
+        "route_stretch_abs_error": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        },
+        "status_match": {
+          "detail": {
+            "expected": "ok",
+            "predicted": "ok"
+          },
+          "passed": true,
+          "value": 1.0
+        },
+        "task_success": {
+          "detail": {
+            "checks": {
+              "status_match": {
+                "detail": {
+                  "expected": "ok",
+                  "predicted": "ok"
+                },
+                "passed": true
+              },
+              "value_abs_error": {
+                "detail": {
+                  "abs_tol": 0.001,
+                  "expected": 549.375939849624,
+                  "predicted": 561.09
+                },
+                "passed": false
+              }
+            },
+            "failed": [
+              "value_abs_error"
+            ]
+          },
+          "passed": false,
+          "value": 0.0
+        },
+        "travel_time_abs_error_s": {
+          "detail": {
+            "expected": 549.375939849624,
+            "predicted": 561.09,
+            "signed_error": 11.714060150376,
+            "tolerance": 0.001
+          },
+          "passed": false,
+          "value": 11.714060150376
+        },
+        "unknown_set_jaccard": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        }
+      },
+      "output": {
+        "ids": [
+          "poi-018"
+        ],
+        "status": "ok",
+        "units": "s",
+        "value": 561.09
+      },
+      "peak_memory_bytes": 1153633,
+      "retries": 0,
+      "scoring_s": 0.000138584058731794,
+      "split": "test",
+      "status": "scored",
+      "strata": {
+        "amenity_category": "school",
+        "neighborhood_type": "cul_de_sac_suburban",
+        "operation": "nearest_amenity",
+        "time_of_day": "none"
+      },
+      "tokens": {
+        "input": 63575,
+        "output": 2173
+      }
+    },
+    {
+      "case_id": "nearest_amenity-006",
+      "cost_usd": null,
+      "error": null,
+      "latency_s": 15.734730959055,
+      "metrics": {
+        "reachable_count_error": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        },
+        "reachable_set_jaccard": {
+          "detail": {},
+          "passed": true,
+          "value": 1.0
+        },
+        "route_stretch_abs_error": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        },
+        "status_match": {
+          "detail": {
+            "expected": "ok",
+            "predicted": "ok"
+          },
+          "passed": true,
+          "value": 1.0
+        },
+        "task_success": {
+          "detail": {
+            "checks": {
+              "status_match": {
+                "detail": {
+                  "expected": "ok",
+                  "predicted": "ok"
+                },
+                "passed": true
+              },
+              "value_abs_error": {
+                "detail": {
+                  "abs_tol": 0.001,
+                  "expected": 428.593984962406,
+                  "predicted": 439.54
+                },
+                "passed": false
+              }
+            },
+            "failed": [
+              "value_abs_error"
+            ]
+          },
+          "passed": false,
+          "value": 0.0
+        },
+        "travel_time_abs_error_s": {
+          "detail": {
+            "expected": 428.593984962406,
+            "predicted": 439.54,
+            "signed_error": 10.946015037594,
+            "tolerance": 0.001
+          },
+          "passed": false,
+          "value": 10.946015037594
+        },
+        "unknown_set_jaccard": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        }
+      },
+      "output": {
+        "ids": [
+          "poi-027"
+        ],
+        "status": "ok",
+        "units": "s",
+        "value": 439.54
+      },
+      "peak_memory_bytes": 1153640,
+      "retries": 0,
+      "scoring_s": 0.000317583093419671,
+      "split": "test",
+      "status": "scored",
+      "strata": {
+        "amenity_category": "grocery",
+        "neighborhood_type": "cul_de_sac_suburban",
+        "operation": "nearest_amenity",
+        "time_of_day": "none"
+      },
+      "tokens": {
+        "input": 63580,
+        "output": 1833
+      }
+    },
+    {
+      "case_id": "nearest_amenity-007",
+      "cost_usd": null,
+      "error": null,
+      "latency_s": 11.6208860840416,
+      "metrics": {
+        "reachable_count_error": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        },
+        "reachable_set_jaccard": {
+          "detail": {},
+          "passed": true,
+          "value": 1.0
+        },
+        "route_stretch_abs_error": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        },
+        "status_match": {
+          "detail": {
+            "expected": "ok",
+            "predicted": "ok"
+          },
+          "passed": true,
+          "value": 1.0
+        },
+        "task_success": {
+          "detail": {
+            "checks": {
+              "status_match": {
+                "detail": {
+                  "expected": "ok",
+                  "predicted": "ok"
+                },
+                "passed": true
+              },
+              "value_abs_error": {
+                "detail": {},
+                "passed": true
+              }
+            }
+          },
+          "passed": true,
+          "value": 1.0
+        },
+        "travel_time_abs_error_s": {
+          "detail": {
+            "signed_error": -6.0150409808557e-07
+          },
+          "passed": true,
+          "value": 6.0150409808557e-07
+        },
+        "unknown_set_jaccard": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        }
+      },
+      "output": {
+        "ids": [
+          "poi-038"
+        ],
+        "status": "ok",
+        "units": "s",
+        "value": 537.49624
+      },
+      "peak_memory_bytes": 1153625,
+      "retries": 0,
+      "scoring_s": 0.000508000026457012,
+      "split": "test",
+      "status": "scored",
+      "strata": {
+        "amenity_category": "park",
+        "neighborhood_type": "rural_fringe",
+        "operation": "nearest_amenity",
+        "time_of_day": "none"
+      },
+      "tokens": {
+        "input": 63575,
+        "output": 1206
+      }
+    },
+    {
+      "case_id": "nearest_amenity-008",
+      "cost_usd": null,
+      "error": null,
+      "latency_s": 15.4425901659997,
+      "metrics": {
+        "reachable_count_error": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        },
+        "reachable_set_jaccard": {
+          "detail": {},
+          "passed": true,
+          "value": 1.0
+        },
+        "route_stretch_abs_error": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        },
+        "status_match": {
+          "detail": {
+            "expected": "ok",
+            "predicted": "ok"
+          },
+          "passed": true,
+          "value": 1.0
+        },
+        "task_success": {
+          "detail": {
+            "checks": {
+              "status_match": {
+                "detail": {
+                  "expected": "ok",
+                  "predicted": "ok"
+                },
+                "passed": true
+              },
+              "value_abs_error": {
+                "detail": {
+                  "abs_tol": 0.001,
+                  "expected": 1170.59,
+                  "predicted": 1181.8
+                },
+                "passed": false
+              }
+            },
+            "failed": [
+              "value_abs_error"
+            ]
+          },
+          "passed": false,
+          "value": 0.0
+        },
+        "travel_time_abs_error_s": {
+          "detail": {
+            "expected": 1170.59,
+            "predicted": 1181.8,
+            "signed_error": 11.21,
+            "tolerance": 0.001
+          },
+          "passed": false,
+          "value": 11.21
+        },
+        "unknown_set_jaccard": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        }
+      },
+      "output": {
+        "ids": [
+          "poi-041"
+        ],
+        "status": "ok",
+        "units": "s",
+        "value": 1181.8
+      },
+      "peak_memory_bytes": 1152020,
+      "retries": 0,
+      "scoring_s": 0.000109249958768487,
+      "split": "test",
+      "status": "scored",
+      "strata": {
+        "amenity_category": "clinic",
+        "neighborhood_type": "rural_fringe",
+        "operation": "nearest_amenity",
+        "time_of_day": "none"
+      },
+      "tokens": {
+        "input": 63593,
+        "output": 1678
+      }
+    },
+    {
+      "case_id": "network_detour-001",
+      "cost_usd": null,
+      "error": null,
+      "latency_s": 13.2209539579926,
+      "metrics": {
+        "reachable_count_error": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        },
+        "reachable_set_jaccard": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        },
+        "route_stretch_abs_error": {
+          "detail": {
+            "expected": 1.41420164190199,
+            "predicted": 1.41102,
+            "signed_error": -0.00318164190199011,
+            "tolerance": 0.0001
+          },
+          "passed": false,
+          "value": 0.00318164190199011
+        },
+        "status_match": {
+          "detail": {
+            "expected": "ok",
+            "predicted": "ok"
+          },
+          "passed": true,
+          "value": 1.0
+        },
+        "task_success": {
+          "detail": {
+            "checks": {
+              "status_match": {
+                "detail": {
+                  "expected": "ok",
+                  "predicted": "ok"
+                },
+                "passed": true
+              },
+              "value_abs_error": {
+                "detail": {
+                  "abs_tol": 0.0001,
+                  "expected": 1.41420164190199,
+                  "predicted": 1.41102
+                },
+                "passed": false
+              }
+            },
+            "failed": [
+              "value_abs_error"
+            ]
+          },
+          "passed": false,
+          "value": 0.0
+        },
+        "travel_time_abs_error_s": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        },
+        "unknown_set_jaccard": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        }
+      },
+      "output": {
+        "status": "ok",
+        "units": "ratio",
+        "value": 1.41102
+      },
+      "peak_memory_bytes": 1151980,
+      "retries": 0,
+      "scoring_s": 0.000591542106121778,
+      "split": "test",
+      "status": "scored",
+      "strata": {
+        "amenity_category": "none",
+        "neighborhood_type": "grid",
+        "operation": "network_detour",
+        "time_of_day": "none"
+      },
+      "tokens": {
+        "input": 63599,
+        "output": 1455
+      }
+    },
+    {
+      "case_id": "network_detour-002",
+      "cost_usd": null,
+      "error": null,
+      "latency_s": 13.1680598749081,
+      "metrics": {
+        "reachable_count_error": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        },
+        "reachable_set_jaccard": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        },
+        "route_stretch_abs_error": {
+          "detail": {
+            "signed_error": 3.55187889988784e-07
+          },
+          "passed": true,
+          "value": 3.55187889988784e-07
+        },
+        "status_match": {
+          "detail": {
+            "expected": "ok",
+            "predicted": "ok"
+          },
+          "passed": true,
+          "value": 1.0
+        },
+        "task_success": {
+          "detail": {
+            "checks": {
+              "status_match": {
+                "detail": {
+                  "expected": "ok",
+                  "predicted": "ok"
+                },
+                "passed": true
+              },
+              "value_abs_error": {
+                "detail": {},
+                "passed": true
+              }
+            }
+          },
+          "passed": true,
+          "value": 1.0
+        },
+        "travel_time_abs_error_s": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        },
+        "unknown_set_jaccard": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        }
+      },
+      "output": {
+        "status": "ok",
+        "units": "ratio",
+        "value": 1.0101
+      },
+      "peak_memory_bytes": 1152023,
+      "retries": 0,
+      "scoring_s": 0.000362624996341765,
+      "split": "test",
+      "status": "scored",
+      "strata": {
+        "amenity_category": "none",
+        "neighborhood_type": "grid",
+        "operation": "network_detour",
+        "time_of_day": "none"
+      },
+      "tokens": {
+        "input": 63604,
+        "output": 1345
+      }
+    },
+    {
+      "case_id": "network_detour-003",
+      "cost_usd": null,
+      "error": null,
+      "latency_s": 12.6726879169,
+      "metrics": {
+        "reachable_count_error": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        },
+        "reachable_set_jaccard": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        },
+        "route_stretch_abs_error": {
+          "detail": {
+            "expected": 6.31603601624009,
+            "predicted": 6.281,
+            "signed_error": -0.03503601624009,
+            "tolerance": 0.0001
+          },
+          "passed": false,
+          "value": 0.03503601624009
+        },
+        "status_match": {
+          "detail": {
+            "expected": "ok",
+            "predicted": "ok"
+          },
+          "passed": true,
+          "value": 1.0
+        },
+        "task_success": {
+          "detail": {
+            "checks": {
+              "status_match": {
+                "detail": {
+                  "expected": "ok",
+                  "predicted": "ok"
+                },
+                "passed": true
+              },
+              "value_abs_error": {
+                "detail": {
+                  "abs_tol": 0.0001,
+                  "expected": 6.31603601624009,
+                  "predicted": 6.281
+                },
+                "passed": false
+              }
+            },
+            "failed": [
+              "value_abs_error"
+            ]
+          },
+          "passed": false,
+          "value": 0.0
+        },
+        "travel_time_abs_error_s": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        },
+        "unknown_set_jaccard": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        }
+      },
+      "output": {
+        "status": "ok",
+        "units": "ratio",
+        "value": 6.281
+      },
+      "peak_memory_bytes": 1151965,
+      "retries": 0,
+      "scoring_s": 0.000226333038881421,
+      "split": "test",
+      "status": "scored",
+      "strata": {
+        "amenity_category": "none",
+        "neighborhood_type": "cul_de_sac_suburban",
+        "operation": "network_detour",
+        "time_of_day": "none"
+      },
+      "tokens": {
+        "input": 63596,
+        "output": 1281
+      }
+    },
+    {
+      "case_id": "network_detour-004",
+      "cost_usd": null,
+      "error": null,
+      "latency_s": 14.9665029579774,
+      "metrics": {
+        "reachable_count_error": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        },
+        "reachable_set_jaccard": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        },
+        "route_stretch_abs_error": {
+          "detail": {
+            "signed_error": -5.22830945297592e-05
+          },
+          "passed": true,
+          "value": 5.22830945297592e-05
+        },
+        "status_match": {
+          "detail": {
+            "expected": "ok",
+            "predicted": "ok"
+          },
+          "passed": true,
+          "value": 1.0
+        },
+        "task_success": {
+          "detail": {
+            "checks": {
+              "status_match": {
+                "detail": {
+                  "expected": "ok",
+                  "predicted": "ok"
+                },
+                "passed": true
+              },
+              "value_abs_error": {
+                "detail": {},
+                "passed": true
+              }
+            }
+          },
+          "passed": true,
+          "value": 1.0
+        },
+        "travel_time_abs_error_s": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        },
+        "unknown_set_jaccard": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        }
+      },
+      "output": {
+        "status": "ok",
+        "units": "ratio",
+        "value": 3.9756
+      },
+      "peak_memory_bytes": 1151786,
+      "retries": 0,
+      "scoring_s": 0.000423958990722895,
+      "split": "test",
+      "status": "scored",
+      "strata": {
+        "amenity_category": "none",
+        "neighborhood_type": "cul_de_sac_suburban",
+        "operation": "network_detour",
+        "time_of_day": "none"
+      },
+      "tokens": {
+        "input": 63600,
+        "output": 1674
+      }
+    },
+    {
+      "case_id": "network_detour-005",
+      "cost_usd": null,
+      "error": null,
+      "latency_s": 21.2982891660649,
+      "metrics": {
+        "reachable_count_error": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        },
+        "reachable_set_jaccard": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        },
+        "route_stretch_abs_error": {
+          "detail": {
+            "signed_error": -4.72260587014439e-06
+          },
+          "passed": true,
+          "value": 4.72260587014439e-06
+        },
+        "status_match": {
+          "detail": {
+            "expected": "ok",
+            "predicted": "ok"
+          },
+          "passed": true,
+          "value": 1.0
+        },
+        "task_success": {
+          "detail": {
+            "checks": {
+              "status_match": {
+                "detail": {
+                  "expected": "ok",
+                  "predicted": "ok"
+                },
+                "passed": true
+              },
+              "value_abs_error": {
+                "detail": {},
+                "passed": true
+              }
+            }
+          },
+          "passed": true,
+          "value": 1.0
+        },
+        "travel_time_abs_error_s": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        },
+        "unknown_set_jaccard": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        }
+      },
+      "output": {
+        "status": "ok",
+        "units": "ratio",
+        "value": 1.37282
+      },
+      "peak_memory_bytes": 1152295,
+      "retries": 0,
+      "scoring_s": 0.000239167013205588,
+      "split": "test",
+      "status": "scored",
+      "strata": {
+        "amenity_category": "none",
+        "neighborhood_type": "mixed_use_core",
+        "operation": "network_detour",
+        "time_of_day": "none"
+      },
+      "tokens": {
+        "input": 63599,
+        "output": 2603
+      }
+    },
+    {
+      "case_id": "network_detour-006",
+      "cost_usd": null,
+      "error": null,
+      "latency_s": 8.85504024999682,
+      "metrics": {
+        "reachable_count_error": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        },
+        "reachable_set_jaccard": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        },
+        "route_stretch_abs_error": {
+          "detail": {
+            "expected": 1.01367105186691,
+            "predicted": 1.00801,
+            "signed_error": -0.00566105186691002,
+            "tolerance": 0.0001
+          },
+          "passed": false,
+          "value": 0.00566105186691002
+        },
+        "status_match": {
+          "detail": {
+            "expected": "ok",
+            "predicted": "ok"
+          },
+          "passed": true,
+          "value": 1.0
+        },
+        "task_success": {
+          "detail": {
+            "checks": {
+              "status_match": {
+                "detail": {
+                  "expected": "ok",
+                  "predicted": "ok"
+                },
+                "passed": true
+              },
+              "value_abs_error": {
+                "detail": {
+                  "abs_tol": 0.0001,
+                  "expected": 1.01367105186691,
+                  "predicted": 1.00801
+                },
+                "passed": false
+              }
+            },
+            "failed": [
+              "value_abs_error"
+            ]
+          },
+          "passed": false,
+          "value": 0.0
+        },
+        "travel_time_abs_error_s": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        },
+        "unknown_set_jaccard": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        }
+      },
+      "output": {
+        "status": "ok",
+        "units": "ratio",
+        "value": 1.00801
+      },
+      "peak_memory_bytes": 1151965,
+      "retries": 0,
+      "scoring_s": 0.000185500015504658,
+      "split": "test",
+      "status": "scored",
+      "strata": {
+        "amenity_category": "none",
+        "neighborhood_type": "rural_fringe",
+        "operation": "network_detour",
+        "time_of_day": "none"
+      },
+      "tokens": {
+        "input": 63597,
+        "output": 837
+      }
+    },
+    {
+      "case_id": "open_amenities-001",
+      "cost_usd": null,
+      "error": null,
+      "latency_s": 13.5884963750141,
+      "metrics": {
+        "reachable_count_error": {
+          "detail": {
+            "signed_error": 0.0
+          },
+          "passed": true,
+          "value": 0.0
+        },
+        "reachable_set_jaccard": {
+          "detail": {},
+          "passed": true,
+          "value": 1.0
+        },
+        "route_stretch_abs_error": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        },
+        "status_match": {
+          "detail": {
+            "expected": "ok",
+            "predicted": "ok"
+          },
+          "passed": true,
+          "value": 1.0
+        },
+        "task_success": {
+          "detail": {
+            "checks": {
+              "status_match": {
+                "detail": {
+                  "expected": "ok",
+                  "predicted": "ok"
+                },
+                "passed": true
+              },
+              "value_abs_error": {
+                "detail": {},
+                "passed": true
+              }
+            }
+          },
+          "passed": true,
+          "value": 1.0
+        },
+        "travel_time_abs_error_s": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        },
+        "unknown_set_jaccard": {
+          "detail": {},
+          "passed": true,
+          "value": 1.0
+        }
+      },
+      "output": {
+        "ids": [
+          "poi-004"
+        ],
+        "status": "ok",
+        "units": "count",
+        "unknown_ids": [],
+        "value": 1
+      },
+      "peak_memory_bytes": 1152224,
+      "retries": 0,
+      "scoring_s": 0.000570249976590276,
+      "split": "test",
+      "status": "scored",
+      "strata": {
+        "amenity_category": "pharmacy",
+        "day_type": "weekend",
+        "hours_feature": "regular",
+        "neighborhood_type": "mixed_use_core",
+        "operation": "open_amenities",
+        "threshold_min": 15,
+        "time_of_day": "evening"
+      },
+      "tokens": {
+        "input": 63697,
+        "output": 1519
+      }
+    },
+    {
+      "case_id": "open_amenities-002",
+      "cost_usd": null,
+      "error": null,
+      "latency_s": 7.01493320800364,
+      "metrics": {
+        "reachable_count_error": {
+          "detail": {
+            "signed_error": 0.0
+          },
+          "passed": true,
+          "value": 0.0
+        },
+        "reachable_set_jaccard": {
+          "detail": {},
+          "passed": true,
+          "value": 1.0
+        },
+        "route_stretch_abs_error": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        },
+        "status_match": {
+          "detail": {
+            "expected": "ok",
+            "predicted": "ok"
+          },
+          "passed": true,
+          "value": 1.0
+        },
+        "task_success": {
+          "detail": {
+            "checks": {
+              "status_match": {
+                "detail": {
+                  "expected": "ok",
+                  "predicted": "ok"
+                },
+                "passed": true
+              },
+              "value_abs_error": {
+                "detail": {},
+                "passed": true
+              }
+            }
+          },
+          "passed": true,
+          "value": 1.0
+        },
+        "travel_time_abs_error_s": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        },
+        "unknown_set_jaccard": {
+          "detail": {},
+          "passed": true,
+          "value": 1.0
+        }
+      },
+      "output": {
+        "ids": [],
+        "status": "ok",
+        "units": "count",
+        "unknown_ids": [],
+        "value": 0
+      },
+      "peak_memory_bytes": 1152507,
+      "retries": 0,
+      "scoring_s": 0.000159415998496115,
+      "split": "test",
+      "status": "scored",
+      "strata": {
+        "amenity_category": "pharmacy",
+        "day_type": "public_holiday",
+        "hours_feature": "public_holiday",
+        "neighborhood_type": "mixed_use_core",
+        "operation": "open_amenities",
+        "threshold_min": 15,
+        "time_of_day": "evening"
+      },
+      "tokens": {
+        "input": 63730,
+        "output": 585
+      }
+    },
+    {
+      "case_id": "open_amenities-003",
+      "cost_usd": null,
+      "error": null,
+      "latency_s": 14.6939497920685,
+      "metrics": {
+        "reachable_count_error": {
+          "detail": {
+            "signed_error": 0.0
+          },
+          "passed": true,
+          "value": 0.0
+        },
+        "reachable_set_jaccard": {
+          "detail": {},
+          "passed": true,
+          "value": 1.0
+        },
+        "route_stretch_abs_error": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        },
+        "status_match": {
+          "detail": {
+            "expected": "ok",
+            "predicted": "ok"
+          },
+          "passed": true,
+          "value": 1.0
+        },
+        "task_success": {
+          "detail": {
+            "checks": {
+              "status_match": {
+                "detail": {
+                  "expected": "ok",
+                  "predicted": "ok"
+                },
+                "passed": true
+              },
+              "value_abs_error": {
+                "detail": {},
+                "passed": true
+              }
+            }
+          },
+          "passed": true,
+          "value": 1.0
+        },
+        "travel_time_abs_error_s": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        },
+        "unknown_set_jaccard": {
+          "detail": {},
+          "passed": true,
+          "value": 1.0
+        }
+      },
+      "output": {
+        "ids": [
+          "poi-005",
+          "poi-015",
+          "poi-016"
+        ],
+        "status": "ok",
+        "units": "count",
+        "unknown_ids": [],
+        "value": 3
+      },
+      "peak_memory_bytes": 1152215,
+      "retries": 0,
+      "scoring_s": 0.000194416963495314,
+      "split": "test",
+      "status": "scored",
+      "strata": {
+        "amenity_category": "pharmacy",
+        "day_type": "public_holiday",
+        "hours_feature": "public_holiday",
+        "neighborhood_type": "mixed_use_core",
+        "operation": "open_amenities",
+        "threshold_min": 15,
+        "time_of_day": "morning"
+      },
+      "tokens": {
+        "input": 63727,
+        "output": 1777
+      }
+    },
+    {
+      "case_id": "open_amenities-004",
+      "cost_usd": null,
+      "error": null,
+      "latency_s": 23.4513062499464,
+      "metrics": {
+        "reachable_count_error": {
+          "detail": {
+            "signed_error": 0.0
+          },
+          "passed": true,
+          "value": 0.0
+        },
+        "reachable_set_jaccard": {
+          "detail": {},
+          "passed": true,
+          "value": 1.0
+        },
+        "route_stretch_abs_error": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        },
+        "status_match": {
+          "detail": {
+            "expected": "ok",
+            "predicted": "ok"
+          },
+          "passed": true,
+          "value": 1.0
+        },
+        "task_success": {
+          "detail": {
+            "checks": {
+              "status_match": {
+                "detail": {
+                  "expected": "ok",
+                  "predicted": "ok"
+                },
+                "passed": true
+              },
+              "value_abs_error": {
+                "detail": {},
+                "passed": true
+              }
+            }
+          },
+          "passed": true,
+          "value": 1.0
+        },
+        "travel_time_abs_error_s": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        },
+        "unknown_set_jaccard": {
+          "detail": {},
+          "passed": true,
+          "value": 1.0
+        }
+      },
+      "output": {
+        "ids": [
+          "poi-022",
+          "poi-023",
+          "poi-024",
+          "poi-025"
+        ],
+        "status": "ok",
+        "units": "count",
+        "unknown_ids": [],
+        "value": 4
+      },
+      "peak_memory_bytes": 1152225,
+      "retries": 0,
+      "scoring_s": 0.000207082950510085,
+      "split": "test",
+      "status": "scored",
+      "strata": {
+        "amenity_category": "transit_stop",
+        "day_type": "weekend",
+        "hours_feature": "overnight",
+        "neighborhood_type": "grid",
+        "operation": "open_amenities",
+        "threshold_min": 10,
+        "time_of_day": "night"
+      },
+      "tokens": {
+        "input": 63696,
+        "output": 2835
+      }
+    },
+    {
+      "case_id": "open_amenities-005",
+      "cost_usd": null,
+      "error": null,
+      "latency_s": 17.9230487919413,
+      "metrics": {
+        "reachable_count_error": {
+          "detail": {
+            "signed_error": 0.0
+          },
+          "passed": true,
+          "value": 0.0
+        },
+        "reachable_set_jaccard": {
+          "detail": {},
+          "passed": true,
+          "value": 1.0
+        },
+        "route_stretch_abs_error": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        },
+        "status_match": {
+          "detail": {
+            "expected": "ok",
+            "predicted": "ok"
+          },
+          "passed": true,
+          "value": 1.0
+        },
+        "task_success": {
+          "detail": {
+            "checks": {
+              "status_match": {
+                "detail": {
+                  "expected": "ok",
+                  "predicted": "ok"
+                },
+                "passed": true
+              },
+              "value_abs_error": {
+                "detail": {},
+                "passed": true
+              }
+            }
+          },
+          "passed": true,
+          "value": 1.0
+        },
+        "travel_time_abs_error_s": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        },
+        "unknown_set_jaccard": {
+          "detail": {},
+          "passed": true,
+          "value": 1.0
+        }
+      },
+      "output": {
+        "ids": [
+          "poi-024",
+          "poi-025"
+        ],
+        "status": "ok",
+        "units": "count",
+        "unknown_ids": [],
+        "value": 2
+      },
+      "peak_memory_bytes": 1151907,
+      "retries": 0,
+      "scoring_s": 0.000454791937954724,
+      "split": "test",
+      "status": "scored",
+      "strata": {
+        "amenity_category": "transit_stop",
+        "day_type": "weekday",
+        "hours_feature": "overnight",
+        "neighborhood_type": "grid",
+        "operation": "open_amenities",
+        "threshold_min": 10,
+        "time_of_day": "night"
+      },
+      "tokens": {
+        "input": 63696,
+        "output": 2232
+      }
+    },
+    {
+      "case_id": "open_amenities-006",
+      "cost_usd": null,
+      "error": null,
+      "latency_s": 18.4694260000251,
+      "metrics": {
+        "reachable_count_error": {
+          "detail": {
+            "signed_error": 0.0
+          },
+          "passed": true,
+          "value": 0.0
+        },
+        "reachable_set_jaccard": {
+          "detail": {},
+          "passed": true,
+          "value": 1.0
+        },
+        "route_stretch_abs_error": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        },
+        "status_match": {
+          "detail": {
+            "expected": "ok",
+            "predicted": "ok"
+          },
+          "passed": true,
+          "value": 1.0
+        },
+        "task_success": {
+          "detail": {
+            "checks": {
+              "status_match": {
+                "detail": {
+                  "expected": "ok",
+                  "predicted": "ok"
+                },
+                "passed": true
+              },
+              "value_abs_error": {
+                "detail": {},
+                "passed": true
+              }
+            }
+          },
+          "passed": true,
+          "value": 1.0
+        },
+        "travel_time_abs_error_s": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        },
+        "unknown_set_jaccard": {
+          "detail": {},
+          "passed": true,
+          "value": 1.0
+        }
+      },
+      "output": {
+        "ids": [
+          "poi-022",
+          "poi-023",
+          "poi-024",
+          "poi-025"
+        ],
+        "status": "ok",
+        "units": "count",
+        "unknown_ids": [],
+        "value": 4
+      },
+      "peak_memory_bytes": 1152236,
+      "retries": 0,
+      "scoring_s": 0.000246707932092249,
+      "split": "test",
+      "status": "scored",
+      "strata": {
+        "amenity_category": "transit_stop",
+        "day_type": "weekend",
+        "hours_feature": "overnight",
+        "neighborhood_type": "grid",
+        "operation": "open_amenities",
+        "threshold_min": 10,
+        "time_of_day": "night"
+      },
+      "tokens": {
+        "input": 63699,
+        "output": 2105
+      }
+    },
+    {
+      "case_id": "open_amenities-007",
+      "cost_usd": null,
+      "error": null,
+      "latency_s": 24.6195102499332,
+      "metrics": {
+        "reachable_count_error": {
+          "detail": {
+            "signed_error": 0.0
+          },
+          "passed": true,
+          "value": 0.0
+        },
+        "reachable_set_jaccard": {
+          "detail": {},
+          "passed": true,
+          "value": 1.0
+        },
+        "route_stretch_abs_error": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        },
+        "status_match": {
+          "detail": {
+            "expected": "ok",
+            "predicted": "ok"
+          },
+          "passed": true,
+          "value": 1.0
+        },
+        "task_success": {
+          "detail": {
+            "checks": {
+              "status_match": {
+                "detail": {
+                  "expected": "ok",
+                  "predicted": "ok"
+                },
+                "passed": true
+              },
+              "value_abs_error": {
+                "detail": {},
+                "passed": true
+              }
+            }
+          },
+          "passed": true,
+          "value": 1.0
+        },
+        "travel_time_abs_error_s": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        },
+        "unknown_set_jaccard": {
+          "detail": {},
+          "passed": true,
+          "value": 1.0
+        }
+      },
+      "output": {
+        "ids": [
+          "poi-024",
+          "poi-025"
+        ],
+        "status": "ok",
+        "units": "count",
+        "unknown_ids": [],
+        "value": 2
+      },
+      "peak_memory_bytes": 1152292,
+      "retries": 0,
+      "scoring_s": 0.000263125053606927,
+      "split": "test",
+      "status": "scored",
+      "strata": {
+        "amenity_category": "transit_stop",
+        "day_type": "weekend",
+        "hours_feature": "overnight",
+        "neighborhood_type": "grid",
+        "operation": "open_amenities",
+        "threshold_min": 10,
+        "time_of_day": "night"
+      },
+      "tokens": {
+        "input": 63699,
+        "output": 2919
+      }
+    },
+    {
+      "case_id": "open_amenities-008",
+      "cost_usd": null,
+      "error": null,
+      "latency_s": 9.18008833308704,
+      "metrics": {
+        "reachable_count_error": {
+          "detail": {
+            "signed_error": 0.0
+          },
+          "passed": true,
+          "value": 0.0
+        },
+        "reachable_set_jaccard": {
+          "detail": {},
+          "passed": true,
+          "value": 1.0
+        },
+        "route_stretch_abs_error": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        },
+        "status_match": {
+          "detail": {
+            "expected": "ok",
+            "predicted": "ok"
+          },
+          "passed": true,
+          "value": 1.0
+        },
+        "task_success": {
+          "detail": {
+            "checks": {
+              "status_match": {
+                "detail": {
+                  "expected": "ok",
+                  "predicted": "ok"
+                },
+                "passed": true
+              },
+              "value_abs_error": {
+                "detail": {},
+                "passed": true
+              }
+            }
+          },
+          "passed": true,
+          "value": 1.0
+        },
+        "travel_time_abs_error_s": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        },
+        "unknown_set_jaccard": {
+          "detail": {},
+          "passed": true,
+          "value": 1.0
+        }
+      },
+      "output": {
+        "ids": [
+          "poi-003"
+        ],
+        "status": "ok",
+        "units": "count",
+        "unknown_ids": [],
+        "value": 1
+      },
+      "peak_memory_bytes": 1152153,
+      "retries": 0,
+      "scoring_s": 0.000139917014166713,
+      "split": "test",
+      "status": "scored",
+      "strata": {
+        "amenity_category": "grocery",
+        "day_type": "weekend",
+        "hours_feature": "24_7",
+        "neighborhood_type": "mixed_use_core",
+        "operation": "open_amenities",
+        "threshold_min": 10,
+        "time_of_day": "night"
+      },
+      "tokens": {
+        "input": 63694,
+        "output": 898
+      }
+    },
+    {
+      "case_id": "open_amenities-009",
+      "cost_usd": null,
+      "error": null,
+      "latency_s": 27.7342238329584,
+      "metrics": {
+        "reachable_count_error": {
+          "detail": {
+            "signed_error": 0.0
+          },
+          "passed": true,
+          "value": 0.0
+        },
+        "reachable_set_jaccard": {
+          "detail": {},
+          "passed": true,
+          "value": 1.0
+        },
+        "route_stretch_abs_error": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        },
+        "status_match": {
+          "detail": {
+            "expected": "ok",
+            "predicted": "ok"
+          },
+          "passed": true,
+          "value": 1.0
+        },
+        "task_success": {
+          "detail": {
+            "checks": {
+              "status_match": {
+                "detail": {
+                  "expected": "ok",
+                  "predicted": "ok"
+                },
+                "passed": true
+              },
+              "value_abs_error": {
+                "detail": {},
+                "passed": true
+              }
+            }
+          },
+          "passed": true,
+          "value": 1.0
+        },
+        "travel_time_abs_error_s": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        },
+        "unknown_set_jaccard": {
+          "detail": {},
+          "passed": true,
+          "value": 1.0
+        }
+      },
+      "output": {
+        "ids": [
+          "poi-001",
+          "poi-003",
+          "poi-013",
+          "poi-014"
+        ],
+        "status": "ok",
+        "units": "count",
+        "unknown_ids": [],
+        "value": 4
+      },
+      "peak_memory_bytes": 1152353,
+      "retries": 0,
+      "scoring_s": 0.000418707961216569,
+      "split": "test",
+      "status": "scored",
+      "strata": {
+        "amenity_category": "grocery",
+        "day_type": "weekend",
+        "hours_feature": "boundary",
+        "neighborhood_type": "mixed_use_core",
+        "operation": "open_amenities",
+        "threshold_min": 10,
+        "time_of_day": "evening"
+      },
+      "tokens": {
+        "input": 63694,
+        "output": 3121
+      }
+    },
+    {
+      "case_id": "open_amenities-010",
+      "cost_usd": null,
+      "error": null,
+      "latency_s": 34.5633747080574,
+      "metrics": {
+        "reachable_count_error": {
+          "detail": {
+            "signed_error": 0.0
+          },
+          "passed": true,
+          "value": 0.0
+        },
+        "reachable_set_jaccard": {
+          "detail": {},
+          "passed": true,
+          "value": 1.0
+        },
+        "route_stretch_abs_error": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        },
+        "status_match": {
+          "detail": {
+            "expected": "ok",
+            "predicted": "ok"
+          },
+          "passed": true,
+          "value": 1.0
+        },
+        "task_success": {
+          "detail": {
+            "checks": {
+              "status_match": {
+                "detail": {
+                  "expected": "ok",
+                  "predicted": "ok"
+                },
+                "passed": true
+              },
+              "value_abs_error": {
+                "detail": {},
+                "passed": true
+              }
+            }
+          },
+          "passed": true,
+          "value": 1.0
+        },
+        "travel_time_abs_error_s": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        },
+        "unknown_set_jaccard": {
+          "detail": {},
+          "passed": true,
+          "value": 1.0
+        }
+      },
+      "output": {
+        "ids": [
+          "poi-001",
+          "poi-002",
+          "poi-003",
+          "poi-013",
+          "poi-014"
+        ],
+        "status": "ok",
+        "units": "count",
+        "unknown_ids": [],
+        "value": 5
+      },
+      "peak_memory_bytes": 1152202,
+      "retries": 0,
+      "scoring_s": 0.000488082994706929,
+      "split": "test",
+      "status": "scored",
+      "strata": {
+        "amenity_category": "grocery",
+        "day_type": "weekend",
+        "hours_feature": "boundary",
+        "neighborhood_type": "mixed_use_core",
+        "operation": "open_amenities",
+        "threshold_min": 10,
+        "time_of_day": "morning"
+      },
+      "tokens": {
+        "input": 63695,
+        "output": 4417
+      }
+    },
+    {
+      "case_id": "open_amenities-011",
+      "cost_usd": null,
+      "error": null,
+      "latency_s": 16.368336084066,
+      "metrics": {
+        "reachable_count_error": {
+          "detail": {
+            "signed_error": 0.0
+          },
+          "passed": true,
+          "value": 0.0
+        },
+        "reachable_set_jaccard": {
+          "detail": {},
+          "passed": true,
+          "value": 1.0
+        },
+        "route_stretch_abs_error": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        },
+        "status_match": {
+          "detail": {
+            "expected": "ok",
+            "predicted": "ok"
+          },
+          "passed": true,
+          "value": 1.0
+        },
+        "task_success": {
+          "detail": {
+            "checks": {
+              "status_match": {
+                "detail": {
+                  "expected": "ok",
+                  "predicted": "ok"
+                },
+                "passed": true
+              },
+              "value_abs_error": {
+                "detail": {},
+                "passed": true
+              }
+            }
+          },
+          "passed": true,
+          "value": 1.0
+        },
+        "travel_time_abs_error_s": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        },
+        "unknown_set_jaccard": {
+          "detail": {},
+          "passed": true,
+          "value": 1.0
+        }
+      },
+      "output": {
+        "ids": [
+          "poi-012",
+          "poi-026"
+        ],
+        "status": "ok",
+        "units": "count",
+        "unknown_ids": [],
+        "value": 2
+      },
+      "peak_memory_bytes": 1152222,
+      "retries": 0,
+      "scoring_s": 0.000429040985181928,
+      "split": "test",
+      "status": "scored",
+      "strata": {
+        "amenity_category": "clinic",
+        "day_type": "weekday",
+        "hours_feature": "regular",
+        "neighborhood_type": "mixed_use_core",
+        "operation": "open_amenities",
+        "threshold_min": 10,
+        "time_of_day": "afternoon"
+      },
+      "tokens": {
+        "input": 63694,
+        "output": 1869
+      }
+    },
+    {
+      "case_id": "open_amenities-012",
+      "cost_usd": null,
+      "error": null,
+      "latency_s": 11.6737205829704,
+      "metrics": {
+        "reachable_count_error": {
+          "detail": {
+            "signed_error": 0.0
+          },
+          "passed": true,
+          "value": 0.0
+        },
+        "reachable_set_jaccard": {
+          "detail": {},
+          "passed": true,
+          "value": 1.0
+        },
+        "route_stretch_abs_error": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        },
+        "status_match": {
+          "detail": {
+            "expected": "ok",
+            "predicted": "ok"
+          },
+          "passed": true,
+          "value": 1.0
+        },
+        "task_success": {
+          "detail": {
+            "checks": {
+              "status_match": {
+                "detail": {
+                  "expected": "ok",
+                  "predicted": "ok"
+                },
+                "passed": true
+              },
+              "value_abs_error": {
+                "detail": {},
+                "passed": true
+              }
+            }
+          },
+          "passed": true,
+          "value": 1.0
+        },
+        "travel_time_abs_error_s": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        },
+        "unknown_set_jaccard": {
+          "detail": {},
+          "passed": true,
+          "value": 1.0
+        }
+      },
+      "output": {
+        "ids": [
+          "poi-011"
+        ],
+        "status": "ok",
+        "units": "count",
+        "unknown_ids": [],
+        "value": 1
+      },
+      "peak_memory_bytes": 1152214,
+      "retries": 0,
+      "scoring_s": 0.000187417026609182,
+      "split": "test",
+      "status": "scored",
+      "strata": {
+        "amenity_category": "clinic",
+        "day_type": "weekday",
+        "hours_feature": "regular",
+        "neighborhood_type": "mixed_use_core",
+        "operation": "open_amenities",
+        "threshold_min": 10,
+        "time_of_day": "evening"
+      },
+      "tokens": {
+        "input": 63695,
+        "output": 1275
+      }
+    },
+    {
+      "case_id": "open_amenities-013",
+      "cost_usd": null,
+      "error": null,
+      "latency_s": 22.4497890420025,
+      "metrics": {
+        "reachable_count_error": {
+          "detail": {
+            "signed_error": 0.0
+          },
+          "passed": true,
+          "value": 0.0
+        },
+        "reachable_set_jaccard": {
+          "detail": {},
+          "passed": true,
+          "value": 1.0
+        },
+        "route_stretch_abs_error": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        },
+        "status_match": {
+          "detail": {
+            "expected": "ok",
+            "predicted": "ok"
+          },
+          "passed": true,
+          "value": 1.0
+        },
+        "task_success": {
+          "detail": {
+            "checks": {
+              "status_match": {
+                "detail": {
+                  "expected": "ok",
+                  "predicted": "ok"
+                },
+                "passed": true
+              },
+              "value_abs_error": {
+                "detail": {},
+                "passed": true
+              }
+            }
+          },
+          "passed": true,
+          "value": 1.0
+        },
+        "travel_time_abs_error_s": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        },
+        "unknown_set_jaccard": {
+          "detail": {},
+          "passed": true,
+          "value": 1.0
+        }
+      },
+      "output": {
+        "ids": [
+          "poi-021",
+          "poi-032"
+        ],
+        "status": "ok",
+        "units": "count",
+        "unknown_ids": [],
+        "value": 2
+      },
+      "peak_memory_bytes": 1152217,
+      "retries": 0,
+      "scoring_s": 0.000385708059184253,
+      "split": "test",
+      "status": "scored",
+      "strata": {
+        "amenity_category": "park",
+        "day_type": "weekday",
+        "hours_feature": "24_7",
+        "neighborhood_type": "cul_de_sac_suburban",
+        "operation": "open_amenities",
+        "threshold_min": 10,
+        "time_of_day": "evening"
+      },
+      "tokens": {
+        "input": 63692,
+        "output": 2701
+      }
+    },
+    {
+      "case_id": "open_amenities-014",
+      "cost_usd": null,
+      "error": null,
+      "latency_s": 32.6147260830039,
+      "metrics": {
+        "reachable_count_error": {
+          "detail": {
+            "expected": 3.0,
+            "predicted": 5.0,
+            "signed_error": 2.0,
+            "tolerance": 0.0
+          },
+          "passed": false,
+          "value": 2.0
+        },
+        "reachable_set_jaccard": {
+          "detail": {
+            "extra": [
+              "poi-013",
+              "poi-014"
+            ],
+            "min_jaccard": 1.0
+          },
+          "passed": false,
+          "value": 0.6
+        },
+        "route_stretch_abs_error": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        },
+        "status_match": {
+          "detail": {
+            "expected": "ok",
+            "predicted": "ok"
+          },
+          "passed": true,
+          "value": 1.0
+        },
+        "task_success": {
+          "detail": {
+            "checks": {
+              "status_match": {
+                "detail": {
+                  "expected": "ok",
+                  "predicted": "ok"
+                },
+                "passed": true
+              },
+              "value_abs_error": {
+                "detail": {
+                  "abs_tol": 0.0,
+                  "expected": 3.0,
+                  "predicted": 5.0
+                },
+                "passed": false
+              }
+            },
+            "failed": [
+              "value_abs_error"
+            ]
+          },
+          "passed": false,
+          "value": 0.0
+        },
+        "travel_time_abs_error_s": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        },
+        "unknown_set_jaccard": {
+          "detail": {},
+          "passed": true,
+          "value": 1.0
+        }
+      },
+      "output": {
+        "ids": [
+          "poi-001",
+          "poi-002",
+          "poi-003",
+          "poi-013",
+          "poi-014"
+        ],
+        "status": "ok",
+        "units": "count",
+        "unknown_ids": [
+          "poi-036"
+        ],
+        "value": 5
+      },
+      "peak_memory_bytes": 1152281,
+      "retries": 0,
+      "scoring_s": 0.00061125005595386,
+      "split": "test",
+      "status": "scored",
+      "strata": {
+        "amenity_category": "grocery",
+        "day_type": "weekday",
+        "hours_feature": "missing_hours",
+        "neighborhood_type": "rural_fringe",
+        "operation": "open_amenities",
+        "threshold_min": 15,
+        "time_of_day": "afternoon"
+      },
+      "tokens": {
+        "input": 63696,
+        "output": 4042
+      }
+    },
+    {
+      "case_id": "open_amenities-015",
+      "cost_usd": null,
+      "error": null,
+      "latency_s": 10.7775285419775,
+      "metrics": {
+        "reachable_count_error": {
+          "detail": {
+            "signed_error": 0.0
+          },
+          "passed": true,
+          "value": 0.0
+        },
+        "reachable_set_jaccard": {
+          "detail": {},
+          "passed": true,
+          "value": 1.0
+        },
+        "route_stretch_abs_error": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        },
+        "status_match": {
+          "detail": {
+            "expected": "ok",
+            "predicted": "ok"
+          },
+          "passed": true,
+          "value": 1.0
+        },
+        "task_success": {
+          "detail": {
+            "checks": {
+              "status_match": {
+                "detail": {
+                  "expected": "ok",
+                  "predicted": "ok"
+                },
+                "passed": true
+              },
+              "value_abs_error": {
+                "detail": {},
+                "passed": true
+              }
+            }
+          },
+          "passed": true,
+          "value": 1.0
+        },
+        "travel_time_abs_error_s": {
+          "detail": {
+            "applicable": false
+          },
+          "passed": null,
+          "value": null
+        },
+        "unknown_set_jaccard": {
+          "detail": {},
+          "passed": true,
+          "value": 1.0
+        }
+      },
+      "output": {
+        "ids": [],
+        "status": "ok",
+        "units": "count",
+        "unknown_ids": [],
+        "value": 0
+      },
+      "peak_memory_bytes": 1152098,
+      "retries": 0,
+      "scoring_s": 0.000111415982246399,
+      "split": "test",
+      "status": "scored",
+      "strata": {
+        "amenity_category": "school",
+        "day_type": "public_holiday",
+        "hours_feature": "public_holiday",
+        "neighborhood_type": "grid",
+        "operation": "open_amenities",
+        "threshold_min": 10,
+        "time_of_day": "morning"
+      },
+      "tokens": {
+        "input": 63738,
+        "output": 1115
+      }
+    }
+  ],
+  "config_hash": "aacd14e65eaa1188ab73ce42fd9a917379d532e2858d8832e79406d56684356a",
+  "dataset_manifest_hash": "f2d344c9051b3956498c04c8da06dd43c1e1ea893b3169052aa52afdaf556b2a",
+  "efficiency": {
+    "cases_per_s": 0.0627604487286073,
+    "cases_total": 51,
+    "cost_usd_per_case": null,
+    "cost_usd_total": null,
+    "failure_rate": 0.0,
+    "latency_max_s": 45.4904261250049,
+    "latency_p50_s": 14.9665029579774,
+    "latency_p90_s": 24.7648333329707,
+    "latency_p99_s": 40.0269004165311,
+    "mean_steps": null,
+    "peak_rss_bytes": 525467648,
+    "price_table_hash": "bac82dab3dacce874bb244d6293734dafcf129d683e7c78cc207567177435b87",
+    "retries_total": 0,
+    "timeout_rate": 0.0,
+    "tokens_input_total": 3245074,
+    "tokens_output_total": 89898,
+    "tool_error_rate": null,
+    "wall_clock_s": 812.61369274999
+  },
+  "environment": {
+    "cpu_count_logical": 8,
+    "cpu_model": "Apple M1 Pro",
+    "geoevals_version": "0.1.0",
+    "geopandas_version": "1.2.0",
+    "geos_version": "3.14.1",
+    "git_commit": "9eda5fc9a84e359ae63767600482415e79f1088c",
+    "git_dirty": false,
+    "machine": "arm64",
+    "os": "Darwin",
+    "os_release": "25.5.0",
+    "platform": "macOS-26.5.2-arm64-arm-64bit",
+    "proj_version": "9.5.1",
+    "pyproj_version": "3.7.2",
+    "python": "3.11.6",
+    "python_implementation": "CPython",
+    "ram_total_bytes": 17179869184,
+    "shapely_version": "2.2.0",
+    "uv_lock_sha256": "ef03eb7ea7f6e758d17061ad5a3ff9951aa2bad73105153027dff22b9a028a55"
+  },
+  "failures": [],
+  "finished_at": "2026-10-11T17:57:45.335735Z",
+  "limitations": [
+    "One small synthetic town; it tests access computations, not scale or real-world data quality.",
+    "Walking is modeled as a constant speed on mapped street lengths; crossings, slope, signals and personal mobility are not modeled.",
+    "Opening hours are evaluated with a documented subset of the OpenStreetMap syntax (docs/human-context.md); values outside it count as unknown. Travel time is not added to the instant.",
+    "Tolerances are tight because the network, lengths and speed are all given; the detour ratio tolerance (1e-4) accepts a correct ratio given to 5 decimal places and still catches a haversine or planar straight-line distance and any longer path."
+  ],
+  "provenance": {
+    "benchmark": {
+      "authors": [
+        "GeoEvals contributors"
+      ],
+      "created": "2026-10-09",
+      "license": "MIT",
+      "notes": "The town is generated by make_fixture.py (seeded). Every expected output is computed by reference.py with networkx Dijkstra; regenerate them with `geoevals bench regenerate human_context_access`. The tests check every expected output against an independent scipy.sparse.csgraph implementation (the access_baseline adapter).",
+      "reference_workflow": "reference.py"
+    },
+    "dataset": {
+      "assets": [
+        {
+          "asset_id": "town_nodes",
+          "attribution": "GeoEvals contributors",
+          "citation": "GeoEvals contributors (2026). Synthetic town nodes for the human-context access benchmark.",
+          "license": "MIT",
+          "redistributable": true
+        },
+        {
+          "asset_id": "town_edges",
+          "attribution": "GeoEvals contributors",
+          "citation": "GeoEvals contributors (2026). Synthetic town edges for the human-context access benchmark.",
+          "license": "MIT",
+          "redistributable": true
+        },
+        {
+          "asset_id": "town_pois",
+          "attribution": "GeoEvals contributors",
+          "citation": "GeoEvals contributors (2026). Synthetic town pois for the human-context access benchmark.",
+          "license": "MIT",
+          "redistributable": true
+        },
+        {
+          "asset_id": "town_neighborhoods",
+          "attribution": "GeoEvals contributors",
+          "citation": "GeoEvals contributors (2026). Synthetic town neighborhoods for the human-context access benchmark.",
+          "license": "MIT",
+          "redistributable": true
+        }
+      ],
+      "dataset_id": "human_context_access"
+    }
+  },
+  "run_id": "human_context_access-claude_direct_sonnet_5_5-20261011T174412Z-aacd14e6",
+  "schema_version": "1.0.0",
+  "started_at": "2026-10-11T17:44:12.715537Z",
+  "summary_metrics": {
+    "reachable_count_error": {
+      "ci_high": 0.25,
+      "ci_low": 0.0,
+      "mean": 0.0833333333333333,
+      "median": 0.0,
+      "n": 24,
+      "n_failed": 1,
+      "version": "1.0.0"
+    },
+    "reachable_set_jaccard": {
+      "ci_high": 1.0,
+      "ci_low": 0.859375,
+      "mean": 0.940625,
+      "median": 1.0,
+      "n": 32,
+      "n_failed": 3,
+      "version": "1.0.0"
+    },
+    "route_stretch_abs_error": {
+      "ci_high": 0.0185788309849677,
+      "ci_low": 0.000539952194343329,
+      "mean": 0.00732267848288,
+      "median": 0.00161696249825993,
+      "n": 6,
+      "n_failed": 3,
+      "version": "1.0.0"
+    },
+    "status_match": {
+      "ci_high": 1.0,
+      "ci_low": 0.862745098039216,
+      "mean": 0.941176470588235,
+      "median": 1.0,
+      "n": 51,
+      "n_failed": 3,
+      "version": "1.1.0"
+    },
+    "task_success": {
+      "ci_high": 0.843137254901961,
+      "ci_low": 0.607843137254902,
+      "mean": 0.725490196078431,
+      "median": 1.0,
+      "n": 51,
+      "n_failed": 14,
+      "version": "1.3.0"
+    },
+    "travel_time_abs_error_s": {
+      "ci_high": 20.3550681983084,
+      "ci_low": 6.38991233458662,
+      "mean": 12.2392098214286,
+      "median": 10.433832631579,
+      "n": 8,
+      "n_failed": 7,
+      "version": "1.0.0"
+    },
+    "unknown_set_jaccard": {
+      "ci_high": 1.0,
+      "ci_low": 1.0,
+      "mean": 1.0,
+      "median": 1.0,
+      "n": 15,
+      "n_failed": 0,
+      "version": "1.0.0"
+    }
+  }
+}

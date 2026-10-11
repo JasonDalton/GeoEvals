@@ -1,0 +1,25 @@
+# Pilot, direct track: five cases per benchmark; every other case is skipped, so a pilot run is
+# never accepted on the leaderboard. See leaderboard/README.md.
+split: test
+seed: 0
+timeout_s: 900
+max_retries: 0
+workers: 1
+adapter:
+  effort: high
+  prompt_version: v1
+  case_timeout_s: 840
+  max_case_usd: 5
+  only_cases:
+    # gis_correctness
+    - crs_transform-001
+    - distance-003
+    - buffer-001
+    - spatial_join-005
+    # both benchmarks have an abstention-001
+    - abstention-001
+    # human_context_access
+    - nearest_amenity-001
+    - amenity_count-001
+    - network_detour-001
+    - open_amenities-001

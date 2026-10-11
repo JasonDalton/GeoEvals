@@ -19,7 +19,12 @@ from geoevals.adapters.gis_baseline import OPERATIONS, UNITS_IN_M
 from geoevals.cli import main
 from geoevals.data.verify import verify_manifest
 from geoevals.metrics.spatial import reproject
-from geoevals.regenerate import RegenerateError, expected_outputs, regenerate
+from geoevals.regenerate import (
+    RegenerateError,
+    expected_outputs,
+    regenerate,
+    same_within_tolerance,
+)
 from geoevals.reporting.report import report_context
 from geoevals.runner.config import RunConfig
 from geoevals.runner.run import RunError, _resolve_metrics, _score, load_cases, run_benchmark
@@ -55,7 +60,7 @@ def test_spec_validates_with_id_and_version() -> None:
     kind, issues = validate_file(SPEC)
     assert (kind, issues) == ("benchmark spec", [])
     spec = load_benchmark_spec(SPEC)
-    assert (spec.id, spec.version) == ("gis_correctness", "0.1.0")
+    assert (spec.id, spec.version) == ("gis_correctness", "0.3.0")
 
 
 def test_spec_lists_every_case_file() -> None:
@@ -160,10 +165,36 @@ def test_regenerate_rewrites_stale_outputs(tmp_path: Path) -> None:
 
     stale = regenerate(copy, "gis_correctness")
     assert sorted(stale) == sorted([expected_files[0], expected_files[1], case_file])
-    assert case_file.read_text(encoding="utf-8") == original
+    # Rewritten with this platform's PROJ and GEOS, which can differ from the committed files in
+    # the last digits.
+    assert same_within_tolerance(original, case_file.read_text(encoding="utf-8"))
     assert regenerate(copy, "gis_correctness") == []
     for path in expected_files:
-        assert path.read_bytes() == (BENCH / "expected" / path.name).read_bytes()
+        committed = (BENCH / "expected" / path.name).read_text(encoding="utf-8")
+        assert same_within_tolerance(committed, path.read_text(encoding="utf-8"))
+
+
+def test_regenerate_accepts_platform_differences_within_5_decimals(tmp_path: Path) -> None:
+    copy = tmp_path / "gis_correctness"
+    shutil.copytree(BENCH, copy, ignore=shutil.ignore_patterns("__pycache__"))
+    path = copy / "cases" / "distance.jsonl"
+    original = path.read_text(encoding="utf-8")
+    first = json.loads(original.splitlines()[0])
+    value = first["expected"]["value"]
+    assert isinstance(value, float)
+
+    def with_value(new: float) -> str:
+        lines = original.splitlines(keepends=True)
+        case = json.loads(lines[0])
+        case["expected"]["value"] = new
+        return json.dumps(case, ensure_ascii=False) + "\n" + "".join(lines[1:])
+
+    path.write_text(with_value(value + 6e-7), encoding="utf-8")
+    assert regenerate(copy, "gis_correctness", write=False) == []
+    path.write_text(with_value(value + 2e-5), encoding="utf-8")
+    assert regenerate(copy, "gis_correctness") == [path]
+    assert same_within_tolerance(original, path.read_text(encoding="utf-8"))
+    assert not same_within_tolerance(original, with_value(value + 2e-5))
 
 
 def test_regenerate_checks_the_benchmark_id() -> None:
@@ -745,9 +776,26 @@ def test_wrong_attribute_fails_only_attribute_match() -> None:
 
 
 def test_wrong_crs_label_fails_only_crs_match() -> None:
+    # ETRS89 to WGS 84 is a null transformation, so the geometry still matches.
     case = _overlay_case("intersection")
-    result = _task_success({**case.expected, "crs": "EPSG:4326"}, case.case_id)
+    result = _task_success({**case.expected, "crs": "EPSG:4258"}, case.case_id)
     assert result["detail"]["failed"] == ["crs_match"]
+
+
+def test_crs_label_in_the_other_axis_order_passes() -> None:
+    case = _overlay_case("intersection")
+    assert case.expected["crs"] == "OGC:CRS84"
+    result = _task_success({**case.expected, "crs": "EPSG:4326"}, case.case_id)
+    assert result["passed"] is True
+
+
+def test_swapped_coordinates_fail_whatever_the_label() -> None:
+    case = _loaded_case(AXIS_TRAP_CASE)
+    swapped = json.loads(json.dumps(case.expected))
+    swapped["geometry"]["coordinates"].reverse()
+    for label in ("EPSG:4326", "OGC:CRS84"):
+        result = _task_success({**swapped, "crs": label}, AXIS_TRAP_CASE)
+        assert result["detail"]["failed"] == ["geometry_match"], label
 
 
 def test_nearest_join_without_the_max_distance_fails_attributes() -> None:

@@ -82,6 +82,9 @@ uv run geoevals bench regenerate <id> --check   # exit 1 if any committed output
 
 An inline `expected` is replaced in the case line; a string `expected` names the file that is
 rewritten. Each benchmark has a test that the committed outputs match the regenerated ones.
+The check compares numbers to 5 decimal places (an absolute difference of at most 1e-5), not
+bytes: PROJ and GEOS give results that differ in the last digits between macOS, Linux arm64 and
+Linux x86_64, and a file that differs only that way is neither reported nor rewritten.
 
 ## Create a new benchmark
 

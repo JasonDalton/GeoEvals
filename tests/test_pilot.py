@@ -161,7 +161,7 @@ def test_download_instructions_name_the_command_and_the_license() -> None:
 
 def test_network_tests_are_excluded_by_default() -> None:
     config = (ROOT / "pyproject.toml").read_text(encoding="utf-8")
-    assert '"-m", "not network"' in config
+    assert '"-m", "not network and not docker"' in config
     assert "network: " in config
 
 

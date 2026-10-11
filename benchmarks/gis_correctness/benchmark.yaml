@@ -1,6 +1,6 @@
 schema_version: "1.1.0"
 id: gis_correctness
-version: 0.1.0
+version: 0.3.0
 title: GIS correctness
 pillar: spatial_reasoning
 task_statement: >-
@@ -143,7 +143,7 @@ metrics:
     version: 1.1.0
     params: {}
   - id: crs_match
-    version: 1.0.0
+    version: 1.1.0
     params: {}
   - id: geometry_match
     version: 1.1.0
@@ -173,4 +173,4 @@ provenance:
 limitations:
   - Small synthetic fixtures; they test operation correctness, not scale or real-world data quality.
   - Expected outputs come from one reference workflow (Shapely, pyproj, GEOS, PROJ); an error shared by those libraries would not be caught.
-  - Tolerances are set per case and stated in explicit units; a looser tolerance hides small errors.
+  - Tolerances are set per case and stated in explicit units, sized to catch the smallest error of the mistake each case targets; none is tighter than a correct answer given to 5 decimal places needs.

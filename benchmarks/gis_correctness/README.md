@@ -3,7 +3,7 @@
 | Field | Value |
 | --- | --- |
 | Benchmark ID | `gis_correctness` |
-| Version | 0.1.0 (`benchmark.yaml`) |
+| Version | 0.3.0 (`benchmark.yaml`) |
 | Cases | 56, one split (`test`) |
 | License | MIT (spec, cases and fixtures) |
 | Reference workflow | [`reference.py`](reference.py) (Shapely, pyproj, GEOS, PROJ) |
@@ -59,11 +59,16 @@ The checks are `status_match`, `crs_match`, `geometry_match`, `validity_match`,
 `attribute_match`, `value_abs_error` and `value_rel_error`.
 [`docs/metrics.md`](../../docs/metrics.md) defines each metric.
 
+`crs_match` (1.1.0, from benchmark 0.3.0) compares the answer's CRS label up to axis order, so
+`EPSG:4326` passes where `OGC:CRS84` is expected. Coordinates are always longitude first, as
+in GeoJSON. The axis-order trap (`crs_transform-005`) is a test of the coordinates: an answer
+written latitude first fails `geometry_match`, whatever its label.
+
 Each case sets its own tolerances, always with explicit units. The spec sets none.
 
 | Tolerance | Units | Metric | Values used |
 | --- | --- | --- | --- |
-| `tol_m` (Hausdorff distance) | m | `geometry_match` | 0.001 m for CRS transforms, joins and overlays; 0.01 m for geometry repair; 0.01 to 5 m for buffers; 12 m for the NAD27 datum shift (`crs_transform-007`) |
+| `tol_m` (Hausdorff distance) | m | `geometry_match` | 0.001 m for projected CRS transforms, joins and overlays; 1 m for transforms to longitude and latitude (`crs_transform-004`, `-005`); 0.01 m for geometry repair; 0.01 to 5 m for buffers; 12 m for the NAD27 datum shift (`crs_transform-007`) |
 | `area_tol_rel` | ratio | `geometry_match` | 0.01 for buffers; 1e-06 for overlays and repairs |
 | `abs_tol` | the answer's units | `value_abs_error` | 0.001 km, 0.01 m, 0.001 mi, 1e-05 mi, 0.03 ft, 0.03 US survey ft |
 | `rel_tol` | ratio | `value_rel_error` | 1e-06 for every distance |
@@ -72,7 +77,9 @@ Each case sets its own tolerances, always with explicit units. The spec sets non
 The buffer tolerances accept reasonable method choices, not errors. They allow a circle with 8
 or more segments per quarter and any suitable local projection. For example, on `buffer-001`
 the reference (local azimuthal equidistant) and the baseline (estimated UTM zone) differ by
-0.55 m, and the tolerance is 5 m.
+0.55 m, and the tolerance is 5 m. `buffer-005` returns its polygon in longitude and latitude, so
+its tolerance is 1 m, enough for coordinates given to 5 decimal places; its trap (round instead
+of square caps) is 8.3 m off.
 
 ## Collection process
 
@@ -120,7 +127,8 @@ asset is listed in the [license inventory](../../datasets/README.md#license-inve
   libraries share an error, the benchmark does not catch it. The `gis_baseline` adapter uses the
   same libraries, so its perfect score shows that the harness works. It does not show that the
   benchmark is hard.
-- Each case has its own tolerance. A looser tolerance hides small errors.
+- Each case has its own tolerance, sized to catch the smallest error of the mistake the case
+  targets. No tolerance is tighter than a correct answer given to 5 decimal places needs.
 - There is one case per variant. A per-stratum score therefore comes from few cases, often one,
   and its confidence interval is wide.
 - The cases avoid CRS pairs that need a PROJ grid (for example NAD27 in the continental US). Thus

@@ -49,6 +49,16 @@ A change to a metric definition in [`metrics.md`](metrics.md) bumps that metric'
 and the specs that use it then ask for the new version. A change to a benchmark also needs a
 new published baseline (see the benchmark card), or `geoevals reproduce` fails.
 
+When a benchmark change touches only scoring (a metric version, a tolerance, an expected
+output) and leaves everything an adapter sees as it was (cases, prompts, inputs, fixtures and
+`output_schema`, which model adapters receive), a finished run can be scored again from its
+saved outputs instead of rerun: `geoevals rescore <run_dir>`. It rewrites `result.json` (and
+`cases.jsonl`, if present) against the current spec and adds a `limitations` line that names
+the version the run was scored against before. It refuses a run of another benchmark, with
+another dataset manifest or other case IDs, or with a saved output that no longer meets
+`output_schema`. It cannot check prompts, which a run result does not hold: whoever rescores
+checks that the change left them alone. Failed cases stay as they were.
+
 ## Run determinism
 
 With the same config, dataset and lockfile, two runs give identical per-case `status`,
@@ -89,6 +99,19 @@ CI's `reproduce` job runs it on every push for every directory under `baselines/
 environment: `uv sync --frozen --no-cache` from `uv.lock`, with the uv cache turned off. Any
 difference, or a baseline that cannot be read, fails the job. The published baselines are
 listed in [`baselines/README.md`](../baselines/README.md).
+
+## Leaderboard runs
+
+The Claude leaderboard ([`leaderboard/README.md`](../leaderboard/README.md)) pins what it can:
+the benchmark version and dataset manifest hash (the same for every row of a benchmark), the
+run config in `leaderboard/configs/`, the prompt template version
+(`src/geoevals/adapters/prompts/`), the effort level, the model ID, and the Claude Code version
+(in the adapter version). The python track's sandbox image is built from `uv.lock`.
+
+Model outputs are not deterministic, so a leaderboard run cannot be reproduced bit for bit, and
+`geoevals reproduce` does not apply to it. Each committed `result.json` holds every case's
+output and scores, and `uv run geoevals leaderboard build` rebuilds the README table from them;
+CI checks that the table matches.
 
 ## Across platforms
 

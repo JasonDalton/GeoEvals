@@ -23,13 +23,31 @@ from geoevals.data.fetch import (
 from geoevals.data.inventory import DEFAULT_README, InventoryError, update_inventory
 from geoevals.data.licenses import DEFAULT_REPORT, render_report, runtime_dependencies
 from geoevals.data.verify import verify_manifest
+from geoevals.leaderboard.table import (
+    DEFAULT_RESULTS,
+    LeaderboardError,
+    add_run,
+    load_rows,
+    render,
+    update_readme,
+)
 from geoevals.regenerate import RegenerateError, find_benchmark_dir, regenerate
 from geoevals.reporting.compare import Tolerance, compare_runs, load_run
 from geoevals.reporting.report import REPORT_HTML, write_report
 from geoevals.reproduce import DEFAULT_TOLERANCE, baseline_spec, compare_reproduction
+from geoevals.rescore import RescoreError, rescore_run
 from geoevals.runner.config import RunConfigError, load_run_config
 from geoevals.runner.cost import PriceTable, PriceTableError, load_price_table
-from geoevals.runner.layout import CONFIG_FILE, LOG_FILE, RESULT_FILE, write_config, write_run_dir
+from geoevals.runner.layout import (
+    CASES_FILE,
+    CONFIG_FILE,
+    LOG_FILE,
+    RESULT_FILE,
+    write_cases,
+    write_config,
+    write_result,
+    write_run_dir,
+)
 from geoevals.runner.run import RunError, run_benchmark, run_logging
 from geoevals.validation import SpecValidationError, validate_file, validate_run_result_file
 from geoevals.validation.validate import load_yaml
@@ -249,6 +267,22 @@ def build_parser() -> argparse.ArgumentParser:
         help="Log level for the rerun (default: WARNING).",
     )
 
+    rescore = subparsers.add_parser(
+        "rescore",
+        help="Score a run's saved outputs again with the current version of its benchmark and "
+        "rewrite its result.json (and cases.jsonl, if present). Only valid when the benchmark "
+        "change left the prompts, inputs and fixtures as they were (exit 0: rescored, 1: the "
+        "run does not fit the benchmark, 2: the run could not be read).",
+    )
+    rescore.add_argument("run_dir", type=Path, help="Run directory with result.json.")
+    rescore.add_argument(
+        "--root",
+        type=Path,
+        default=DEFAULT_BENCHMARKS,
+        help="Directory of benchmark directories; the spec is "
+        f"<root>/<benchmark id>/benchmark.yaml (default: {DEFAULT_BENCHMARKS}).",
+    )
+
     bench = subparsers.add_parser("bench", help="Benchmark authoring tools.")
     bench_commands = bench.add_subparsers(dest="bench_command", required=True)
     regen = bench_commands.add_parser(
@@ -296,7 +330,70 @@ def build_parser() -> argparse.ArgumentParser:
         help="Directory to write the benchmark into; must be gitignored and is replaced "
         "(default: <source>/benchmark).",
     )
+    leaderboard = subparsers.add_parser("leaderboard", help="Claude model leaderboard tools.")
+    leaderboard_commands = leaderboard.add_subparsers(dest="leaderboard_command", required=True)
+    add = leaderboard_commands.add_parser(
+        "add",
+        help="Copy a complete Claude run's result.json and config.yaml to "
+        "<results>/<benchmark>/<adapter>/.",
+    )
+    add.add_argument("run_dir", type=Path, help="Run directory or its result.json.")
+    add.add_argument(
+        "--results",
+        type=Path,
+        default=DEFAULT_RESULTS,
+        help=f"Leaderboard results directory (default: {DEFAULT_RESULTS}).",
+    )
+    board = leaderboard_commands.add_parser(
+        "build",
+        help="Write the leaderboard table into the README between its leaderboard markers.",
+    )
+    board.add_argument(
+        "--results",
+        type=Path,
+        default=DEFAULT_RESULTS,
+        help=f"Leaderboard results directory (default: {DEFAULT_RESULTS}).",
+    )
+    board.add_argument(
+        "--readme",
+        type=Path,
+        default=Path("README.md"),
+        help="README to update (default: README.md).",
+    )
+    board.add_argument(
+        "--check",
+        action="store_true",
+        help="Write nothing; exit 1 when the README table is out of date.",
+    )
     return parser
+
+
+def _leaderboard_add(run_dir: Path, results: Path) -> int:
+    try:
+        target = add_run(run_dir, results)
+    except LeaderboardError as exc:
+        print(exc, file=sys.stderr)
+        return 1
+    print(f"added {target}")
+    return 0
+
+
+def _leaderboard_build(results: Path, readme: Path, check: bool) -> int:
+    try:
+        text = readme.read_text(encoding="utf-8")
+        updated = update_readme(text, render(load_rows(results)))
+    except (OSError, LeaderboardError) as exc:
+        print(exc, file=sys.stderr)
+        return 1
+    if updated == text:
+        print(f"{readme}: leaderboard is up to date")
+        return 0
+    if check:
+        print(f"{readme}: leaderboard is out of date; run `geoevals leaderboard build`")
+        return 1
+    readme.write_text(updated, encoding="utf-8")
+    print(f"{readme}: leaderboard written")
+    return 0
 
 
 def _print_issues(path: Path, issues: Sequence[object]) -> None:
@@ -608,6 +705,29 @@ def _reproduce_into(
     return 1
 
 
+def _rescore(run_dir: Path, root: Path) -> int:
+    try:
+        result = load_run(run_dir)
+    except SpecValidationError as exc:
+        _print_issues(exc.path, exc.issues)
+        return 2
+    try:
+        rescored = rescore_run(result, baseline_spec(result, root))
+    except RescoreError as exc:
+        print(f"{run_dir}: {exc}", file=sys.stderr)
+        return 1
+    write_result(rescored, run_dir / RESULT_FILE)
+    if (run_dir / CASES_FILE).is_file():
+        write_cases(rescored["cases"], run_dir / CASES_FILE)
+    before = result["summary_metrics"]["task_success"]["mean"]
+    after = rescored["summary_metrics"]["task_success"]["mean"]
+    print(
+        f"{run_dir}: rescored {result['benchmark']['id']} {result['benchmark']['version']} -> "
+        f"{rescored['benchmark']['version']}; task_success {before} -> {after}"
+    )
+    return 0
+
+
 def _bench_regenerate(benchmark_id: str, root: Path, check: bool) -> int:
     benchmark_dir = find_benchmark_dir(root, benchmark_id)
     try:
@@ -662,9 +782,15 @@ def main(argv: Sequence[str] | None = None) -> int:
     if args.command == "reproduce":
         tolerance = Tolerance(args.abs_tol, args.rel_tol)
         return _reproduce(args.baseline_dir, args.root, args.out, args.log_level, tolerance)
+    if args.command == "rescore":
+        return _rescore(args.run_dir, args.root)
     if args.command == "bench" and args.bench_command == "regenerate":
         return _bench_regenerate(args.benchmark_id, args.root, args.check)
     if args.command == "bench" and args.bench_command == "build":
         return _bench_build(args.pilot_id, args.root, args.source, args.out)
+    if args.command == "leaderboard" and args.leaderboard_command == "add":
+        return _leaderboard_add(args.run_dir, args.results)
+    if args.command == "leaderboard" and args.leaderboard_command == "build":
+        return _leaderboard_build(args.results, args.readme, args.check)
     parser.print_help()
     return 0

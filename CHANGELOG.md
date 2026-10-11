@@ -9,6 +9,45 @@ metrics and schemas carry their own versions; see
 
 ## Unreleased
 
+### Added
+
+#### Adapters
+
+- `claude_direct_opus_5_5`, `claude_direct_sonnet_5_5` and `claude_direct_haiku_5_5` 0.1.0:
+  Claude models answering from the inlined input data, with no tools.
+- `claude_python_opus_5_5`, `claude_python_sonnet_5_5` and `claude_python_haiku_5_5` 0.1.0:
+  Claude models with a `run_python` tool that runs code in a per-case Docker container with no
+  network.
+
+Both tracks call the local Claude Code CLI (`claude -p`) signed in to a Claude subscription;
+no API key is used. The adapter version records the Claude Code version (`0.1.0+cc.<version>`).
+
+#### Tools
+
+- `geoevals rescore <run_dir>`: scores a run's saved outputs again with the current version of
+  its benchmark, for a change that touches only scoring. It records the rescore in the result's
+  `limitations`. See `docs/reproducibility.md`.
+
+### Changed
+
+- `gis_correctness` 0.2.0 and `human_context_access` 0.2.0: tolerances recalibrated so that a
+  correct answer given to 5 decimal places passes, while each case still catches the mistake it
+  targets. `crs_transform-004` and `-005` (answers in longitude and latitude): `tol_m` 0.001 m to
+  1 m; the smallest targeted mistake is 21 km off. `buffer-005`: `tol_m` 0.2 m to 1 m; its trap
+  is 8.3 m off. `network_detour-001` to `-006`: `abs_tol` and `stretch_tol` 1e-6 to 1e-4; a
+  haversine straight-line distance is at least 1.0e-3 off. Expected outputs are unchanged.
+  Scores are not comparable with 0.1.0.
+- `crs_match` 1.1.0 and `gis_correctness` 0.3.0: the CRS label is compared up to axis order,
+  so `EPSG:4326` passes where `OGC:CRS84` is expected, and the reverse. Coordinates are always
+  longitude first; a swapped answer still fails `geometry_match`. Another datum (for example
+  `EPSG:4258`) still fails `crs_match`. Scores are not comparable with 0.2.0.
+
+### Fixed
+
+- `geoevals bench regenerate --check` and the expected-output tests failed on Linux: PROJ and
+  GEOS results differ in the last digits between platforms, and the check compared bytes. It now
+  compares numbers to 5 decimal places.
+
 ## 0.1.0 - 2026-10-09
 
 The first release: the evaluation contracts, a deterministic GIS correctness benchmark and a

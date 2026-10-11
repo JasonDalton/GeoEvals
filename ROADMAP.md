@@ -25,10 +25,12 @@ Feature extraction from imagery is not planned. Many benchmarks already cover it
 
 ### LLM and hosted-API adapters
 
-Adapters for language models and hosted APIs. The adapter protocol, the run-result token and
-cost fields and the price table already support them; v0.1.0 ships none. Open questions:
-who maintains the price table, and how price changes are versioned so that historical cost
-figures stay interpretable.
+Adapters for language models and hosted APIs. The first are not yet released: the Claude
+leaderboard adapters (`claude_direct_<model>`, `claude_python_<model>`) run Claude models
+through the local Claude Code CLI on a subscription, with no API key
+([`leaderboard/README.md`](leaderboard/README.md)). Still open: adapters that call hosted APIs
+with keys, who maintains the price table, and how price changes are versioned so that
+historical cost figures stay interpretable.
 
 ### Agentic GIS tasks with real agents
 
@@ -44,10 +46,14 @@ validated rating protocol exists. The 1,000-case PlaceContext-1K benchmark is a 
 
 ### Leaderboard policy
 
-A leaderboard only after comparability and verification rules are defined: what a submission
-contains, how a result is verified (local runs, submitted artifacts or community reports), and
-the trust level each one carries. An open question is whether the run-result schema reserves
-a submission or verification block before then, to avoid a breaking schema change.
+A first leaderboard is not yet released: Claude models on the two v0.1.0 benchmarks, run
+locally by the maintainer, in the [README](README.md#leaderboard). Its rules: a row is a
+complete run (no skipped case), every row of a benchmark shares its version and dataset
+manifest hash, and the Claude Code version, prompt version and effort are stated with the
+table. These rows are local runs, not verified submissions. Still open: what a submission
+contains, how a result is verified (local runs, submitted artifacts or community reports), the
+trust level each one carries, and whether the run-result schema reserves a submission or
+verification block before then, to avoid a breaking schema change.
 
 ### Maintainer review and benchmark versioning
 
