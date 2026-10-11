@@ -1,5 +1,6 @@
 """What the Claude adapters send to the model: the system prompt and the user message of a case.
 
+``benchmark_dir`` is a benchmark's directory, or a graded eval's (with ``eval.yaml``).
 The system prompt is a versioned template from ``geoevals/adapters/prompts/<track>_<version>.md``
 with the benchmark's task statement filled in. The user message holds the case ``prompt``, its
 ``inputs.params`` and its input files. Nothing else from the case is sent: not ``expected``,
@@ -22,6 +23,7 @@ from geoevals.validation import load_benchmark_spec
 
 PROMPTS_DIR = Path(__file__).parent.parent / "adapters" / "prompts"
 SPEC_FILE = "benchmark.yaml"
+EVAL_SPEC_FILE = "eval.yaml"
 ANNOTATION_KEYWORDS = frozenset({"evidence_type"})
 """GeoEvals keywords in output schemas that the CLI's schema validator rejects."""
 
@@ -40,7 +42,15 @@ def system_prompt(template: str, task_statement: str) -> str:
 
 @cache
 def _spec(benchmark_dir: str) -> tuple[str, str]:
-    spec = load_benchmark_spec(Path(benchmark_dir) / SPEC_FILE)
+    directory = Path(benchmark_dir)
+    if (directory / EVAL_SPEC_FILE).is_file():
+        # A graded eval: its task statement and the fixed answer schema.
+        from geoevals.graded.spec import OUTPUT_SCHEMA
+        from geoevals.validation import load_eval_spec
+
+        eval_spec = load_eval_spec(directory / EVAL_SPEC_FILE)
+        return eval_spec.task_statement, json.dumps(OUTPUT_SCHEMA)
+    spec = load_benchmark_spec(directory / SPEC_FILE)
     return spec.task_statement, json.dumps(spec.output_schema)
 
 

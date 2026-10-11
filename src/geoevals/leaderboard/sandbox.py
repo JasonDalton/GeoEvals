@@ -8,7 +8,8 @@ a new image. The image holds no credentials and no project source.
 A container runs ``sleep infinity`` with no network, a read-only root filesystem, a writable
 ``tmpfs`` at ``/tmp``, CPU, memory and process limits, all capabilities dropped, a non-root
 user, and only the benchmark's ``fixtures/`` directory mounted, read-only, at
-``/bench/fixtures``. The working directory is ``/bench``, so the case's relative file paths
+``/bench/fixtures``. For a graded eval, the city's layers are mounted read-only at
+``/bench/data`` instead. The working directory is ``/bench``, so the case's relative file paths
 work. Case files and expected outputs are never mounted. Code runs with ``docker exec``, one
 new Python process per call, under a time limit.
 """
@@ -24,6 +25,7 @@ from pathlib import Path
 
 MOUNT = "/bench"
 FIXTURES_MOUNT = f"{MOUNT}/fixtures"
+DATA_MOUNT = f"{MOUNT}/data"
 DOCKERFILE = Path(__file__).parent / "sandbox.Dockerfile"
 IMAGE_REPOSITORY = "geoevals-sandbox"
 LABEL = "geoevals.sandbox=1"
@@ -128,12 +130,15 @@ def ensure_image(root: Path | None = None) -> str:
     return tag
 
 
-def start_container(image: str, name: str, fixtures: Path | None) -> None:
-    """Start the case's container. ``fixtures`` is mounted read-only at ``/bench/fixtures``."""
+def start_container(image: str, name: str, fixtures: Path | None, data: Path | None = None) -> None:
+    """Start the case's container. ``fixtures`` is mounted read-only at ``/bench/fixtures`` and
+    ``data`` (a graded eval's city layers) at ``/bench/data``."""
     args = ["run", "-d", "--rm", "--name", name, "--label", LABEL, *RUN_LIMITS]
     args += ["-e", "HOME=/tmp", "-e", "MPLCONFIGDIR=/tmp", "-w", MOUNT]
     if fixtures is not None:
         args += ["-v", f"{fixtures.resolve()}:{FIXTURES_MOUNT}:ro"]
+    if data is not None:
+        args += ["-v", f"{data.resolve()}:{DATA_MOUNT}:ro"]
     started = _docker(*args, image, "sleep", "infinity")
     if started.returncode != 0:
         raise SandboxError(f"docker run failed: {started.stderr.strip()}")

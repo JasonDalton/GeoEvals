@@ -19,6 +19,8 @@ Config (all optional)::
     only_cases: [...]       # decline every other case (pilots)
     claude_command: [claude]
     sandbox_image: null     # python track: default geoevals-sandbox:<hash of uv.lock>
+    prompt: benchmark       # graded: the graded-eval template (python track only)
+    data_mount: null        # python track: a directory mounted read-only at /bench/data
 
 When the subscription's usage limit is reached, the case and every later case are declined
 (``SkipCase``), so the run has skipped cases and the leaderboard rejects it.
@@ -74,6 +76,8 @@ class ClaudeAdapterConfig(BaseModel):
     only_cases: list[str] | None = None
     claude_command: list[str] = Field(default_factory=lambda: ["claude"], min_length=1)
     sandbox_image: str | None = None
+    prompt: Literal["benchmark", "graded"] = "benchmark"
+    data_mount: str | None = None
 
 
 class _ClaudeAdapter:
@@ -97,7 +101,15 @@ class _ClaudeAdapter:
             self._config = ClaudeAdapterConfig.model_validate(dict(config))
         except ValidationError as exc:
             raise ClaudeConfigError(f"invalid {self.name} config: {exc}") from exc
-        self._template = prompting.load_template(self.track, self._config.prompt_version)
+        if self.track != "python" and (
+            self._config.prompt == "graded" or self._config.data_mount is not None
+        ):
+            raise ClaudeConfigError(
+                f"{self.name}: graded evals and data_mount need the python track; the direct "
+                "track cannot hold a city in its prompt"
+            )
+        template = f"graded_{self.track}" if self._config.prompt == "graded" else self.track
+        self._template = prompting.load_template(template, self._config.prompt_version)
         if shutil.which(self._config.claude_command[0]) is None:
             raise RuntimeError(
                 f"the Claude Code CLI ({self._config.claude_command[0]!r}) is not on PATH"
@@ -194,6 +206,8 @@ class ClaudePythonAdapter(_ClaudeAdapter):
         ]
         if fixtures.is_dir():
             args += ["--fixtures", str(fixtures)]
+        if self._config.data_mount is not None:
+            args += ["--data", self._config.data_mount]
         mcp_config = {"mcpServers": {SANDBOX_SERVER: {"command": sys.executable, "args": args}}}
         call = self._call(
             case_input,

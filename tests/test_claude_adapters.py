@@ -371,3 +371,54 @@ def test_version_change_during_a_run_fails_the_case(
     fake.set([init, result_event({"status": "ok"})])
     with pytest.raises(ClaudeVersionChanged, match=r"9\.9\.10"):
         adapter.predict(_case(GIS, "distance-001").input)
+
+
+GRADED_SAMPLE = Path(__file__).parent / "fixtures" / "graded" / "sample"
+
+
+def _graded_case() -> dict:
+    return {
+        "case_id": "sample-001",
+        "prompt": "Which pharmacy is nearest on foot?\n\nWrite for: a resident",
+        "inputs": {"files": {}, "params": {"point": [10.0, 50.0], "feature_ids": []}},
+        "benchmark_dir": str(GRADED_SAMPLE),
+    }
+
+
+def test_graded_python_adapter_mounts_the_city(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    calls: list[CliCall] = []
+    answer = {"status": "ok", "answer": "North Pharmacy (node/500)."}
+    result = CliResult(answer, 10, 5, (MODEL,), 2, "9.9.9", [])
+    monkeypatch.setattr(claude_module, "run_cli", lambda call: calls.append(call) or result)
+    monkeypatch.setattr(sandbox, "docker_available", lambda: True)
+    monkeypatch.setattr(sandbox, "remove_container", lambda name: None)
+    adapter = ClaudePythonAdapter("haiku_5_5")
+    adapter.setup(
+        {
+            "claude_command": list(FAKE_COMMAND),
+            "sandbox_image": "img:1",
+            "prompt": "graded",
+            "data_mount": str(tmp_path),
+        }
+    )
+    response = adapter.predict(_graded_case())
+    assert response.output == answer
+    [call] = calls
+    assert call.mcp_config is not None
+    args = call.mcp_config["mcpServers"]["sandbox"]["args"]
+    assert args[args.index("--data") + 1] == str(tmp_path)
+    assert "/bench/data" in call.system_prompt
+    assert "Answer one open-ended question" in call.system_prompt, "the eval's task statement"
+    assert call.json_schema is not None
+    assert call.json_schema["required"] == ["status", "answer"]
+    assert "Which pharmacy is nearest on foot?" in call.user_message
+
+
+def test_direct_track_rejects_graded_prompts() -> None:
+    adapter = ClaudeDirectAdapter("haiku_5_5")
+    with pytest.raises(ValueError, match="python track"):
+        adapter.setup({"claude_command": list(FAKE_COMMAND), "prompt": "graded"})
+    with pytest.raises(ValueError, match="python track"):
+        adapter.setup({"claude_command": list(FAKE_COMMAND), "data_mount": "/tmp"})
