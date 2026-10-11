@@ -307,8 +307,7 @@ def containment_key(params: Mapping[str, Any], layers: Layers) -> dict[str, Any]
 # --- adjacency -------------------------------------------------------------------------------
 
 SNAP_M = 0.05
-"""Walls drawn 5 cm apart still count as touching."""
-OVERLAP_M2 = 0.01
+"""Walls drawn up to 5 cm apart, or overlapping by up to 5 cm, count as touching."""
 
 
 def adjacency_key(params: Mapping[str, Any], layers: Layers) -> dict[str, Any]:
@@ -323,8 +322,9 @@ def adjacency_key(params: Mapping[str, Any], layers: Layers) -> dict[str, Any]:
     pairs = []
     for a, b in itertools.combinations(ids, 2):
         ga, gb = local[a], local[b]
-        shared = ga.boundary.intersection(gb.buffer(SNAP_M)).length
-        if ga.intersection(gb).area > OVERLAP_M2:
+        # the buffer adds SNAP_M of boundary at each end of a shared wall
+        shared = max(0.0, ga.boundary.intersection(gb.buffer(SNAP_M)).length - 2 * SNAP_M)
+        if ga.buffer(-SNAP_M).intersects(gb) or gb.buffer(-SNAP_M).intersects(ga):
             relation = "overlap"
         elif ga.distance(gb) > SNAP_M:
             relation = "disjoint"

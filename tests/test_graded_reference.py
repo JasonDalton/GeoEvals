@@ -1,6 +1,8 @@
 from pathlib import Path
 
+import geopandas as gpd
 import pytest
+from shapely.geometry import Polygon
 
 from geoevals.graded.city import convert_extract
 from geoevals.graded.reference import load_reference
@@ -163,3 +165,27 @@ def test_closure_rejects_features_that_are_not_streets_or_paths() -> None:
             {"from": {"point": ORIGIN}, "to": {"feature_id": "node/501"}, "closed": ["way/400"]},
             LAYERS,
         )
+
+
+def _two_buildings(gap_m: float) -> dict[str, gpd.GeoDataFrame]:
+    """A 20 m square at x 0..20 and a second whose west wall sits at x = 20 + gap_m."""
+    ring_a = [lonlat(x, y) for x, y in [(0, 0), (20, 0), (20, 20), (0, 20), (0, 0)]]
+    x0 = 20 + gap_m
+    ring_b = [lonlat(x, y) for x, y in [(x0, 0), (x0 + 20, 0), (x0 + 20, 20), (x0, 20), (x0, 0)]]
+    polygons = [Polygon(ring_a), Polygon(ring_b)]
+    frame = gpd.GeoDataFrame(
+        {"feature_id": ["way/1", "way/2"], "geometry": polygons}, crs="OGC:CRS84"
+    )
+    return {"buildings": frame}
+
+
+@pytest.mark.parametrize(
+    ("gap_m", "relation"),
+    [(0.04, "shared_edge"), (0.06, "disjoint"), (-0.01, "shared_edge"), (-1.0, "overlap")],
+)
+def test_adjacency_snap_tolerance_is_symmetric(gap_m: float, relation: str) -> None:
+    key = compute_key("adjacency", {"features": ["way/1", "way/2"]}, _two_buildings(gap_m))
+    (pair,) = key["pairs"]
+    assert pair["relation"] == relation
+    if relation == "shared_edge":
+        assert pair["shared_m"] == pytest.approx(20, abs=0.5)
