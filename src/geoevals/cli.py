@@ -28,6 +28,7 @@ from geoevals.data.licenses import DEFAULT_REPORT, render_report, runtime_depend
 from geoevals.data.verify import verify_manifest
 from geoevals.graded.city import LAYERS_DIR, convert_extract, write_layers
 from geoevals.graded.keys import default_data_dir, regenerate_keys
+from geoevals.graded.run import run_eval
 from geoevals.graded.spec import find_eval_spec
 from geoevals.graded.towns import EXTRACT_FILE, fetch_candidate, measure_layers, stats_table
 from geoevals.leaderboard.table import (
@@ -198,7 +199,13 @@ def build_parser() -> argparse.ArgumentParser:
     predict.add_argument("case_input", type=Path, help="Path to a case input (JSON object).")
 
     run = subparsers.add_parser("run", help="Run an adapter on every case of a benchmark split.")
-    run.add_argument("--benchmark", type=Path, required=True, help="Benchmark spec (YAML).")
+    target = run.add_mutually_exclusive_group(required=True)
+    target.add_argument("--benchmark", type=Path, help="Benchmark spec (YAML).")
+    target.add_argument(
+        "--eval",
+        type=Path,
+        help="Graded eval spec (eval.yaml): answers only; score them with `geoevals grade`.",
+    )
     add_adapter_argument(run)
     run.add_argument("--config", type=Path, required=True, help="Run config (YAML).")
     run.add_argument(
@@ -206,6 +213,12 @@ def build_parser() -> argparse.ArgumentParser:
         type=Path,
         required=True,
         help="Parent directory; the run is written to <out>/<run_id>/.",
+    )
+    run.add_argument(
+        "--data",
+        type=Path,
+        help="Graded evals: the data directory with layers/ (default: the city manifest asset's "
+        "directory).",
     )
     run.add_argument(
         "--prices",
@@ -706,6 +719,48 @@ def _run_to_dir(
     return run_dir
 
 
+def _run_eval(
+    spec_path: Path, adapter_name: str, config_path: Path, out: Path, data: Path | None, level: str
+) -> int:
+    for path in (spec_path, config_path):
+        if not path.is_file():
+            print(f"{path}: file not found", file=sys.stderr)
+            return 1
+    try:
+        config = load_run_config(config_path)
+        data_dir = data or default_data_dir(spec_path)
+    except (RunConfigError, SpecValidationError, OSError) as exc:
+        print(exc, file=sys.stderr)
+        return 1
+    run_dir: Path | None = None
+    with run_logging(level) as run_log:
+
+        def start(run_id: str) -> None:
+            nonlocal run_dir
+            run_dir = out / run_id
+            try:
+                run_dir.mkdir(parents=True)
+            except FileExistsError:
+                raise RunError(f"{run_dir} already exists; not overwriting it") from None
+            run_log.attach(run_dir / LOG_FILE)
+            write_config(config, run_dir / CONFIG_FILE)
+            logger.info("writing graded run %s to %s", run_id, run_dir)
+
+        try:
+            result = run_eval(spec_path, adapter_name, config, data_dir, on_start=start)
+        except SpecValidationError as exc:
+            for issue in exc.issues:
+                logger.error("%s: %s", exc.path, issue)
+            return 1
+        except (RunError, ValueError) as exc:
+            logger.error("run failed: %s", exc)
+            return 1
+        assert run_dir is not None
+        write_result(result, run_dir / RESULT_FILE)
+    print(run_dir)
+    return 0
+
+
 def _compare(path_a: Path, path_b: Path, tolerance: Tolerance) -> int:
     try:
         run_a, run_b = load_run(path_a), load_run(path_b)
@@ -887,6 +942,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         return 0
     if args.command == "adapters" and args.adapters_command == "predict":
         return _adapters_predict(args.adapter, args.config, args.case_input)
+    if args.command == "run" and args.eval is not None:
+        return _run_eval(args.eval, args.adapter, args.config, args.out, args.data, args.log_level)
     if args.command == "run":
         return _run(
             args.benchmark,

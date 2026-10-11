@@ -26,6 +26,8 @@ no API key is used. The adapter version records the Claude Code version (`0.1.0+
 
 - Graded eval spec schema 1.0.0 (`schemas/eval-spec.schema.json`), for open-ended evals that a
   grading agent scores against a shared rubric.
+- Graded run result schema 1.0.0 (`schemas/graded-result.schema.json`): the answers of one
+  adapter to every task of a graded eval, with no scores.
 
 #### Tools
 
