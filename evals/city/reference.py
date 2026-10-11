@@ -6,10 +6,12 @@ by hand (``geoevals evals regenerate``), and are not committed (OpenStreetMap-de
 
 Distances are geodesic meters on WGS 84. Walking distances use the ``streets`` and ``paths``
 layers as an undirected graph whose nodes are the lines' shared vertices; a place joins the
-network at its nearest vertex, and a place more than ``MAX_SNAP_M`` from every vertex is
-unreachable. Local geometry (shared edges, lines of sight, distance to a boundary) is measured in
-an azimuthal equidistant projection centered on the features involved. Every float in a key is
-rounded to 0.1 (meters, degrees), so the key and its hash are the same on every platform.
+network at its nearest vertex after the lines are densified to ``NETWORK_STEP_M``, so the snap
+distance is within a few meters of the distance to the network; a place more than ``MAX_SNAP_M``
+from every vertex is unreachable. Local geometry (shared edges, lines of sight, distance to a
+boundary) is measured in an azimuthal equidistant projection centered on the features involved.
+Every float in a key is rounded to 0.1 (meters, degrees), so the key and its hash are the same on
+every platform.
 
 Key types and their params:
 
@@ -45,6 +47,7 @@ from shapely.geometry.base import BaseGeometry
 WGS84 = "OGC:CRS84"
 GEOD = Geod(ellps="WGS84")
 MAX_SNAP_M = 100.0
+NETWORK_STEP_M = 10.0
 NEAR_DEG = 0.001
 """Prefilter: features farther than this (about 70 to 110 m) cannot be within a tolerance."""
 NETWORK_LAYERS = ("streets", "paths")
@@ -140,18 +143,24 @@ class WalkGraph:
                     continue
                 for line in _lines(geometry):
                     for a, b in itertools.pairwise(line.coords):
-                        length = float(GEOD.inv(a[0], a[1], b[0], b[1])[2])
-                        if length == 0:
-                            continue
-                        u, v = (a[0], a[1]), (b[0], b[1])
-                        existing = self.graph.get_edge_data(u, v)
-                        if existing is None or existing["length"] > length:
-                            self.graph.add_edge(
-                                u, v, length=length, feature_id=feature_id, name=_text(name)
-                            )
+                        self._add_segment(a, b, feature_id, _text(name))
         self._nodes: list[Node] = list(self.graph.nodes)
         self._lons = np.array([node[0] for node in self._nodes])
         self._lats = np.array([node[1] for node in self._nodes])
+
+    def _add_segment(self, a: Any, b: Any, feature_id: str, name: str | None) -> None:
+        """Add the segment a-b, split into pieces of at most ``NETWORK_STEP_M``."""
+        total = float(GEOD.inv(a[0], a[1], b[0], b[1])[2])
+        if total == 0:
+            return
+        steps = math.ceil(total / NETWORK_STEP_M)
+        inner = GEOD.npts(a[0], a[1], b[0], b[1], steps - 1) if steps > 1 else []
+        points: list[Node] = [(a[0], a[1]), *inner, (b[0], b[1])]
+        for u, v in itertools.pairwise(points):
+            length = float(GEOD.inv(u[0], u[1], v[0], v[1])[2])
+            existing = self.graph.get_edge_data(u, v)
+            if length > 0 and (existing is None or existing["length"] > length):
+                self.graph.add_edge(u, v, length=length, feature_id=feature_id, name=name)
 
     def snap(self, point: Point) -> tuple[Node | None, float]:
         """The nearest network vertex and its distance in meters."""

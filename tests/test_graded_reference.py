@@ -99,3 +99,17 @@ def test_unknown_key_type_and_feature_are_errors() -> None:
         compute_key("guess", {}, LAYERS)
     with pytest.raises(module["KeyComputationError"], match="no feature 'way/1'"):
         compute_key("containment", {"features": ["way/1"]}, LAYERS)
+
+
+def test_a_place_beside_the_middle_of_a_long_street_is_reachable() -> None:
+    place = module["Point"](*lonlat(-125, 120))  # 20 m off North Street, 125 m from its vertices
+    graph = module["WalkGraph"](LAYERS)
+    assert graph.snap(place)[1] < 25
+    route = graph.route(place, module["Point"](*lonlat(-250, 140)))
+    assert route["reachable"] is True
+    key = compute_key(
+        "proximity",
+        {"from": {"point": lonlat(-125, 120)}, "category": {"amenity": "pharmacy"}},
+        LAYERS,
+    )
+    assert key["walking_nearest"] == "node/500"
