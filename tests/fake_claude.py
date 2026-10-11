@@ -8,7 +8,11 @@ The scenario is the JSON file named by ``FAKE_CLAUDE_SCENARIO``::
 
 When ``FAKE_CLAUDE_RECORD`` names a file, every call is appended there to a JSON list of records,
 each with ``argv``, ``stdin``, ``cwd``, ``cwd_entries`` (the files in the working directory at
-start), ``env_has_api_key`` and XX ``--version`` prints a fixed version.
+start), ``env_has_api_key``, ``env`` (the variables starting with ANTHROPIC, CLAUDE or DISABLE),
+``ppid`` and ``pid``. Then the fake sleeps ``sleep_s``, prints each event as one JSON line and
+exits with ``exit_code``.
+
+``--version`` prints a fixed version.
 """
 
 import json
