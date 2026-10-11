@@ -113,3 +113,53 @@ def test_a_place_beside_the_middle_of_a_long_street_is_reachable() -> None:
         LAYERS,
     )
     assert key["walking_nearest"] == "node/500"
+
+
+def test_adjacency_tells_shared_walls_from_corners() -> None:
+    key = compute_key(
+        "adjacency", {"features": ["way/410", "way/411", "way/412", "way/413"]}, LAYERS
+    )
+    relations = {(p["a"], p["b"]): p for p in key["pairs"]}
+    assert relations["way/410", "way/411"]["relation"] == "shared_edge"
+    assert relations["way/410", "way/411"]["shared_m"] == pytest.approx(20, abs=0.5)
+    assert relations["way/411", "way/412"]["relation"] == "corner"
+    assert relations["way/410", "way/412"]["relation"] == "disjoint"
+    assert relations["way/412", "way/413"]["relation"] == "disjoint"
+    assert len(key["pairs"]) == 6
+
+
+def test_adjacency_needs_two_features() -> None:
+    with pytest.raises(module["KeyComputationError"], match="at least two"):
+        compute_key("adjacency", {"features": ["way/410"]}, LAYERS)
+
+
+def test_closing_the_only_bridge_disconnects_the_banks() -> None:
+    key = compute_key(
+        "closure",
+        {"from": {"point": ORIGIN}, "to": {"feature_id": "node/501"}, "closed": ["way/202"]},
+        LAYERS,
+    )
+    assert key["before"]["reachable"] is True
+    assert key["before"]["walking_m"] == pytest.approx(880, rel=0.01)
+    assert key["after"] == {"reachable": False, "walking_m": None, "reason": "not_connected"}
+    assert key["disconnected_by_closure"] is True
+    assert key["added_m"] is None
+
+
+def test_closing_a_side_path_adds_no_distance() -> None:
+    key = compute_key(
+        "closure",
+        {"from": {"point": ORIGIN}, "to": {"feature_id": "node/500"}, "closed": ["way/211"]},
+        LAYERS,
+    )
+    assert key["disconnected_by_closure"] is False
+    assert key["added_m"] == 0.0
+
+
+def test_closure_rejects_features_that_are_not_streets_or_paths() -> None:
+    with pytest.raises(module["KeyComputationError"], match="not streets or paths"):
+        compute_key(
+            "closure",
+            {"from": {"point": ORIGIN}, "to": {"feature_id": "node/501"}, "closed": ["way/400"]},
+            LAYERS,
+        )

@@ -304,11 +304,74 @@ def containment_key(params: Mapping[str, Any], layers: Layers) -> dict[str, Any]
     return {"points": points, "features": features}
 
 
+# --- adjacency -------------------------------------------------------------------------------
+
+SNAP_M = 0.05
+"""Walls drawn 5 cm apart still count as touching."""
+OVERLAP_M2 = 0.01
+
+
+def adjacency_key(params: Mapping[str, Any], layers: Layers) -> dict[str, Any]:
+    layer = params.get("layer", "buildings")
+    edge_min = float(params.get("edge_min_m", 0.5))
+    ids = list(params["features"])
+    if len(ids) < 2:
+        raise KeyComputationError("adjacency needs at least two features")
+    geometries = {feature_id: _row(layers, feature_id, layer).geometry for feature_id in ids}
+    project = _projector(shapely.union_all(list(geometries.values())).centroid)
+    local = {feature_id: project(geometry) for feature_id, geometry in geometries.items()}
+    pairs = []
+    for a, b in itertools.combinations(ids, 2):
+        ga, gb = local[a], local[b]
+        shared = ga.boundary.intersection(gb.buffer(SNAP_M)).length
+        if ga.intersection(gb).area > OVERLAP_M2:
+            relation = "overlap"
+        elif ga.distance(gb) > SNAP_M:
+            relation = "disjoint"
+        elif shared >= edge_min:
+            relation = "shared_edge"
+        else:
+            relation = "corner"
+        pairs.append({"a": a, "b": b, "relation": relation, "shared_m": shared})
+    return {"pairs": pairs}
+
+
+# --- closures --------------------------------------------------------------------------------
+
+
+def _route_summary(route: Mapping[str, Any]) -> dict[str, Any]:
+    summary = {"reachable": route["reachable"], "walking_m": route["walking_m"]}
+    if "reason" in route:
+        summary["reason"] = route["reason"]
+    return summary
+
+
+def closure_key(params: Mapping[str, Any], layers: Layers) -> dict[str, Any]:
+    start, end = _place(layers, params["from"]), _place(layers, params["to"])
+    closed = frozenset(params["closed"])
+    network = set(layers["streets"]["feature_id"]) | set(layers["paths"]["feature_id"])
+    unknown = sorted(closed - network)
+    if unknown:
+        raise KeyComputationError(f"closed features are not streets or paths: {unknown}")
+    before = WalkGraph(layers).route(start, end)
+    after = WalkGraph(layers, closed).route(start, end)
+    both = before["reachable"] and after["reachable"]
+    return {
+        "closed": sorted(closed),
+        "before": _route_summary(before),
+        "after": _route_summary(after),
+        "disconnected_by_closure": before["reachable"] and not after["reachable"],
+        "added_m": after["walking_m"] - before["walking_m"] if both else None,
+    }
+
+
 # --- dispatch --------------------------------------------------------------------------------
 
 KEY_FUNCTIONS: dict[str, Callable[[Mapping[str, Any], Layers], dict[str, Any]]] = {
     "proximity": proximity_key,
     "containment": containment_key,
+    "adjacency": adjacency_key,
+    "closure": closure_key,
 }
 
 
