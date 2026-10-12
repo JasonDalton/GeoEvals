@@ -4,6 +4,8 @@ from pathlib import Path
 from typing import Any
 
 import osmium
+import osmium.io
+import osmium.osm.mutable
 import pytest
 import yaml
 
@@ -138,7 +140,8 @@ def _box_document() -> dict[str, Any]:
 
 def test_read_pbf_keeps_what_the_city_query_would(tmp_path: Path) -> None:
     path = write_pbf(tmp_path / "box.osm.pbf", _box_document())
-    bbox = (*lonlat(0, 0), *lonlat(100, 100))
+    (min_lon, min_lat), (max_lon, max_lat) = lonlat(0, 0), lonlat(100, 100)
+    bbox = (min_lon, min_lat, max_lon, max_lat)
     elements = _elements(read_pbf(path, bbox))
     assert "node/1" in elements and "node/2" not in elements, "tagged nodes in the box"
     assert not any(e["type"] == "node" and not e.get("tags") for e in elements.values())

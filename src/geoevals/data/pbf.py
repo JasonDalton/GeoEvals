@@ -19,6 +19,8 @@ from pathlib import Path
 from typing import Any
 
 import osmium
+import osmium.io
+import osmium.osm
 from shapely.geometry import LineString, box
 
 from geoevals.data.fetch import Bbox, FetchError, normalize_overpass
@@ -70,6 +72,8 @@ def _relations(path: Path) -> dict[int, dict[str, Any]]:
     """The wanted relations, by ID, with their tags and members."""
     relations: dict[int, dict[str, Any]] = {}
     for relation in osmium.FileProcessor(str(path), osmium.osm.RELATION):
+        if not isinstance(relation, osmium.osm.Relation):
+            continue
         tags = dict(relation.tags)
         if _wanted_relation(tags):
             members = [(MEMBER_TYPES[m.type], m.ref, m.role) for m in relation.members]
@@ -101,7 +105,7 @@ def read_pbf(path: Path, bbox: Bbox) -> bytes:
         way_coords: dict[int, Coords] = {}
         processor = osmium.FileProcessor(str(path), osmium.osm.NODE | osmium.osm.WAY)
         for obj in processor.with_locations():
-            if obj.is_node():
+            if isinstance(obj, osmium.osm.Node):
                 lon, lat = obj.location.lon, obj.location.lat
                 if not inside(lon, lat):
                     continue
@@ -110,7 +114,7 @@ def read_pbf(path: Path, bbox: Bbox) -> bytes:
                 if len(obj.tags):
                     node = {"type": "node", "id": obj.id, "lat": lat, "lon": lon}
                     elements.append({**node, "tags": dict(obj.tags)})
-            elif obj.is_way():
+            elif isinstance(obj, osmium.osm.Way):
                 coords: Coords = [(n.lon, n.lat) if n.location.valid() else None for n in obj.nodes]
                 if obj.id in member_ways:
                     way_coords[obj.id] = coords
