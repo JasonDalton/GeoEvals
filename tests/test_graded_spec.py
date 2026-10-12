@@ -96,6 +96,10 @@ def _with_tasks(tmp_path: Path, edit) -> Path:
         ),
         (lambda ls: ls[1].update(anchors={"assumptions": {"5": "x"}}), "score 5"),
         (lambda ls: ls[0].update(prompt=""), "prompt"),
+        (
+            lambda ls: ls[0].update(rubric=["relations", "clarity", "relations"]),
+            "duplicate criterion 'relations'",
+        ),
     ],
 )
 def test_invalid_tasks_are_reported(tmp_path: Path, edit, message: str) -> None:

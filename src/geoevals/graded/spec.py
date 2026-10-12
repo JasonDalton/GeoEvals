@@ -155,6 +155,8 @@ def load_tasks(spec_path: Path, spec: EvalSpec) -> list[EvalTask]:
         for criterion in task.rubric:
             if criterion not in criteria:
                 issues.append(ValidationIssue(where, f"unknown criterion {criterion!r}"))
+        for criterion in sorted({c for c in task.rubric if task.rubric.count(c) > 1}):
+            issues.append(ValidationIssue(where, f"duplicate criterion {criterion!r} in rubric"))
         for criterion, anchors in task.anchors.items():
             if criterion not in task.rubric:
                 issues.append(
