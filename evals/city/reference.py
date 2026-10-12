@@ -8,10 +8,11 @@ Distances are geodesic meters on WGS 84. Walking distances use the ``streets`` a
 layers as an undirected graph whose nodes are the lines' shared vertices, densified to
 ``NETWORK_STEP_M``. A place joins the network by a straight snap leg to one of its nearest
 vertices (up to ``MAX_SNAP_CANDIDATES`` within ``MAX_SNAP_M``); a leg that crosses a ``railways``
-line or a ``water`` line or area is not used, and only the nearest usable vertex of each connected
-part of the network is a candidate. The shortest walk picks the best leg at each end, so a place
-beside an isolated fragment still joins the connected street behind it. A place with no
-vertex within ``MAX_SNAP_M`` is unreachable (``too_far_from_network``), as is one whose every
+or ``water`` feature marked ``walk_barrier`` (surface rail, rivers, canals, streams and water
+areas; see ``geoevals.graded.city``) is not used, and only the nearest usable vertex of each
+connected part of the network is a candidate. The shortest walk picks the best leg at each end,
+so a place beside an isolated fragment still joins the connected street behind it. A place with
+no vertex within ``MAX_SNAP_M`` is unreachable (``too_far_from_network``), as is one whose every
 candidate leg crosses a barrier (``blocked_by_barrier``). Local geometry (shared edges, lines of
 sight, distance to a boundary) is measured in an azimuthal equidistant projection centered on the
 features involved. Every float in a key is rounded to 0.1 (meters, degrees), so the key and its
@@ -164,8 +165,10 @@ class WalkGraph:
             geometry
             for layer in BARRIER_LAYERS
             if layer in layers
-            for geometry in layers[layer].geometry
-            if geometry is not None and not geometry.is_empty
+            for geometry, barrier in zip(
+                layers[layer].geometry, layers[layer]["walk_barrier"], strict=True
+            )
+            if barrier and geometry is not None and not geometry.is_empty
         ]
         self._barriers = shapely.STRtree(barriers)
 
@@ -197,7 +200,7 @@ class WalkGraph:
         return self._nodes[index], float(distances[index])
 
     def _crosses_barrier(self, point: Point, node: Node) -> bool:
-        """Whether the straight leg from ``point`` to ``node`` crosses a railway or water."""
+        """Whether the straight leg from ``point`` to ``node`` crosses a walk barrier."""
         if (point.x, point.y) == node:
             return False
         leg = LineString([(point.x, point.y), node])

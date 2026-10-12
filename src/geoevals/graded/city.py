@@ -7,8 +7,8 @@ latitude (``OGC:CRS84``):
 - ``buildings``: ``building=*`` areas, with ``height_m`` and ``height_source`` (see below)
 - ``streets``: ``highway=*`` ways for vehicles (``STREET_HIGHWAYS``)
 - ``paths``: ``highway=*`` ways for walking and cycling (``PATH_HIGHWAYS``)
-- ``railways``: ``railway=*`` lines (``RAIL_TYPES``)
-- ``water``: ``natural=water``, ``waterway=*`` and ``water=*``
+- ``railways``: ``railway=*`` lines (``RAIL_TYPES``), with ``walk_barrier`` (see below)
+- ``water``: ``natural=water``, ``waterway=*`` and ``water=*``, with ``walk_barrier``
 - ``parks``: parks, gardens, playgrounds, nature reserves (``PARK_LEISURE``)
 - ``landuse``: ``landuse=*`` areas
 - ``pois``: features with one of ``POI_KEYS``, as points (``category`` is the first such key,
@@ -23,6 +23,12 @@ feature order (nodes, ways, relations; then by ID), so two conversions give the 
 Building heights: the ``height`` tag in meters (``12``, ``12 m``, ``40 ft``, ``40'``) when it
 parses, else ``building:levels`` x 3 m, else unknown (``height_m`` empty, ``height_source``
 ``unknown``).
+
+Walk barriers: ``walk_barrier`` is true for a feature a pedestrian cannot cross where no street
+or path is mapped. Rail is a barrier when it is ``BARRIER_RAIL_TYPES`` at the surface (not in a
+tunnel, on a bridge or ``location=underground``); trams and subways are not. Water is a barrier
+when it is a ``BARRIER_WATERWAYS`` line that is not in a tunnel (a culverted stream is tagged
+``tunnel=culvert``), or any water area; ditches, drains, culverts and water points are not.
 
 Elements without usable geometry are left out: attic data can lack node positions, and a
 relation member can lack its geometry. An invalid geometry is repaired (``make_valid``) keeping
@@ -62,8 +68,8 @@ LAYER_COLUMNS: dict[str, tuple[str, ...]] = {
     "buildings": ("building", "height_m", "height_source"),
     "streets": ("highway",),
     "paths": ("highway",),
-    "railways": ("railway",),
-    "water": ("water_kind",),
+    "railways": ("railway", "walk_barrier"),
+    "water": ("water_kind", "walk_barrier"),
     "parks": ("leisure",),
     "landuse": ("landuse",),
     "pois": ("category", "value"),
@@ -85,6 +91,8 @@ PATH_HIGHWAYS = frozenset(
 RAIL_TYPES = frozenset(
     {"rail", "light_rail", "tram", "subway", "narrow_gauge", "monorail", "funicular"}
 )
+BARRIER_RAIL_TYPES = frozenset({"rail", "light_rail", "narrow_gauge", "monorail", "funicular"})
+BARRIER_WATERWAYS = frozenset({"river", "canal", "stream"})
 PARK_LEISURE = frozenset({"park", "garden", "playground", "nature_reserve", "dog_park"})
 POI_KEYS = ("amenity", "shop", "tourism", "office", "healthcare", "historic", "craft")
 AREA_KEYS = frozenset(
@@ -190,6 +198,25 @@ def element_geometry(element: Mapping[str, Any]) -> BaseGeometry | None:
     return None
 
 
+def _passes_over_or_under(tags: Mapping[str, str]) -> bool:
+    """Whether the feature is in a tunnel, on a bridge or underground, off the walking level."""
+    return (
+        tags.get("tunnel", "no") != "no"
+        or tags.get("bridge", "no") != "no"
+        or tags.get("location") == "underground"
+    )
+
+
+def walk_barrier(layer: str, tags: Mapping[str, str], geometry: BaseGeometry) -> bool:
+    """Whether a ``railways`` or ``water`` feature bars walking; see the module docstring."""
+    if layer == "railways":
+        return tags.get("railway") in BARRIER_RAIL_TYPES and not _passes_over_or_under(tags)
+    if geometry.geom_type in ("Polygon", "MultiPolygon"):
+        return True
+    linear = geometry.geom_type in ("LineString", "MultiLineString")
+    return linear and tags.get("waterway") in BARRIER_WATERWAYS and not _passes_over_or_under(tags)
+
+
 def _layers_of(tags: Mapping[str, str], geometry: BaseGeometry) -> list[str]:
     polygonal = geometry.geom_type in ("Polygon", "MultiPolygon")
     linear = geometry.geom_type in ("LineString", "MultiLineString")
@@ -216,16 +243,19 @@ def _layers_of(tags: Mapping[str, str], geometry: BaseGeometry) -> list[str]:
     return layers
 
 
-def _columns(layer: str, tags: Mapping[str, str]) -> dict[str, Any]:
+def _columns(layer: str, tags: Mapping[str, str], geometry: BaseGeometry) -> dict[str, Any]:
     if layer == "buildings":
         height, source = building_height(tags)
         return {"building": tags["building"], "height_m": height, "height_source": source}
     if layer in ("streets", "paths"):
         return {"highway": tags["highway"]}
     if layer == "railways":
-        return {"railway": tags["railway"]}
+        return {"railway": tags["railway"], "walk_barrier": walk_barrier(layer, tags, geometry)}
     if layer == "water":
-        return {"water_kind": tags.get("waterway") or tags.get("water") or tags.get("natural")}
+        return {
+            "water_kind": tags.get("waterway") or tags.get("water") or tags.get("natural"),
+            "walk_barrier": walk_barrier(layer, tags, geometry),
+        }
     if layer == "parks":
         return {"leisure": tags["leisure"]}
     if layer == "landuse":
@@ -282,9 +312,9 @@ def convert_extract(document: Mapping[str, Any]) -> dict[str, gpd.GeoDataFrame]:
         for layer in _layers_of(tags, geometry):
             point_only = layer == "pois" and geometry.geom_type != "Point"
             shape = geometry.representative_point() if point_only else geometry
-            rows[layer].append({**base, **_columns(layer, tags), "geometry": shape})
+            rows[layer].append({**base, **_columns(layer, tags, geometry), "geometry": shape})
         rows["all_features"].append(
-            {**base, **_columns("all_features", tags), "geometry": geometry}
+            {**base, **_columns("all_features", tags, geometry), "geometry": geometry}
         )
     return {layer: _frame(layer, rows[layer]) for layer in LAYERS}
 
