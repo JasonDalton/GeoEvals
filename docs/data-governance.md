@@ -79,6 +79,10 @@ obligations, so v0.1 commits no OSM-derived data. Only synthetic fixtures are co
 Whether small derived samples may ever be committed is an open question for a qualified
 reviewer.
 
+The graded evals will use a whole-town OpenStreetMap extract (`osm_city_<town>`). Its layers and the evals' reference keys are derived data, so they stay in `data/raw/osm_city_<town>/`; `tasks.jsonl` commits only each key's SHA-256. Task prompts name features by their OSM name and ID, as a citation would. Whether such names and IDs in committed prompts count as OSM-derived data is part of the open question for a qualified reviewer noted above.
+
+Graded runs raise the same question. A graded run's answers quote OSM names, IDs and distances, and the grader's justifications in `grades.json` cite the reference key. `geoevals leaderboard add` copies `result.json` and `grades.json` into `leaderboard/graded/`, so whether `leaderboard/graded/` may be committed is part of the same open question, and no graded run is committed until it is decided.
+
 ## Fixtures in the repository
 
 - Keep fixtures small: under 1 MB per benchmark.
@@ -102,7 +106,7 @@ from a committed config file. CI uses no secrets.
 The Claude leaderboard adapters store no credentials at all: they run the local Claude Code
 CLI, which uses the maintainer's own sign-in. They send each case's prompt, parameters and input
 files to Anthropic. Those inputs are the MIT-licensed synthetic fixtures of the v0.1.0
-benchmarks; no personal or restricted data is sent.
+benchmarks; no personal or restricted data is sent. In a graded eval, the python-track model also reads the town's OpenStreetMap layers in its sandbox, and what it prints is sent to Anthropic as part of the conversation; OpenStreetMap data is public and ODbL licensed, and no personal data is sent.
 
 CI scans the full git history with [gitleaks](https://github.com/gitleaks/gitleaks) and fails
 on any finding. A secret that reaches a commit stays in the history: revoke it first, then

@@ -1,0 +1,62 @@
+# The five criteria shared by every graded eval on the city. Each is scored 0 to 4 against its
+# anchors; a task's score is the mean of its criteria divided by 4. A task may add anchors of its
+# own (`anchors` in tasks.jsonl). Changing this file is a minor version change of every eval.
+version: 1.0.0
+criteria:
+  - id: relations
+    title: Spatial relations correct
+    description: >-
+      The spatial facts the answer states (which feature is nearest, what touches what, what can
+      be seen, what lies inside what, which way to go) agree with the reference key.
+    anchors:
+      "0": The main spatial facts contradict the key, or the answer states none.
+      "1": Some facts agree with the key, but the main conclusion contradicts it.
+      "2": The main conclusion agrees with the key; several supporting facts do not.
+      "3": The main conclusion and most supporting facts agree with the key; one minor fact does not.
+      "4": Every spatial fact stated agrees with the key, within the key's precision.
+  - id: reasoning
+    title: Reasoning sound
+    description: >-
+      The steps from the data to the conclusion are valid and use the right spatial method:
+      walking versus straight-line distance, shared edges versus corner touches, line of sight
+      with heights, points on boundaries, turns along a route.
+    anchors:
+      "0": No reasoning, or reasoning that cannot reach the conclusion.
+      "1": The method is wrong for the question, for example straight-line distance where walking distance was asked.
+      "2": The method is right but applied with a significant error.
+      "3": The method is right and applied correctly, with a minor gap.
+      "4": The method is right, applied correctly, and each step follows from the last.
+  - id: assumptions
+    title: Assumptions and edge cases stated
+    description: >-
+      The answer states the assumptions it makes (unknown building heights, where a place joins
+      the path network, how close to a boundary counts as on it) and the edge cases that could
+      change the conclusion.
+    anchors:
+      "0": Relies on unstated assumptions that change the conclusion.
+      "1": Mentions an assumption, but not the one that matters most.
+      "2": States the main assumption but not how it affects the conclusion.
+      "3": States the main assumptions and their effect; misses a relevant edge case.
+      "4": States every assumption that matters, its effect, and the relevant edge cases.
+  - id: data_use
+    title: Use of the data
+    description: >-
+      The answer uses the city data that bears on the question, names the features it relies on
+      (name and feature_id), and leaves out features that do not bear on it.
+    anchors:
+      "0": Does not use the data, or uses data that does not bear on the question.
+      "1": Uses some relevant data but misses the features that decide the answer.
+      "2": Uses the deciding features without naming them, or mixes in irrelevant ones.
+      "3": Uses and names the deciding features; misses one relevant layer or attribute.
+      "4": Uses and names every feature that decides the answer, and nothing irrelevant.
+  - id: clarity
+    title: Clear for the stated audience
+    description: >-
+      The answer suits the audience named in the task: it leads with the conclusion, uses terms
+      the audience knows, and is no longer than it needs to be.
+    anchors:
+      "0": The audience could not act on the answer.
+      "1": The conclusion is hard to find, or wrapped in jargon the audience would not know.
+      "2": The conclusion is clear, but the explanation does not suit the audience.
+      "3": Clear and suited to the audience, with some unnecessary length or jargon.
+      "4": Leads with the conclusion, suits the audience, and has nothing unnecessary.

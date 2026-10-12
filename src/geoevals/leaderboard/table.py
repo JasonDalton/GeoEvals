@@ -202,13 +202,18 @@ def render(rows: list[Row]) -> str:
     return "\n".join(lines + notes)
 
 
+def replace_section(text: str, start: str, end: str, body: str) -> str:
+    """``text`` with everything between the ``start`` and ``end`` markers replaced by ``body``."""
+    if text.count(start) != 1 or text.count(end) != 1 or text.index(start) > text.index(end):
+        raise LeaderboardError(f"the README must hold {start} and then {end}, once each")
+    before, rest = text.split(start, 1)
+    _, after = rest.split(end, 1)
+    return f"{before}{start}\n{body}\n{end}{after}"
+
+
 def update_readme(text: str, table: str) -> str:
-    """``text`` with everything between the markers replaced by ``table``."""
-    if text.count(START) != 1 or text.count(END) != 1 or text.index(START) > text.index(END):
-        raise LeaderboardError(f"the README must hold {START} and then {END}, once each")
-    before, rest = text.split(START, 1)
-    _, after = rest.split(END, 1)
-    return f"{before}{START}\n{table}\n{END}{after}"
+    """``text`` with the benchmark leaderboard table replaced by ``table``."""
+    return replace_section(text, START, END, table)
 
 
 def add_run(run_dir: Path, results_dir: Path) -> Path:

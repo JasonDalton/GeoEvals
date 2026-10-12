@@ -1,0 +1,11 @@
+# Gitleaks configuration: the default rules plus one narrow allowlist.
+[extend]
+useDefault = true
+
+# Graded eval tasks carry key_sha256, the SHA-256 of a hidden reference key.
+# A 64-character hex digest reads as a generic API key; it is a hash, not a secret.
+# Only the matched "key_sha256": "<hex>" text is allowed, not the rest of the line.
+[[allowlists]]
+description = "SHA-256 digests of graded-eval reference keys"
+regexTarget = "match"
+regexes = ['''key_sha256"\s*:\s*"[0-9a-f]{64}"''']

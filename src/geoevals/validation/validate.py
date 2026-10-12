@@ -20,6 +20,7 @@ from jsonschema.exceptions import ValidationError
 from geoevals.metrics.registry import registered_metric_ids
 from geoevals.trajectory import step_numbering_problem, summary_problem
 from geoevals.validation.benchmark import BenchmarkSpec
+from geoevals.validation.eval_spec import EvalSpec
 from geoevals.validation.git import GitPathState, git_path_state
 from geoevals.validation.manifest import DatasetManifest
 from geoevals.validation.run_result import RunResult
@@ -309,19 +310,53 @@ def load_run_result(path: Path) -> RunResult:
     return RunResult.model_validate(document)
 
 
+# --- graded eval specs -----------------------------------------------------------------------
+
+
+def validate_eval_document(document: Any) -> list[ValidationIssue]:
+    """Validate a parsed graded eval spec. Returns an empty list when the spec is valid."""
+    return schema_issues(document, "eval-spec.schema.json")
+
+
+def validate_eval_file(path: Path) -> list[ValidationIssue]:
+    """Load a YAML graded eval spec and validate it."""
+    try:
+        document = load_yaml(path)
+    except yaml.YAMLError as exc:
+        return [ValidationIssue("<root>", f"invalid YAML: {exc}")]
+    return validate_eval_document(document)
+
+
+def load_eval_spec(path: Path) -> EvalSpec:
+    """Load and validate a graded eval spec. Raises ``SpecValidationError`` if it is invalid."""
+    issues = validate_eval_file(path)
+    if issues:
+        raise SpecValidationError(path, issues)
+    return EvalSpec.model_validate(load_yaml(path))
+
+
 # --- document type dispatch ------------------------------------------------------------------
 
-DocumentType = Literal["benchmark spec", "dataset manifest", "run result"]
+DocumentType = Literal[
+    "benchmark spec", "dataset manifest", "run result", "eval spec", "graded result"
+]
+
+
+def _is_graded_result(document: Any) -> bool:
+    return isinstance(document, dict) and "eval" in document and "tasks" in document
 
 
 def detect_document_type(path: Path) -> DocumentType:
     """Guess the document type.
 
-    ``result.json`` files and mappings with ``run_id`` are run results, JSONL files and mappings
-    with ``assets`` are dataset manifests, and anything else is a benchmark spec.
+    ``result.json`` files and mappings with ``run_id`` are run results, or graded eval results
+    when they hold ``eval`` and ``tasks``; JSONL files and mappings with ``assets`` are dataset
+    manifests, mappings with ``rubric_criteria`` are graded eval specs, and anything else is a
+    benchmark spec.
     """
     if path.name == "result.json":
-        return "run result"
+        document, issues = _load_json(path)
+        return "graded result" if not issues and _is_graded_result(document) else "run result"
     if path.suffix == ".jsonl":
         return "dataset manifest"
     try:
@@ -331,7 +366,9 @@ def detect_document_type(path: Path) -> DocumentType:
     if isinstance(document, dict) and "assets" in document:
         return "dataset manifest"
     if isinstance(document, dict) and "run_id" in document:
-        return "run result"
+        return "graded result" if _is_graded_result(document) else "run result"
+    if isinstance(document, dict) and "rubric_criteria" in document:
+        return "eval spec"
     return "benchmark spec"
 
 
@@ -342,4 +379,11 @@ def validate_file(path: Path) -> tuple[DocumentType, list[ValidationIssue]]:
         return kind, validate_manifest_file(path)
     if kind == "run result":
         return kind, validate_run_result_file(path)
+    if kind == "graded result":
+        from geoevals.graded.run import validate_graded_result  # imported here: no import cycle
+
+        document, issues = _load_json(path)
+        return kind, issues or validate_graded_result(document)
+    if kind == "eval spec":
+        return kind, validate_eval_file(path)
     return kind, validate_benchmark_file(path)

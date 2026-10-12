@@ -6,6 +6,7 @@ import pytest
 
 from geoevals.adapters.claude import ClaudeAdapterConfig
 from geoevals.cli import main
+from geoevals.graded.board import GRADED_END, GRADED_START
 from geoevals.leaderboard.table import (
     END,
     START,
@@ -20,6 +21,7 @@ from geoevals.runner.run import load_cases
 from geoevals.validation import load_benchmark_spec
 
 README = f"# Title\n\nIntro.\n\n{START}\nold table\n{END}\n\n## Next\n"
+GRADED_README = README.replace("## Next", f"{GRADED_START}\nold graded\n{GRADED_END}\n\n## Next")
 
 
 def _result(
@@ -150,10 +152,19 @@ def test_add_run_refuses_a_pilot(tmp_path: Path) -> None:
 
 def test_cli_build_check(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
     readme = tmp_path / "README.md"
-    readme.write_text(README, encoding="utf-8")
+    readme.write_text(GRADED_README, encoding="utf-8")
     results = tmp_path / "results"
     _write(results, _result())
-    args = ["leaderboard", "build", "--results", str(results), "--readme", str(readme)]
+    args = [
+        "leaderboard",
+        "build",
+        "--results",
+        str(results),
+        "--readme",
+        str(readme),
+        "--graded",
+        str(tmp_path / "graded"),
+    ]
     assert main([*args, "--check"]) == 1
     assert "out of date" in capsys.readouterr().out
     assert main(args) == 0

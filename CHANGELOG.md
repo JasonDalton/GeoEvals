@@ -22,6 +22,21 @@ metrics and schemas carry their own versions; see
 Both tracks call the local Claude Code CLI (`claude -p`) signed in to a Claude subscription;
 no API key is used. The adapter version records the Claude Code version (`0.1.0+cc.<version>`).
 
+#### Schemas
+
+- Graded eval spec schema 1.0.0 (`schemas/eval-spec.schema.json`), for open-ended evals that a
+  grading agent scores against a shared rubric.
+- Graded run result schema 1.0.0 (`schemas/graded-result.schema.json`): the answers of one
+  adapter to every task of a graded eval, with no scores.
+
+#### Graded evals
+
+- Agent-graded spatial-reasoning evals, reported apart from the benchmarks: `geoevals evals
+  measure-town`, `evals build-city`, `evals regenerate`, `geoevals run --eval`, `geoevals
+  grade`, and a graded section in `geoevals leaderboard build` (quartile table and SVG box
+  plots). The python-track adapters take `prompt: graded` and `data_mount`. New optional extra
+  `plots` (matplotlib). See `docs/eval-authoring.md`.
+
 #### Tools
 
 - `geoevals rescore <run_dir>`: scores a run's saved outputs again with the current version of

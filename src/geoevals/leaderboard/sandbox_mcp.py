@@ -10,7 +10,7 @@ the model can recover from. After ``--max-calls`` calls, the tool returns an err
 model to submit its answer, and runs nothing.
 
 Run it as ``python -m geoevals.leaderboard.sandbox_mcp --image <tag> --name <container>
-[--fixtures <dir>] [--max-calls 20] [--timeout-s 60] [--max-output 20000]``.
+[--fixtures <dir>] [--data <dir>] [--max-calls 20] [--timeout-s 60] [--max-output 20000]``.
 """
 
 import argparse
@@ -137,6 +137,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument("--image", required=True)
     parser.add_argument("--name", required=True)
     parser.add_argument("--fixtures", type=Path)
+    parser.add_argument("--data", type=Path)
     parser.add_argument("--max-calls", type=int, default=20)
     parser.add_argument("--timeout-s", type=float, default=60.0)
     parser.add_argument("--max-output", type=int, default=20_000)
@@ -146,7 +147,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     def execute(code: str) -> ExecResult:
         nonlocal started
         if not started:
-            start_container(args.image, args.name, args.fixtures)
+            start_container(args.image, args.name, args.fixtures, data=args.data)
             started = True
         return exec_python(args.name, code, args.timeout_s, args.max_output)
 

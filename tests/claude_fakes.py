@@ -63,10 +63,24 @@ class FakeClaude:
 
     def set(self, events: list[dict[str, Any]], **extra: Any) -> None:
         self.scenario_path.write_text(json.dumps({"events": events, **extra}), encoding="utf-8")
+        self._reset_counter()
+
+    def set_sequence(self, scenarios: list[list[dict[str, Any]]]) -> None:
+        """One list of events per call; the last repeats."""
+        sequence = [{"events": events} for events in scenarios]
+        self.scenario_path.write_text(json.dumps({"sequence": sequence}), encoding="utf-8")
+        self._reset_counter()
+
+    def _reset_counter(self) -> None:
+        self.scenario_path.with_name(self.scenario_path.name + ".count").unlink(missing_ok=True)
+
+    @property
+    def records(self) -> list[dict[str, Any]]:
+        return json.loads(self.record_path.read_text(encoding="utf-8"))
 
     @property
     def record(self) -> dict[str, Any]:
-        return json.loads(self.record_path.read_text(encoding="utf-8"))
+        return self.records[-1]
 
     @property
     def called(self) -> bool:

@@ -1,3 +1,4 @@
+import io
 import json
 import shutil
 import subprocess
@@ -8,7 +9,7 @@ from pathlib import Path
 
 import pytest
 
-from geoevals.leaderboard import sandbox
+from geoevals.leaderboard import sandbox, sandbox_mcp
 from geoevals.leaderboard.sandbox import (
     FIXTURES_MOUNT,
     ExecResult,
@@ -236,3 +237,39 @@ def test_mcp_main_over_stdio() -> None:
     replies = [json.loads(line) for line in completed.stdout.splitlines()]
     assert [reply["id"] for reply in replies] == [1, 2]
     assert replies[1]["result"]["tools"][0]["name"] == "run_python"
+
+
+def test_start_container_mounts_the_data_read_only(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    calls: list[tuple[str, ...]] = []
+
+    def docker(*args: str, **kwargs: object) -> subprocess.CompletedProcess[str]:
+        calls.append(args)
+        return subprocess.CompletedProcess(args, 0, "", "")
+
+    monkeypatch.setattr(sandbox, "_docker", docker)
+    sandbox.start_container("img:1", "c1", None, data=tmp_path)
+    [args] = calls
+    assert f"{tmp_path.resolve()}:/bench/data:ro" in args
+    assert not any(":/bench/fixtures:ro" in a for a in args)
+
+
+def test_mcp_server_passes_the_data_mount(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    started: list[tuple] = []
+    monkeypatch.setattr(sandbox_mcp, "start_container", lambda *a, **k: started.append((a, k)))
+    monkeypatch.setattr(
+        sandbox_mcp, "exec_python", lambda *a: sandbox.ExecResult(0, "ok", "", False)
+    )
+    monkeypatch.setattr(sandbox_mcp, "remove_container", lambda name: None)
+    call = {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "method": "tools/call",
+        "params": {"name": "run_python", "arguments": {"code": "print(1)"}},
+    }
+    monkeypatch.setattr("sys.stdin", io.StringIO(json.dumps(call) + "\n"))
+    sandbox_mcp.main(["--image", "img:1", "--name", "c1", "--data", str(tmp_path)])
+    [(args, kwargs)] = started
+    assert args == ("img:1", "c1", None)
+    assert kwargs == {"data": tmp_path}

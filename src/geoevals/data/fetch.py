@@ -19,6 +19,8 @@ Fetchers:
   pinned to a snapshot date with an Overpass ``date:`` (attic) query, so that two fetches of
   the same box and date return the same data. The response is normalized (the server header is
   dropped and the elements sorted) before its checksum is taken.
+- ``osm_city_<town>``: every tagged OpenStreetMap feature of a town for the graded evals, from
+  the Overpass API at a snapshot date (``city_query``), with full geometry.
 """
 
 import copy
@@ -140,6 +142,27 @@ def overpass_query(bbox: Bbox, snapshot_date: str, timeout_s: int = 180) -> str:
     )
 
 
+def city_query(bbox: Bbox, snapshot_date: str, timeout_s: int = 900) -> str:
+    """The Overpass QL query for a whole town as of ``snapshot_date``: every tagged node, every
+    way, the multipolygon relations, and the boundary relations below the county level (admin
+    levels 8 to 11, or none). Country and state boundaries are left out: their geometry would
+    dwarf the town's."""
+    min_lon, min_lat, max_lon, max_lat = bbox
+    return (
+        f"[out:json][timeout:{timeout_s}][maxsize:2147483648]"
+        f"[bbox:{min_lat},{min_lon},{max_lat},{max_lon}]"
+        f'[date:"{snapshot_date}T00:00:00Z"];\n'
+        "(\n"
+        '  node[~"."~"."];\n'
+        "  way;\n"
+        '  relation["type"="multipolygon"];\n'
+        '  relation["type"="boundary"]["admin_level"~"^([89]|1[01])$"];\n'
+        '  relation["type"="boundary"][!"admin_level"];\n'
+        ");\n"
+        "out geom;\n"
+    )
+
+
 def normalize_overpass(document: dict[str, Any]) -> bytes:
     """Canonical bytes of an Overpass JSON response: only ``elements``, sorted, compact.
 
@@ -159,10 +182,15 @@ def normalize_overpass(document: dict[str, Any]) -> bytes:
 
 
 def fetch_overpass(
-    source_url: str, bbox: Bbox, snapshot_date: str, opener: Opener
+    source_url: str,
+    bbox: Bbox,
+    snapshot_date: str,
+    opener: Opener,
+    query: str | None = None,
 ) -> tuple[str, bytes, str | None]:
-    """Run the query; return it, the normalized extract and the server's database timestamp."""
-    query = overpass_query(bbox, snapshot_date)
+    """Run ``query`` (default: ``overpass_query``); return it, the normalized extract and the
+    server's database timestamp."""
+    query = query or overpass_query(bbox, snapshot_date)
     request = urllib.request.Request(
         source_url,
         data=urllib.parse.urlencode({"data": query}).encode("utf-8"),
@@ -189,6 +217,15 @@ def fetch_overpass(
 
 FETCHERS = {"human_context_pilot": "overpass"}
 """Dataset ID -> how its asset is downloaded."""
+CITY_PREFIX = "osm_city_"
+"""Datasets named ``osm_city_<town>`` are whole-town extracts (``city_query``)."""
+
+
+def fetcher_for(dataset_id: str) -> str | None:
+    """How ``dataset_id`` is downloaded: ``overpass``, ``overpass_city`` or None (unknown)."""
+    if dataset_id.startswith(CITY_PREFIX):
+        return "overpass_city"
+    return FETCHERS.get(dataset_id)
 
 
 # --- fetch ---------------------------------------------------------------------------------
@@ -212,8 +249,9 @@ def fetch_dataset(
     ``bbox`` and ``snapshot_date`` default to the committed manifest's asset ``bbox`` and
     ``time_range.end``. ``out_dir`` defaults to the directory of the asset path.
     """
-    if dataset_id not in FETCHERS:
-        known = ", ".join(sorted(FETCHERS))
+    kind = fetcher_for(dataset_id)
+    if kind is None:
+        known = ", ".join([*sorted(FETCHERS), f"{CITY_PREFIX}<town>"])
         raise FetchError(f"no fetcher for dataset {dataset_id!r} (known: {known})")
     path = manifest_path(dataset_id, manifests_dir)
     if not path.is_file():
@@ -240,7 +278,10 @@ def fetch_dataset(
     for output in outputs:
         ensure_ignored(output)
 
-    query, extract, osm_base = fetch_overpass(asset.source_url, bbox, snapshot_date, opener)
+    query = city_query(bbox, snapshot_date) if kind == "overpass_city" else None
+    query, extract, osm_base = fetch_overpass(
+        asset.source_url, bbox, snapshot_date, opener, query=query
+    )
     access_date = (today or dt.date.today()).isoformat()
     out_dir.mkdir(parents=True, exist_ok=True)
     outputs[0].write_bytes(extract)

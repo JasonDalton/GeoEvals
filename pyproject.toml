@@ -28,6 +28,9 @@ network = [
     "networkx>=3.6.1",
     "scipy>=1.14",
 ]
+plots = [
+    "matplotlib>=3.9",
+]
 
 [build-system]
 requires = ["hatchling>=1.27"]
@@ -41,6 +44,7 @@ packages = ["src/geoevals"]
 
 [dependency-groups]
 dev = [
+    "matplotlib>=3.9",
     "networkx>=3.6.1",
     "pyright>=1.1.400",
     "pytest>=8.3",

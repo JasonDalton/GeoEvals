@@ -4,6 +4,7 @@ import argparse
 import dataclasses
 import json
 import logging
+import os
 import sys
 import tempfile
 import webbrowser
@@ -15,7 +16,9 @@ from geoevals import __version__
 from geoevals.adapters import create_adapter, registered_adapter_names
 from geoevals.data.fetch import (
     DEFAULT_MANIFESTS,
+    Bbox,
     FetchError,
+    ensure_ignored,
     fetch_dataset,
     manifest_path,
     parse_bbox,
@@ -23,12 +26,29 @@ from geoevals.data.fetch import (
 from geoevals.data.inventory import DEFAULT_README, InventoryError, update_inventory
 from geoevals.data.licenses import DEFAULT_REPORT, render_report, runtime_dependencies
 from geoevals.data.verify import verify_manifest
+from geoevals.graded.board import (
+    DEFAULT_GRADED,
+    GRADED_END,
+    GRADED_START,
+    GradedError,
+    add_graded_run,
+    is_graded_result,
+    load_graded,
+    render_graded,
+)
+from geoevals.graded.city import LAYERS_DIR, convert_extract, write_layers
+from geoevals.graded.grader import GRADES_FILE, GradeError, GraderConfig, grade_run
+from geoevals.graded.keys import default_data_dir, regenerate_keys
+from geoevals.graded.run import run_eval
+from geoevals.graded.spec import find_eval_spec
+from geoevals.graded.towns import EXTRACT_FILE, fetch_candidate, measure_layers, stats_table
 from geoevals.leaderboard.table import (
     DEFAULT_RESULTS,
     LeaderboardError,
     add_run,
     load_rows,
     render,
+    replace_section,
     update_readme,
 )
 from geoevals.regenerate import RegenerateError, find_benchmark_dir, regenerate
@@ -49,11 +69,17 @@ from geoevals.runner.layout import (
     write_run_dir,
 )
 from geoevals.runner.run import RunError, run_benchmark, run_logging
-from geoevals.validation import SpecValidationError, validate_file, validate_run_result_file
+from geoevals.validation import (
+    SpecValidationError,
+    load_dataset_manifest,
+    validate_file,
+    validate_run_result_file,
+)
 from geoevals.validation.validate import load_yaml
 
 logger = logging.getLogger("geoevals.cli")
 
+GRADER_COMMAND: tuple[str, ...] = ("claude",)
 DEFAULT_PRICES = Path("examples/prices.example.yaml")
 """Relative to the working directory, like the other paths on the command line."""
 
@@ -104,11 +130,13 @@ def build_parser() -> argparse.ArgumentParser:
 
     validate = subparsers.add_parser(
         "validate",
-        help="Validate a benchmark spec (YAML), dataset manifest (YAML or JSONL), "
-        "or run result (<run-dir>/result.json).",
+        help="Validate a benchmark spec (YAML), dataset manifest (YAML or JSONL), graded eval "
+        "spec, or run result (<run-dir>/result.json, benchmark or graded).",
     )
     validate.add_argument(
-        "path", type=Path, help="Path to a benchmark spec, dataset manifest, or run result."
+        "path",
+        type=Path,
+        help="Path to a benchmark spec, dataset manifest, eval spec, or run result.",
     )
 
     data = subparsers.add_parser("data", help="Dataset tools.")
@@ -186,7 +214,13 @@ def build_parser() -> argparse.ArgumentParser:
     predict.add_argument("case_input", type=Path, help="Path to a case input (JSON object).")
 
     run = subparsers.add_parser("run", help="Run an adapter on every case of a benchmark split.")
-    run.add_argument("--benchmark", type=Path, required=True, help="Benchmark spec (YAML).")
+    target = run.add_mutually_exclusive_group(required=True)
+    target.add_argument("--benchmark", type=Path, help="Benchmark spec (YAML).")
+    target.add_argument(
+        "--eval",
+        type=Path,
+        help="Graded eval spec (eval.yaml): answers only; score them with `geoevals grade`.",
+    )
     add_adapter_argument(run)
     run.add_argument("--config", type=Path, required=True, help="Run config (YAML).")
     run.add_argument(
@@ -194,6 +228,12 @@ def build_parser() -> argparse.ArgumentParser:
         type=Path,
         required=True,
         help="Parent directory; the run is written to <out>/<run_id>/.",
+    )
+    run.add_argument(
+        "--data",
+        type=Path,
+        help="Graded evals: the data directory with layers/ (default: the city manifest asset's "
+        "directory).",
     )
     run.add_argument(
         "--prices",
@@ -344,6 +384,12 @@ def build_parser() -> argparse.ArgumentParser:
         default=DEFAULT_RESULTS,
         help=f"Leaderboard results directory (default: {DEFAULT_RESULTS}).",
     )
+    add.add_argument(
+        "--graded",
+        type=Path,
+        default=DEFAULT_GRADED,
+        help=f"Graded leaderboard directory (default: {DEFAULT_GRADED}).",
+    )
     board = leaderboard_commands.add_parser(
         "build",
         help="Write the leaderboard table into the README between its leaderboard markers.",
@@ -353,6 +399,12 @@ def build_parser() -> argparse.ArgumentParser:
         type=Path,
         default=DEFAULT_RESULTS,
         help=f"Leaderboard results directory (default: {DEFAULT_RESULTS}).",
+    )
+    board.add_argument(
+        "--graded",
+        type=Path,
+        default=DEFAULT_GRADED,
+        help=f"Graded leaderboard directory (default: {DEFAULT_GRADED}).",
     )
     board.add_argument(
         "--readme",
@@ -365,33 +417,143 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Write nothing; exit 1 when the README table is out of date.",
     )
+    grade = subparsers.add_parser(
+        "grade",
+        help="Grade a graded run's answers with Claude Opus 5.5 (two passes per answer, on the "
+        "local Claude subscription) and write grades.json into the run directory.",
+    )
+    grade.add_argument("run_dir", type=Path, help="Graded run directory (with result.json).")
+    grade.add_argument(
+        "--data",
+        type=Path,
+        help="Data directory with keys/ (default: the city manifest asset's directory).",
+    )
+    grade.add_argument(
+        "--evals", type=Path, default=Path("evals"), help="Directory of evals (default: evals)."
+    )
+    grade.add_argument(
+        "--passes", type=int, default=2, help="Grading passes per answer (default: 2)."
+    )
+    grade.add_argument(
+        "--force",
+        action="store_true",
+        help="Replace an existing grades.json (by default grading refuses, so a run is not "
+        "re-graded until the grade looks better).",
+    )
+    evals = subparsers.add_parser("evals", help="Graded eval tools (agent-graded, not benchmarks).")
+    evals_commands = evals.add_subparsers(dest="evals_command", required=True)
+    measure = evals_commands.add_parser(
+        "measure-town",
+        help="Fetch a candidate town's OpenStreetMap extract at a snapshot date into a gitignored "
+        "directory, convert it to layers and print its measurement row.",
+    )
+    measure.add_argument("--name", required=True, help="Town name, for the table.")
+    measure.add_argument(
+        "--bbox", required=True, type=parse_bbox, help="min_lon,min_lat,max_lon,max_lat."
+    )
+    measure.add_argument("--date", required=True, help="Snapshot date, YYYY-MM-DD.")
+    measure.add_argument(
+        "--out",
+        type=Path,
+        default=Path("data/raw/town_candidates"),
+        help="Parent directory of the fetch (default: data/raw/town_candidates).",
+    )
+    measure.add_argument(
+        "--source",
+        type=Path,
+        help=f"Measure an existing fetch (a directory with {EXTRACT_FILE}) instead of fetching.",
+    )
+    build_city = evals_commands.add_parser(
+        "build-city",
+        help="Convert a fetched city extract (`geoevals data fetch osm_city_<town>`) into "
+        "GeoParquet layers in <source>/layers/.",
+    )
+    build_city.add_argument("dataset_id", help="The city's dataset ID, osm_city_<town>.")
+    build_city.add_argument(
+        "--manifests",
+        type=Path,
+        default=DEFAULT_MANIFESTS,
+        help=f"Directory of dataset manifests (default: {DEFAULT_MANIFESTS}).",
+    )
+    build_city.add_argument(
+        "--source",
+        type=Path,
+        help="Directory of the fetched extract (default: the manifest asset's directory).",
+    )
+    regen_keys = evals_commands.add_parser(
+        "regenerate",
+        help="Compute an eval's reference keys from the city layers, write them to the gitignored "
+        "data directory and update key_sha256 in its tasks.jsonl.",
+    )
+    regen_keys.add_argument("eval_id", help="The eval ID (a directory under --root).")
+    regen_keys.add_argument(
+        "--root", type=Path, default=Path("evals"), help="Directory of evals (default: evals)."
+    )
+    regen_keys.add_argument(
+        "--data",
+        type=Path,
+        help="Data directory with layers/ (default: the city manifest asset's directory).",
+    )
+    regen_keys.add_argument(
+        "--check",
+        action="store_true",
+        help="Write nothing; exit 1 when a committed key_sha256 is out of date.",
+    )
     return parser
 
 
-def _leaderboard_add(run_dir: Path, results: Path) -> int:
+def _leaderboard_add(run_dir: Path, results: Path, graded: Path) -> int:
     try:
-        target = add_run(run_dir, results)
-    except LeaderboardError as exc:
+        result_path = run_dir / "result.json" if run_dir.is_dir() else run_dir
+        document = json.loads(result_path.read_text(encoding="utf-8"))
+        if is_graded_result(document):
+            target = add_graded_run(run_dir, graded)
+        else:
+            target = add_run(run_dir, results)
+    except (LeaderboardError, GradedError, SpecValidationError, OSError, ValueError) as exc:
         print(exc, file=sys.stderr)
         return 1
     print(f"added {target}")
     return 0
 
 
-def _leaderboard_build(results: Path, readme: Path, check: bool) -> int:
+def _leaderboard_build(results: Path, readme: Path, check: bool, graded: Path) -> int:
     try:
         text = readme.read_text(encoding="utf-8")
         updated = update_readme(text, render(load_rows(results)))
-    except (OSError, LeaderboardError) as exc:
+        rows, agreements = load_graded(graded)
+        updated = replace_section(
+            updated, GRADED_START, GRADED_END, render_graded(rows, agreements)
+        )
+    except (OSError, LeaderboardError, GradedError) as exc:
         print(exc, file=sys.stderr)
         return 1
-    if updated == text:
+    plots: dict[Path, str] = {}
+    if rows:
+        try:
+            from geoevals.graded.plots import plot_files
+
+            plots = plot_files(rows, graded)
+        except ImportError:
+            print("the graded box plots need matplotlib: uv sync --extra plots", file=sys.stderr)
+            return 1
+    stale = [
+        path for path, svg in plots.items()
+        if not path.is_file() or path.read_text(encoding="utf-8") != svg
+    ]  # fmt: skip
+    if updated == text and not stale:
         print(f"{readme}: leaderboard is up to date")
         return 0
     if check:
-        print(f"{readme}: leaderboard is out of date; run `geoevals leaderboard build`")
+        if updated != text:
+            print(f"{readme}: leaderboard is out of date; run `geoevals leaderboard build`")
+        for path in stale:
+            print(f"{path}: plot is out of date")
         return 1
     readme.write_text(updated, encoding="utf-8")
+    for path in stale:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(plots[path], encoding="utf-8")
     print(f"{readme}: leaderboard written")
     return 0
 
@@ -635,6 +797,48 @@ def _run_to_dir(
     return run_dir
 
 
+def _run_eval(
+    spec_path: Path, adapter_name: str, config_path: Path, out: Path, data: Path | None, level: str
+) -> int:
+    for path in (spec_path, config_path):
+        if not path.is_file():
+            print(f"{path}: file not found", file=sys.stderr)
+            return 1
+    try:
+        config = load_run_config(config_path)
+        data_dir = data or default_data_dir(spec_path)
+    except (RunConfigError, SpecValidationError, OSError) as exc:
+        print(exc, file=sys.stderr)
+        return 1
+    run_dir: Path | None = None
+    with run_logging(level) as run_log:
+
+        def start(run_id: str) -> None:
+            nonlocal run_dir
+            run_dir = out / run_id
+            try:
+                run_dir.mkdir(parents=True)
+            except FileExistsError:
+                raise RunError(f"{run_dir} already exists; not overwriting it") from None
+            run_log.attach(run_dir / LOG_FILE)
+            write_config(config, run_dir / CONFIG_FILE)
+            logger.info("writing graded run %s to %s", run_id, run_dir)
+
+        try:
+            result = run_eval(spec_path, adapter_name, config, data_dir, on_start=start)
+        except SpecValidationError as exc:
+            for issue in exc.issues:
+                logger.error("%s: %s", exc.path, issue)
+            return 1
+        except (RunError, ValueError) as exc:
+            logger.error("run failed: %s", exc)
+            return 1
+        assert run_dir is not None
+        write_result(result, run_dir / RESULT_FILE)
+    print(run_dir)
+    return 0
+
+
 def _compare(path_a: Path, path_b: Path, tolerance: Tolerance) -> int:
     try:
         run_a, run_b = load_run(path_a), load_run(path_b)
@@ -745,6 +949,97 @@ def _bench_regenerate(benchmark_id: str, root: Path, check: bool) -> int:
     return 1 if check and stale else 0
 
 
+def _evals_measure_town(name: str, bbox: Bbox, date: str, out: Path, source: Path | None) -> int:
+    try:
+        directory = source or fetch_candidate(name, bbox, date, out)
+        extract_path = directory / EXTRACT_FILE
+        layers = convert_extract(json.loads(extract_path.read_text(encoding="utf-8")))
+        ensure_ignored(directory / LAYERS_DIR / "buildings.parquet")
+        write_layers(layers, directory / LAYERS_DIR)
+    except (OSError, ValueError, FetchError) as exc:
+        print(exc, file=sys.stderr)
+        return 1
+    print(stats_table([(name, measure_layers(layers, bbox, extract_path.stat().st_size))]))
+    return 0
+
+
+def _evals_regenerate(eval_id: str, root: Path, data: Path | None, check: bool) -> int:
+    spec_path = find_eval_spec(root, eval_id)
+    try:
+        data_dir = data or default_data_dir(spec_path)
+        stale = regenerate_keys(spec_path, data_dir, write=not check)
+    except SpecValidationError as exc:
+        _print_issues(exc.path, exc.issues)
+        return 1
+    except (OSError, ValueError, RuntimeError) as exc:
+        print(exc, file=sys.stderr)
+        return 1
+    for task_id in stale:
+        print(f"{task_id}: {'out of date' if check else 'key_sha256 written'}")
+    if not stale:
+        print(f"{spec_path}: keys are up to date")
+    return 1 if check and stale else 0
+
+
+def _evals_build_city(dataset_id: str, manifests: Path, source: Path | None) -> int:
+    try:
+        path = manifest_path(dataset_id, manifests)
+        manifest = load_dataset_manifest(path)
+        asset = manifest.assets[0]
+        directory = source or Path(os.path.normpath(path.parent / asset.path)).parent
+        extract_path = directory / Path(asset.path).name
+        layers = convert_extract(json.loads(extract_path.read_text(encoding="utf-8")))
+        ensure_ignored(directory / LAYERS_DIR / "buildings.parquet")
+        written = write_layers(layers, directory / LAYERS_DIR)
+    except SpecValidationError as exc:
+        _print_issues(exc.path, exc.issues)
+        return 1
+    except (OSError, ValueError, FetchError) as exc:
+        print(exc, file=sys.stderr)
+        return 1
+    print(f"{directory / LAYERS_DIR}: wrote {len(written)} layers")
+    return 0
+
+
+def _grade(run_dir: Path, data: Path | None, evals: Path, passes: int, force: bool) -> int:
+    if passes < 2:
+        print(
+            "--passes must be at least 2: the report states the grader's agreement with itself",
+            file=sys.stderr,
+        )
+        return 1
+    path = run_dir / GRADES_FILE
+    if path.exists() and not force:
+        print(
+            f"{path} exists; a run is graded once. Use --force to replace it on purpose.",
+            file=sys.stderr,
+        )
+        return 1
+    config = GraderConfig(passes=passes, command=GRADER_COMMAND, evals_root=evals)
+    try:
+        grades = grade_run(run_dir, data, config)
+    except SpecValidationError as exc:
+        _print_issues(exc.path, exc.issues)
+        return 1
+    except (GradeError, OSError, ValueError) as exc:
+        print(exc, file=sys.stderr)
+        return 1
+    path.write_text(json.dumps(grades.model_dump(mode="json"), indent=2) + "\n", encoding="utf-8")
+    counts: dict[str, int] = {}
+    for task in grades.tasks:
+        counts[task.status] = counts.get(task.status, 0) + 1
+    print(f"{path}: " + ", ".join(f"{status} {n}" for status, n in sorted(counts.items())))
+    if grades.stopped:
+        print(f"grading stopped: {grades.stopped}", file=sys.stderr)
+    if counts.get("not_graded"):
+        print(
+            f"{counts['not_graded']} task(s) not graded; the run cannot go on the leaderboard "
+            "until they are",
+            file=sys.stderr,
+        )
+    return 1 if grades.stopped or counts.get("not_graded") else 0
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
@@ -764,6 +1059,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         return 0
     if args.command == "adapters" and args.adapters_command == "predict":
         return _adapters_predict(args.adapter, args.config, args.case_input)
+    if args.command == "run" and args.eval is not None:
+        return _run_eval(args.eval, args.adapter, args.config, args.out, args.data, args.log_level)
     if args.command == "run":
         return _run(
             args.benchmark,
@@ -789,8 +1086,16 @@ def main(argv: Sequence[str] | None = None) -> int:
     if args.command == "bench" and args.bench_command == "build":
         return _bench_build(args.pilot_id, args.root, args.source, args.out)
     if args.command == "leaderboard" and args.leaderboard_command == "add":
-        return _leaderboard_add(args.run_dir, args.results)
+        return _leaderboard_add(args.run_dir, args.results, args.graded)
     if args.command == "leaderboard" and args.leaderboard_command == "build":
-        return _leaderboard_build(args.results, args.readme, args.check)
+        return _leaderboard_build(args.results, args.readme, args.check, args.graded)
+    if args.command == "grade":
+        return _grade(args.run_dir, args.data, args.evals, args.passes, args.force)
+    if args.command == "evals" and args.evals_command == "measure-town":
+        return _evals_measure_town(args.name, args.bbox, args.date, args.out, args.source)
+    if args.command == "evals" and args.evals_command == "build-city":
+        return _evals_build_city(args.dataset_id, args.manifests, args.source)
+    if args.command == "evals" and args.evals_command == "regenerate":
+        return _evals_regenerate(args.eval_id, args.root, args.data, args.check)
     parser.print_help()
     return 0

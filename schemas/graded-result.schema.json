@@ -1,0 +1,96 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "GeoEvals graded run result",
+  "description": "The answers of one adapter to every task of a graded eval. It holds no scores: `geoevals grade` writes them to grades.json.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "run_id", "schema_version", "eval", "adapter", "config_hash", "dataset_manifest_hash",
+    "data_sha256", "environment", "started_at", "finished_at", "efficiency", "tasks"
+  ],
+  "properties": {
+    "run_id": {"type": "string", "minLength": 1},
+    "schema_version": {"const": "1.0.0"},
+    "eval": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "version"],
+      "properties": {
+        "id": {"type": "string", "pattern": "^[a-z][a-z0-9_]*$"},
+        "version": {"type": "string", "minLength": 1}
+      }
+    },
+    "adapter": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "version", "config"],
+      "properties": {
+        "name": {"type": "string", "minLength": 1},
+        "version": {"type": "string", "minLength": 1},
+        "config": {"type": "object"}
+      }
+    },
+    "config_hash": {"$ref": "#/$defs/sha256"},
+    "dataset_manifest_hash": {"$ref": "#/$defs/sha256"},
+    "data_sha256": {"description": "SHA-256 of the city layers the run used.", "$ref": "#/$defs/sha256"},
+    "environment": {"type": "object"},
+    "started_at": {"type": "string", "minLength": 1},
+    "finished_at": {"type": "string", "minLength": 1},
+    "efficiency": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["wall_clock_s", "latency_p50_s", "latency_p90_s", "tokens_input_total", "tokens_output_total"],
+      "properties": {
+        "wall_clock_s": {"type": "number", "minimum": 0},
+        "latency_p50_s": {"type": ["number", "null"]},
+        "latency_p90_s": {"type": ["number", "null"]},
+        "tokens_input_total": {"type": "integer", "minimum": 0},
+        "tokens_output_total": {"type": "integer", "minimum": 0}
+      }
+    },
+    "tasks": {"type": "array", "items": {"$ref": "#/$defs/task"}}
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "task": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["task_id", "status", "output", "latency_s", "retries", "tokens", "error"],
+      "properties": {
+        "task_id": {"type": "string", "pattern": "^[a-z][a-z0-9_]*-[0-9]{3}$"},
+        "status": {"enum": ["answered", "invalid_output", "adapter_error", "timeout", "skipped"]},
+        "output": {"type": ["object", "null"]},
+        "latency_s": {"type": ["number", "null"], "minimum": 0},
+        "retries": {"type": "integer", "minimum": 0},
+        "tokens": {
+          "oneOf": [
+            {"type": "null"},
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["input", "output"],
+              "properties": {
+                "input": {"type": "integer", "minimum": 0},
+                "output": {"type": "integer", "minimum": 0}
+              }
+            }
+          ]
+        },
+        "error": {
+          "oneOf": [
+            {"type": "null"},
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["type", "message"],
+              "properties": {"type": {"type": "string", "minLength": 1}, "message": {"type": "string"}}
+            }
+          ]
+        },
+        "trajectory": {"type": "array", "items": {"type": "object"}}
+      },
+      "if": {"properties": {"status": {"const": "answered"}}},
+      "then": {"properties": {"output": {"type": "object"}, "error": {"type": "null"}}}
+    }
+  }
+}

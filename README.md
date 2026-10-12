@@ -74,7 +74,9 @@ uv run geoevals compare <run_a> <run_b>                             # per-case d
 uv run geoevals validate <benchmark.yaml | manifest.yaml | result.json>
 ```
 
-## Available benchmarks
+## Benchmarks (deterministic)
+
+Each benchmark task has one checkable answer, scored by code against an expected output and stated tolerances. Open-ended tasks are graded evals instead (see [Graded evals](#graded-evals-agent-graded)).
 
 | Benchmark | Pillar | Cases | Data | Card |
 | --- | --- | --- | --- | --- |
@@ -130,6 +132,20 @@ Run locally through Claude Code 2.1.296 on a Claude subscription, effort high, p
 Task success is the mean of `task_success` over every case, with its 95% interval; cases that were not scored (errors, invalid output, timeouts) count as failures. Latency is the wall-clock time per case, including CLI startup. Tokens in count every prompt token the model processed, cache reads included; tokens out include thinking. Runs on a subscription have no per-token charge, so there is no cost column.
 <!-- leaderboard:end -->
 
+## Graded evals (agent-graded)
+
+Open-ended spatial-reasoning tasks on a real city (proximity, adjacency, visibility,
+containment, direction), answered by Claude models on the python track with the whole city
+mounted, and scored by Claude Opus 5.5 against a rubric and a reference key computed from the
+data. Each answer is graded twice. The table shows each model's distribution of task scores
+(0 to 1); the box plots show the same numbers. Graded scores measure something different from
+benchmark scores and are never combined with them. How evals are written and graded:
+[`docs/eval-authoring.md`](docs/eval-authoring.md).
+
+<!-- graded:start -->
+No graded runs have been added yet. See [`evals/README.md`](evals/README.md).
+<!-- graded:end -->
+
 ## Add a benchmark, metric, adapter or dataset manifest
 
 [`docs/benchmark-authoring.md`](docs/benchmark-authoring.md) is the guide. It has the
@@ -145,6 +161,7 @@ definition of done for a benchmark and a worked example that adds a new operatio
 - **Adapter:** a module-level class that implements the `geoevals.adapters.Adapter`
   protocol (`name`, `version`, `setup`, `predict`, `teardown`), registered in
   `src/geoevals/adapters/__init__.py`.
+- **Graded eval:** an open-ended task set under `evals/`; see [`docs/eval-authoring.md`](docs/eval-authoring.md). Use one only when a task has no single checkable answer.
 - **Dataset manifest:** a YAML or JSONL file that matches
   `schemas/dataset-manifest.schema.json`. `uv run geoevals data verify <manifest>` checks the
   SHA-256 of each asset. See [`docs/data-governance.md`](docs/data-governance.md).
@@ -191,6 +208,7 @@ See [`docs/data-governance.md`](docs/data-governance.md).
 | [`docs/data-governance.md`](docs/data-governance.md) | Licenses, manifests, restricted data, privacy |
 | [`docs/benchmark-authoring.md`](docs/benchmark-authoring.md) | How to add a benchmark, case, metric, adapter or manifest; definition of done |
 | [`docs/reproducibility.md`](docs/reproducibility.md) | Versions, comparability, run determinism, reproduction |
+| [`docs/eval-authoring.md`](docs/eval-authoring.md) | Graded evals: when to use one, rubrics, reference keys, grading |
 | [`docs/human-context.md`](docs/human-context.md) | Human-context concepts and evidence types |
 | [`docs/release-checklist.md`](docs/release-checklist.md) | The release acceptance checklist: what CI verifies and what needs human sign-off |
 

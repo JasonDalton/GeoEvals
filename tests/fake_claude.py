@@ -4,10 +4,15 @@ The scenario is the JSON file named by ``FAKE_CLAUDE_SCENARIO``::
 
     {"events": [...], "exit_code": 0, "sleep_s": 0, "stderr": ""}
 
-When ``FAKE_CLAUDE_RECORD`` names a file, the call is recorded there as JSON: ``argv``, ``stdin``,
-``cwd``, ``cwd_entries`` (the files in the working directory at start), ``env_has_api_key`` and
-``pid``. Then the fake sleeps ``sleep_s``, prints each event as one JSON line and exits with
-``exit_code``. ``--version`` prints a fixed version.
+``{"sequence": [scenario, ...]}`` replays one scenario per call, repeating the last.
+
+When ``FAKE_CLAUDE_RECORD`` names a file, every call is appended there to a JSON list of records,
+each with ``argv``, ``stdin``, ``cwd``, ``cwd_entries`` (the files in the working directory at
+start), ``env_has_api_key``, ``env`` (the variables starting with ANTHROPIC, CLAUDE or DISABLE),
+``ppid`` and ``pid``. Then the fake sleeps ``sleep_s``, prints each event as one JSON line and
+exits with ``exit_code``.
+
+``--version`` prints a fixed version.
 """
 
 import json
@@ -22,6 +27,16 @@ def main() -> int:
         return 0
     with open(os.environ["FAKE_CLAUDE_SCENARIO"], encoding="utf-8") as file:
         scenario = json.load(file)
+    sequence = scenario.get("sequence")
+    if sequence is not None:
+        counter = os.environ["FAKE_CLAUDE_SCENARIO"] + ".count"
+        calls = 0
+        if os.path.exists(counter):
+            with open(counter, encoding="utf-8") as file:
+                calls = int(file.read())
+        with open(counter, "w", encoding="utf-8") as file:
+            file.write(str(calls + 1))
+        scenario = sequence[min(calls, len(sequence) - 1)]
     stdin = sys.stdin.read()
     record_path = os.environ.get("FAKE_CLAUDE_RECORD")
     if record_path:
@@ -39,8 +54,13 @@ def main() -> int:
             "ppid": os.getppid(),
             "pid": os.getpid(),
         }
+        records = []
+        if os.path.exists(record_path):
+            with open(record_path, encoding="utf-8") as file:
+                records = json.load(file)
+        records.append(record)
         with open(record_path, "w", encoding="utf-8") as file:
-            json.dump(record, file)
+            json.dump(records, file)
     time.sleep(scenario.get("sleep_s", 0))
     for event in scenario.get("events", []):
         print(json.dumps(event), flush=True)
