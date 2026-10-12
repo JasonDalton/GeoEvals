@@ -29,6 +29,28 @@ Feature extraction from imagery is not planned. Many benchmarks already cover it
 
 The engine for agent-graded evals exists (see `docs/eval-authoring.md`). Planned: five evals (proximity, adjacency, visibility, containment, direction) on one pinned town, 12 tasks each, graded by Claude Opus 5.5. They arrive with the town's dataset manifest and the task drafting.
 
+Ideas for later graded evals, not yet designed:
+
+- **Multi-skill tasks.** One task that needs several of the five skills. The model is a
+  multi-criteria site search such as the "Home Finder" exercise of a study of 104 geography
+  students in Waterloo, Ontario: homes within a walking distance of a school, away from rail,
+  inside city limits. The key lists each part and the facts that link them. Read against the
+  five single-skill evals, which come first.
+- **Reading a rendered map.** The same questions from a map image instead of the layers, so that
+  paired tasks measure what a model loses reading a map. The map is supplied pre-rendered and
+  pinned by its SHA-256 in the dataset manifest; GeoEvals does not render it. Needs image input
+  in the adapters, a grader that sees the image or keys limited to what the image shows, and a
+  governance decision on shipping the image (a rendered map is an ODbL Produced Work).
+- **Grading the strategy.** A criterion graded from the python-track code transcript: whether
+  the model narrowed candidates criterion by criterion, checked its distances, and kept the
+  method in proportion to the problem. Needs a new grader prompt version.
+- **Patterns and association.** Clustering and dispersion (nearest-neighbor ratio, quadrat
+  counts) and association between feature types (co-location quotient), computed from the data.
+- **Difficulty tiers.** Each task tagged describe, analyze or infer in its `strata`, so the
+  report shows where scores fall off.
+- **A human baseline.** A subset of tasks answered by GIS students, to place model scores on a
+  human scale.
+
 ### LLM and hosted-API adapters
 
 Adapters for language models and hosted APIs. The first are not yet released: the Claude
