@@ -1,4 +1,5 @@
 import json
+from dataclasses import replace
 from pathlib import Path
 
 import pytest
@@ -165,11 +166,24 @@ def test_board_rejects_incomplete_runs(result: dict, message: str) -> None:
         graded_row(result, grades, "w")
 
 
-def test_load_graded_rejects_mixed_data(tmp_path: Path) -> None:
+def _other_eval_version(result: dict, grades: dict) -> None:
+    result["eval"]["version"] = grades["eval"]["version"] = "0.2.0"
+
+
+def _other_claude_code(result: dict, grades: dict) -> None:
+    grades["grader"] = {**grades["grader"], "claude_code_version": "9.9.10"}
+
+
+def _other_data(result: dict, grades: dict) -> None:
+    result["data_sha256"] = "e" * 64
+
+
+@pytest.mark.parametrize("change", [_other_data, _other_eval_version, _other_claude_code])
+def test_load_graded_rejects_mixed_runs(tmp_path: Path, change) -> None:
     _write(tmp_path, _result(), _grades([(4, 4)] * 4))
-    _write(
-        tmp_path, _result(adapter="claude_python_haiku_5_5", data="e" * 64), _grades([(2, 2)] * 4)
-    )
+    result, grades = _result(adapter="claude_python_haiku_5_5"), _grades([(2, 2)] * 4)
+    change(result, grades)
+    _write(tmp_path, result, grades)
     with pytest.raises(GradedError, match="not comparable"):
         load_graded(tmp_path)
 
@@ -186,6 +200,39 @@ def test_render_graded(tmp_path: Path) -> None:
     assert "![proximity: task scores by model](leaderboard/graded/plots/proximity.svg)" in text
     assert "Opus 5.5 also answered" in text
     assert "never combined" in text
+    assert "Each row covers 4 tasks." in text
+
+
+def _graded_by(model: str) -> dict:
+    return {**_grades([(4, 4)] * 4), "grader": {**GRADER, "model": model}}
+
+
+@pytest.mark.parametrize(
+    ("grader", "note"),
+    [
+        ("claude-sonnet-5-5", None),
+        ("claude-haiku-5-5", "Haiku 5.5 also answered these tasks"),
+        ("claude-opus-5-5", "Opus 5.5 also answered these tasks"),
+    ],
+)
+def test_self_grading_note_follows_the_grader_model(
+    tmp_path: Path, grader: str, note: str | None
+) -> None:
+    _write(tmp_path, _result(), _graded_by(grader))
+    _write(tmp_path, _result(adapter="claude_python_haiku_5_5"), _graded_by(grader))
+    text = render_graded(*load_graded(tmp_path))
+    if note is None:
+        assert "also answered" not in text
+    else:
+        assert note in text
+
+
+def test_task_counts_are_listed_per_eval_when_they_differ() -> None:
+    grades = Grades.model_validate(_grades([(4, 4)] * 4))
+    row = graded_row(_result(), grades, "w")
+    other = replace(row, eval_id="adjacency", n=6)
+    text = render_graded([other, row], {"adjacency": agreement([]), "proximity": agreement([])})
+    assert "Rows cover `adjacency` 6 tasks and `proximity` 4 tasks." in text
 
 
 def test_render_with_no_graded_runs() -> None:

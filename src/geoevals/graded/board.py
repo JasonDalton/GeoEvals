@@ -199,9 +199,27 @@ def load_graded(results_dir: Path) -> tuple[list[GradedRow], dict[str, Agreement
     return sorted(rows, key=GradedRow.sort_key), agreements
 
 
+def _model_slug(model_id: str) -> str:
+    """``claude-opus-5-5`` -> ``opus_5_5``, the slug in adapter names."""
+    return model_id.removeprefix("claude-").replace("-", "_")
+
+
 def _model_name(model_id: str) -> str:
     """``claude-opus-5-5`` -> ``Opus 5.5``."""
-    return MODEL_NAMES.get(model_id.removeprefix("claude-").replace("-", "_"), model_id)
+    return MODEL_NAMES.get(_model_slug(model_id), model_id)
+
+
+def _task_counts(rows: list[GradedRow]) -> str:
+    """One sentence on how many tasks the rows cover."""
+    counts = {row.n for row in rows}
+    if len(counts) == 1:
+        return f"Each row covers {counts.pop()} tasks."
+    per_eval = []
+    for eval_id in sorted({row.eval_id for row in rows}):
+        numbers = sorted({row.n for row in rows if row.eval_id == eval_id})
+        per_eval.append(f"`{eval_id}` {' or '.join(map(str, numbers))} tasks")
+    listed = ", ".join(per_eval[:-1]) + f" and {per_eval[-1]}"
+    return f"Rows cover {listed}."
 
 
 def render_graded(rows: list[GradedRow], agreements: dict[str, Agreement]) -> str:
@@ -228,7 +246,7 @@ def render_graded(rows: list[GradedRow], agreements: dict[str, Agreement]) -> st
         f"difference {agreements[e].mean_abs_diff:.2f}"
         for e in evals
     )
-    answered_by_grader = "opus_5_5" in {row.model for row in rows}
+    answered_by_grader = _model_slug(grader.model) in {row.model for row in rows}
     notes = [
         "",
         f"Graded by Claude {_model_name(grader.model)} (effort {grader.effort}, grader prompt "
@@ -239,14 +257,15 @@ def render_graded(rows: list[GradedRow], agreements: dict[str, Agreement]) -> st
     ]
     if answered_by_grader:
         notes.append(
-            "Opus 5.5 also answered these tasks, so its own rows may be biased in its favor."
+            f"{_model_name(grader.model)} also answered these tasks, so its own rows may be "
+            "biased in its favor."
         )
     notes += [
         "",
         "A task score is the mean of the rubric criteria (0 to 4) divided by 4, averaged over the "
-        "passes, from 0 to 1. Tasks without an answer (errors, model timeouts, invalid output) "
-        "score 0. Graded scores are not comparable with benchmark scores and are never combined "
-        "with them.",
+        f"passes, from 0 to 1. {_task_counts(rows)} Tasks without an answer (errors, model "
+        "timeouts, invalid output) score 0. Graded scores are not comparable with benchmark "
+        "scores and are never combined with them.",
     ]
     return "\n".join(lines + notes)
 
