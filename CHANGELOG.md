@@ -35,7 +35,9 @@ no API key is used. The adapter version records the Claude Code version (`0.1.0+
   measure-town`, `evals build-city`, `evals regenerate`, `geoevals run --eval`, `geoevals
   grade`, and a graded section in `geoevals leaderboard build` (quartile table and SVG box
   plots). The python-track adapters take `prompt: graded` and `data_mount`. New optional extra
-  `plots` (matplotlib). See `docs/eval-authoring.md`.
+  `plots` (matplotlib). The grader sees each task's location; graded runs are committed in
+  `leaderboard/graded/` with OpenStreetMap attribution (decision recorded in
+  `docs/data-governance.md`). See `docs/eval-authoring.md`.
 
 #### Tools
 

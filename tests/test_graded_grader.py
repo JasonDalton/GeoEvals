@@ -123,6 +123,7 @@ def test_grader_never_sees_who_answered(tmp_path: Path, fake: FakeClaude) -> Non
         assert name.lower() not in sent.lower(), name
     assert "walking_nearest" in record["stdin"], "the key is sent"
     assert "North Pharmacy (node/500)" in record["stdin"], "the answer is sent"
+    assert "50.000538987" in record["stdin"], "the task location is sent"
     argv = record["argv"]
     assert argv[argv.index("--model") + 1] == GRADER_MODEL
     assert argv[argv.index("--tools") + 1] == ""

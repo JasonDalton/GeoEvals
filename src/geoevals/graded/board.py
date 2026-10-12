@@ -251,8 +251,8 @@ def render_graded(rows: list[GradedRow], agreements: dict[str, Agreement]) -> st
         "",
         f"Graded by Claude {_model_name(grader.model)} (effort {grader.effort}, grader prompt "
         f"{grader.prompt_version}, Claude Code {grader.claude_code_version}) in "
-        f"{grader.passes} passes per answer. The grader saw the task, the rubric, the reference "
-        "key and the answer, never which model answered. "
+        f"{grader.passes} passes per answer. The grader saw the task with its location, the "
+        "rubric, the reference key and the answer, never which model answered. "
         f"Agreement between passes: {agreement_text}.",
     ]
     if answered_by_grader:
@@ -266,6 +266,8 @@ def render_graded(rows: list[GradedRow], agreements: dict[str, Agreement]) -> st
         f"passes, from 0 to 1. {_task_counts(rows)} Tasks without an answer (errors, model "
         "timeouts, invalid output) score 0. Graded scores are not comparable with benchmark "
         "scores and are never combined with them.",
+        "",
+        "Tasks, answers and reference keys use map data © OpenStreetMap contributors (ODbL-1.0).",
     ]
     return "\n".join(lines + notes)
 

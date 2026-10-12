@@ -201,6 +201,8 @@ def test_render_graded(tmp_path: Path) -> None:
     assert "Opus 5.5 also answered" in text
     assert "never combined" in text
     assert "Each row covers 4 tasks." in text
+    assert "the task with its location" in text
+    assert "© OpenStreetMap contributors (ODbL-1.0)" in text
 
 
 def _graded_by(model: str) -> dict:

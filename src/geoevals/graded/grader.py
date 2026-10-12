@@ -5,9 +5,9 @@
 call). For every answered task it runs ``passes`` separate ``claude -p`` sessions through
 ``geoevals.leaderboard.claude_cli.run_cli``: model ``GRADER_MODEL``, effort high, no tools,
 ``--restricted``, a stripped environment, an empty working directory and the subscription
-check. The input is the grader prompt (``prompts/grader_v1.md``), the task prompt and audience,
-the rubric with anchors, the key and the answer; never the answering model, the adapter, the run
-ID or the trajectory.
+check. The input is the grader prompt (``prompts/grader_v1.md``), the task prompt, audience and
+location (the marked point and feature IDs), the rubric with anchors, the key and the answer;
+never the answering model, the adapter, the run ID or the trajectory.
 
 A grade is valid when it scores exactly the task's criteria with integers 0 to 4, each with a
 justification of at most 60 words. An error or an invalid grade is retried once; a second
@@ -178,7 +178,9 @@ def grader_message(
     task: EvalTask, criteria: list[Criterion], key: dict[str, Any], output: dict[str, Any]
 ) -> str:
     """The user message of a grading session; see the module docstring for what it holds."""
-    lines = ["# Task", "", task.prompt, "", f"Audience: {task.audience}", "", "# Rubric", ""]
+    location = json.dumps(task.location.model_dump(exclude_none=True), indent=2)
+    lines = ["# Task", "", task.prompt, "", f"Audience: {task.audience}", ""]
+    lines += ["Location (JSON), as the answering model received it:", location, "", "# Rubric", ""]
     lines.append("Score each criterion from 0 to 4 using its anchors.")
     for criterion in criteria:
         lines += ["", f"## {criterion.id}: {criterion.title}", "", criterion.description, ""]
