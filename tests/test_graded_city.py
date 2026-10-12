@@ -81,6 +81,65 @@ def test_building_heights_follow_the_rule() -> None:
     assert buildings.loc["way/404", "height_source"] == "unknown"
 
 
+def _barrier(tags: dict[str, str], layer: str, closed: bool = False) -> bool:
+    points = [(0, 0), (100, 0), (100, 50), (0, 50), (0, 0)] if closed else [(0, 0), (100, 0)]
+    way = {
+        "type": "way",
+        "id": 1,
+        "geometry": [{"lon": 10 + x / 1e5, "lat": 50 + y / 1e5} for x, y in points],
+        "tags": tags,
+    }
+    frame = convert_extract({"elements": [way]})[layer]
+    assert len(frame) == 1, tags
+    return bool(frame["walk_barrier"].iloc[0])
+
+
+@pytest.mark.parametrize(
+    ("tags", "barrier"),
+    [
+        ({"railway": "rail"}, True),
+        ({"railway": "light_rail"}, True),
+        ({"railway": "narrow_gauge"}, True),
+        ({"railway": "monorail"}, True),
+        ({"railway": "funicular"}, True),
+        ({"railway": "rail", "tunnel": "no", "bridge": "no"}, True),
+        ({"railway": "tram"}, False),
+        ({"railway": "subway"}, False),
+        ({"railway": "rail", "tunnel": "yes"}, False),
+        ({"railway": "rail", "bridge": "viaduct"}, False),
+        ({"railway": "light_rail", "location": "underground"}, False),
+    ],
+)
+def test_walk_barrier_rail(tags: dict[str, str], barrier: bool) -> None:
+    assert _barrier(tags, "railways") is barrier
+
+
+@pytest.mark.parametrize(
+    ("tags", "closed", "barrier"),
+    [
+        ({"waterway": "river"}, False, True),
+        ({"waterway": "canal"}, False, True),
+        ({"waterway": "stream"}, False, True),
+        ({"waterway": "ditch"}, False, False),
+        ({"waterway": "drain"}, False, False),
+        ({"waterway": "culvert"}, False, False),
+        ({"waterway": "stream", "tunnel": "culvert"}, False, False),
+        ({"natural": "water"}, True, True),
+        ({"natural": "water", "water": "pond"}, True, True),
+        ({"waterway": "riverbank"}, True, True),
+        ({"natural": "water"}, False, False),  # an unclosed outline is not an area
+    ],
+)
+def test_walk_barrier_water(tags: dict[str, str], closed: bool, barrier: bool) -> None:
+    assert _barrier(tags, "water", closed) is barrier
+
+
+def test_a_water_point_is_not_a_barrier() -> None:
+    node = {"type": "node", "id": 1, "lon": 10.0, "lat": 50.0, "tags": {"waterway": "waterfall"}}
+    water = convert_extract({"elements": [node]})["water"]
+    assert list(water["walk_barrier"]) == [False]
+
+
 def test_multipolygon_relation_keeps_its_hole() -> None:
     parks = convert_extract(overpass_document())["parks"].set_index("feature_id")
     ring = parks.geometry["relation/703"]

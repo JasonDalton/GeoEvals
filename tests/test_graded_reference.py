@@ -428,6 +428,31 @@ def test_a_water_area_is_a_barrier() -> None:
     assert route["reason"] == "blocked_by_barrier"
 
 
+@pytest.mark.parametrize(
+    ("tags", "blocked"),
+    [
+        ({"railway": "rail"}, True),
+        ({"waterway": "stream"}, True),
+        ({"railway": "rail", "tunnel": "yes"}, False),
+        ({"railway": "tram"}, False),
+        ({"waterway": "ditch"}, False),
+        ({"waterway": "stream", "tunnel": "culvert"}, False),
+    ],
+)
+def test_only_walk_barriers_block_a_snap_leg(tags: dict[str, str], blocked: bool) -> None:
+    layers = _town(
+        [
+            (1, [(-50, -20), (50, -20)], {"highway": "footway"}),
+            (2, [(-200, 0), (200, 0)], tags),
+        ]
+    )
+    route = module["WalkGraph"](layers).route(
+        module["Point"](*lonlat(0, 30)), module["Point"](*lonlat(50, -20))
+    )
+    assert route["reachable"] is not blocked
+    assert route.get("reason") == ("blocked_by_barrier" if blocked else None)
+
+
 def test_a_point_observer_inside_a_building_is_not_blocked_by_it() -> None:
     layers = _sight_layers({"way/1": 30.0, "way/3": 12.0})
     key = _visibility(layers, {"point": lonlat(5, 0), "height_m": 1.6})  # inside way/1

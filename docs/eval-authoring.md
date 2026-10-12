@@ -56,7 +56,9 @@ The keys follow a few fixed rules, so a task author should expect them:
   within a few meters of its nearest street. A place can join each nearby connected part of the
   network, so a short isolated footway beside it does not cut it off from the street behind.
 - A place more than 100 m from every network vertex it can reach is unreachable, and so is a
-  place whose only nearby vertices are across a railway or water.
+  place whose only nearby vertices are across a walk barrier: surface rail (not trams, subways,
+  tunnels or bridges), a river, canal or stream that is not culverted, or a water area. Ditches
+  and drains are not barriers.
 - Walls up to 5 cm apart, or overlapping by up to 5 cm, count as touching.
 - Visibility never guesses an unknown height. When a target or an observer has no known height
   and the answer depends on it, the key says `visible: null`, and a good answer says it cannot
