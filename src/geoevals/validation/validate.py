@@ -337,18 +337,26 @@ def load_eval_spec(path: Path) -> EvalSpec:
 
 # --- document type dispatch ------------------------------------------------------------------
 
-DocumentType = Literal["benchmark spec", "dataset manifest", "run result", "eval spec"]
+DocumentType = Literal[
+    "benchmark spec", "dataset manifest", "run result", "eval spec", "graded result"
+]
+
+
+def _is_graded_result(document: Any) -> bool:
+    return isinstance(document, dict) and "eval" in document and "tasks" in document
 
 
 def detect_document_type(path: Path) -> DocumentType:
     """Guess the document type.
 
-    ``result.json`` files and mappings with ``run_id`` are run results, JSONL files and mappings
-    with ``assets`` are dataset manifests, mappings with ``rubric_criteria`` are graded eval
-    specs, and anything else is a benchmark spec.
+    ``result.json`` files and mappings with ``run_id`` are run results, or graded eval results
+    when they hold ``eval`` and ``tasks``; JSONL files and mappings with ``assets`` are dataset
+    manifests, mappings with ``rubric_criteria`` are graded eval specs, and anything else is a
+    benchmark spec.
     """
     if path.name == "result.json":
-        return "run result"
+        document, issues = _load_json(path)
+        return "graded result" if not issues and _is_graded_result(document) else "run result"
     if path.suffix == ".jsonl":
         return "dataset manifest"
     try:
@@ -358,7 +366,7 @@ def detect_document_type(path: Path) -> DocumentType:
     if isinstance(document, dict) and "assets" in document:
         return "dataset manifest"
     if isinstance(document, dict) and "run_id" in document:
-        return "run result"
+        return "graded result" if _is_graded_result(document) else "run result"
     if isinstance(document, dict) and "rubric_criteria" in document:
         return "eval spec"
     return "benchmark spec"
@@ -371,6 +379,11 @@ def validate_file(path: Path) -> tuple[DocumentType, list[ValidationIssue]]:
         return kind, validate_manifest_file(path)
     if kind == "run result":
         return kind, validate_run_result_file(path)
+    if kind == "graded result":
+        from geoevals.graded.run import validate_graded_result  # imported here: no import cycle
+
+        document, issues = _load_json(path)
+        return kind, issues or validate_graded_result(document)
     if kind == "eval spec":
         return kind, validate_eval_file(path)
     return kind, validate_benchmark_file(path)

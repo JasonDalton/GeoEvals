@@ -109,3 +109,21 @@ def test_run_eval_cli(tmp_path: Path) -> None:
 def test_run_needs_a_benchmark_or_an_eval(capsys: pytest.CaptureFixture[str]) -> None:
     with pytest.raises(SystemExit):
         main(["run", "--adapter", "mock", "--config", "c.yaml", "--out", "o"])
+
+
+def test_validate_cli_detects_a_graded_result(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    from geoevals.validation import detect_document_type
+    from graded_helpers import graded_run_dir
+
+    run_dir, _ = graded_run_dir(tmp_path, {"sample-001": "answered"})
+    path = run_dir / "result.json"
+    assert detect_document_type(path) == "graded result"
+    assert main(["validate", str(path)]) == 0
+    assert "valid graded result" in capsys.readouterr().out
+    document = json.loads(path.read_text())
+    del document["data_sha256"]
+    path.write_text(json.dumps(document), encoding="utf-8")
+    assert main(["validate", str(path)]) == 1
+    assert "data_sha256" in capsys.readouterr().err

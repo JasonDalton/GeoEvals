@@ -130,11 +130,13 @@ def build_parser() -> argparse.ArgumentParser:
 
     validate = subparsers.add_parser(
         "validate",
-        help="Validate a benchmark spec (YAML), dataset manifest (YAML or JSONL), "
-        "or run result (<run-dir>/result.json).",
+        help="Validate a benchmark spec (YAML), dataset manifest (YAML or JSONL), graded eval "
+        "spec, or run result (<run-dir>/result.json, benchmark or graded).",
     )
     validate.add_argument(
-        "path", type=Path, help="Path to a benchmark spec, dataset manifest, or run result."
+        "path",
+        type=Path,
+        help="Path to a benchmark spec, dataset manifest, eval spec, or run result.",
     )
 
     data = subparsers.add_parser("data", help="Dataset tools.")
