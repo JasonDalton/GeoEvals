@@ -53,11 +53,16 @@ adjacency, closure, visibility, direction).
 The keys follow a few fixed rules, so a task author should expect them:
 
 - The walking network is densified to vertices at most 10 m apart, so a place joins the network
-  within a few meters of its nearest street.
+  within a few meters of its nearest street. A place can join each nearby connected part of the
+  network, so a short isolated footway beside it does not cut it off from the street behind.
+- A place more than 100 m from every network vertex it can reach is unreachable, and so is a
+  place whose only nearby vertices are across a railway or water.
 - Walls up to 5 cm apart, or overlapping by up to 5 cm, count as touching.
 - Visibility never guesses an unknown height. When a target or an observer has no known height
   and the answer depends on it, the key says `visible: null`, and a good answer says it cannot
-  tell.
+  tell. A building of unknown height on a sight line also leaves the target undecided.
+- In directions, step distances cover only the walk on the network, not the walks to and from
+  it, so they do not sum to `walking_m`.
 
 ## Compute the keys
 
@@ -93,7 +98,13 @@ task, the rubric, the key and the answer, never which model answered. Each answe
 twice; an error or invalid grade is retried once, and a task that still has no grade leaves the
 run off the leaderboard. `geoevals grade` exits 1 when grading stopped or any task is not
 graded. It refuses to replace an existing `grades.json` unless given `--force`: a run is graded
-once, not re-graded until the scores look better. `leaderboard build` needs the `plots` extra when graded rows exist.
+once, not re-graded until the scores look better. `leaderboard build` needs the `plots` extra
+when graded rows exist.
+
+Do not commit a graded run yet: its answers quote OpenStreetMap names, IDs and distances, and
+the grader's justifications cite the key. Whether `leaderboard/graded/` may be committed is an
+open question in [`data-governance.md`](data-governance.md#restricted-data), and no graded run is
+committed until it is decided.
 
 ## Review and versions
 

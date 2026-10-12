@@ -95,6 +95,11 @@ uv run geoevals leaderboard build
 `result.json`, `grades.json` and `config.yaml`. `leaderboard build` writes the graded section of
 the README and the box plot `leaderboard/graded/plots/<eval>.svg` (it needs the `plots` extra).
 
+Do not commit a graded run yet. Its answers quote OpenStreetMap names, IDs and distances, and
+the grader's justifications cite the reference key. Whether `leaderboard/graded/` may be
+committed is an open question in [`docs/data-governance.md`](../docs/data-governance.md#restricted-data),
+and no graded run is committed until it is decided.
+
 A graded run is accepted only if:
 
 - it comes from a `claude_python_<model>` adapter with the default CLI;

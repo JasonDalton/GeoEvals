@@ -81,6 +81,8 @@ reviewer.
 
 The graded evals will use a whole-town OpenStreetMap extract (`osm_city_<town>`). Its layers and the evals' reference keys are derived data, so they stay in `data/raw/osm_city_<town>/`; `tasks.jsonl` commits only each key's SHA-256. Task prompts name features by their OSM name and ID, as a citation would. Whether such names and IDs in committed prompts count as OSM-derived data is part of the open question for a qualified reviewer noted above.
 
+Graded runs raise the same question. A graded run's answers quote OSM names, IDs and distances, and the grader's justifications in `grades.json` cite the reference key. `geoevals leaderboard add` copies `result.json` and `grades.json` into `leaderboard/graded/`, so whether `leaderboard/graded/` may be committed is part of the same open question, and no graded run is committed until it is decided.
+
 ## Fixtures in the repository
 
 - Keep fixtures small: under 1 MB per benchmark.
