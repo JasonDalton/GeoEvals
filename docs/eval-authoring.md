@@ -94,17 +94,17 @@ uv run geoevals leaderboard build
 Graded evals run on the python track only: the city is mounted read-only in the sandbox at
 `/bench/data`. `geoevals grade` runs Claude Opus 5.5 (effort high) in its own `claude -p`
 session per answer and pass, with no tools and the leaderboard's isolation. The grader sees the
-task, the rubric, the key and the answer, never which model answered. Each answer is graded
+task with its location, the rubric, the key and the answer, never which model answered. Each answer is graded
 twice; an error or invalid grade is retried once, and a task that still has no grade leaves the
 run off the leaderboard. `geoevals grade` exits 1 when grading stopped or any task is not
 graded. It refuses to replace an existing `grades.json` unless given `--force`: a run is graded
 once, not re-graded until the scores look better. `leaderboard build` needs the `plots` extra
 when graded rows exist.
 
-Do not commit a graded run yet: its answers quote OpenStreetMap names, IDs and distances, and
-the grader's justifications cite the key. Whether `leaderboard/graded/` may be committed is an
-open question in [`data-governance.md`](data-governance.md#restricted-data), and no graded run is
-committed until it is decided.
+Graded runs are committed in `leaderboard/graded/`. Their answers quote OpenStreetMap names,
+IDs and distances, and the grader's justifications cite the key; the maintainer decided on
+2026-10-12 that this may be committed with OpenStreetMap attribution (see
+[`data-governance.md`](data-governance.md#restricted-data)).
 
 ## Review and versions
 

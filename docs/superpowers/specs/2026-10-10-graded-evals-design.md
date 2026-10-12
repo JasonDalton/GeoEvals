@@ -31,7 +31,7 @@ The two are never combined: no shared score, no shared table, no shared director
 | Town | Chosen by the user from 2 or 3 candidates measured on real OSM data (checkpoint 1) |
 | Tracks | Python only: the whole city is mounted read-only in the sandbox. The direct track cannot take a city that does not fit in a prompt |
 | Models | The leaderboard's three: Opus 5.5, Sonnet 5.5, Haiku 5.5, effort high |
-| Grader | Opus 5.5, effort high, in its own `claude -p` session with no tools; it sees the task, rubric, reference key and answer, never which model answered |
+| Grader | Opus 5.5, effort high, in its own `claude -p` session with no tools; it sees the task with its location, rubric, reference key and answer, never which model answered |
 | Grading passes | Two per answer; the task score is their mean, and their agreement is reported |
 | Scale | Each rubric criterion 0 to 4 with written anchors; task score = mean of criteria / 4 |
 | Table | Per model and eval: mean (95% CI), min, Q1, median, Q3, max |
