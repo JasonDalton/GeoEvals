@@ -1,10 +1,10 @@
 """Measure candidate towns for the graded evals (checkpoint 1 of the design).
 
 ``geoevals evals measure-town`` fetches a town's extract at a snapshot date into a gitignored
-directory (``fetch_candidate``), converts it to layers and prints one row of ``stats_table``:
-how much a town offers the five evals (buildings with heights for visibility, paths for
-proximity and directions, land use and water for context and barriers) and how large its
-extract is.
+directory (``fetch_candidate``, or ``read_candidate`` from a local ``.osm.pbf``), converts it
+to layers and prints one row of ``stats_table``: how much a town offers the five evals
+(buildings with heights for visibility, paths for proximity and directions, land use and water
+for context and barriers) and how large its extract is.
 """
 
 import datetime as dt
@@ -122,6 +122,34 @@ def fetch_candidate(
         "snapshot_date": snapshot_date,
         "access_date": dt.date.today().isoformat(),
         "osm_base": osm_base,
+        "sha256": sha256_file(extract_path),
+        "bytes": len(extract),
+    }
+    record_path.write_text(json.dumps(record, indent=2) + "\n", encoding="utf-8")
+    return directory
+
+
+def read_candidate(name: str, bbox: Bbox, pbf: Path, out_root: Path) -> Path:
+    """Read a candidate town from a local extract into ``out_root/<slug>/``, like
+    ``fetch_candidate``; the snapshot date is the extract's replication date."""
+    from geoevals.data.pbf import pbf_timestamp, read_pbf  # needs osmium; only this path does
+
+    directory = out_root / slug(name)
+    extract_path, record_path = directory / EXTRACT_FILE, directory / FETCH_RECORD
+    for path in (extract_path, record_path):
+        ensure_ignored(path)
+    extract = read_pbf(pbf, bbox)
+    timestamp = pbf_timestamp(pbf)
+    directory.mkdir(parents=True, exist_ok=True)
+    extract_path.write_bytes(extract)
+    record = {
+        "name": name,
+        "source": str(pbf),
+        "source_sha256": sha256_file(pbf),
+        "bbox": list(bbox),
+        "snapshot_date": timestamp[:10] if timestamp else None,
+        "access_date": dt.date.today().isoformat(),
+        "osm_base": timestamp,
         "sha256": sha256_file(extract_path),
         "bytes": len(extract),
     }

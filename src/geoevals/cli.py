@@ -41,7 +41,13 @@ from geoevals.graded.grader import GRADES_FILE, GradeError, GraderConfig, grade_
 from geoevals.graded.keys import default_data_dir, regenerate_keys
 from geoevals.graded.run import run_eval
 from geoevals.graded.spec import find_eval_spec
-from geoevals.graded.towns import EXTRACT_FILE, fetch_candidate, measure_layers, stats_table
+from geoevals.graded.towns import (
+    EXTRACT_FILE,
+    fetch_candidate,
+    measure_layers,
+    read_candidate,
+    stats_table,
+)
 from geoevals.leaderboard.table import (
     DEFAULT_RESULTS,
     LeaderboardError,
@@ -171,6 +177,12 @@ def build_parser() -> argparse.ArgumentParser:
         type=Path,
         help="Directory to write into; must be gitignored (default: the directory of the "
         "manifest asset's path).",
+    )
+    fetch.add_argument(
+        "--pbf",
+        type=Path,
+        help="osm_city_<town> only: read the town from this local dated .osm.pbf extract "
+        "instead of the Overpass API; its replication date must be the snapshot date.",
     )
 
     inventory = data_commands.add_parser(
@@ -451,7 +463,9 @@ def build_parser() -> argparse.ArgumentParser:
     measure.add_argument(
         "--bbox", required=True, type=parse_bbox, help="min_lon,min_lat,max_lon,max_lat."
     )
-    measure.add_argument("--date", required=True, help="Snapshot date, YYYY-MM-DD.")
+    measure.add_argument(
+        "--date", help="Snapshot date, YYYY-MM-DD (required unless --pbf or --source)."
+    )
     measure.add_argument(
         "--out",
         type=Path,
@@ -462,6 +476,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--source",
         type=Path,
         help=f"Measure an existing fetch (a directory with {EXTRACT_FILE}) instead of fetching.",
+    )
+    measure.add_argument(
+        "--pbf",
+        type=Path,
+        help="Read the town from a local dated .osm.pbf extract instead of the Overpass API.",
     )
     build_city = evals_commands.add_parser(
         "build-city",
@@ -636,10 +655,15 @@ def _data_licenses(out: Path) -> int:
 
 
 def _data_fetch(
-    dataset_id: str, manifests: Path, bbox: Any, date: str | None, out: Path | None
+    dataset_id: str,
+    manifests: Path,
+    bbox: Any,
+    date: str | None,
+    out: Path | None,
+    pbf: Path | None,
 ) -> int:
     try:
-        record = fetch_dataset(dataset_id, manifests, out, bbox, date)
+        record = fetch_dataset(dataset_id, manifests, out, bbox, date, pbf=pbf)
     except SpecValidationError as exc:
         _print_issues(exc.path, exc.issues)
         return 1
@@ -652,7 +676,7 @@ def _data_fetch(
         committed = load_yaml(manifest_path(dataset_id, manifests))["assets"][0]["sha256"]
         if committed != record.sha256:
             print(
-                f"warning: the committed manifest records sha256 {committed}; the server "
+                f"warning: the committed manifest records sha256 {committed}; the source "
                 "returned different data for the same bounding box and date",
                 file=sys.stderr,
             )
@@ -949,9 +973,19 @@ def _bench_regenerate(benchmark_id: str, root: Path, check: bool) -> int:
     return 1 if check and stale else 0
 
 
-def _evals_measure_town(name: str, bbox: Bbox, date: str, out: Path, source: Path | None) -> int:
+def _evals_measure_town(
+    name: str, bbox: Bbox, date: str | None, out: Path, source: Path | None, pbf: Path | None
+) -> int:
+    if source is None and pbf is None and date is None:
+        print("measure-town needs --date to fetch from the Overpass API", file=sys.stderr)
+        return 1
     try:
-        directory = source or fetch_candidate(name, bbox, date, out)
+        if source is not None:
+            directory = source
+        elif pbf is not None:
+            directory = read_candidate(name, bbox, pbf, out)
+        else:
+            directory = fetch_candidate(name, bbox, str(date), out)
         extract_path = directory / EXTRACT_FILE
         layers = convert_extract(json.loads(extract_path.read_text(encoding="utf-8")))
         ensure_ignored(directory / LAYERS_DIR / "buildings.parquet")
@@ -1048,7 +1082,9 @@ def main(argv: Sequence[str] | None = None) -> int:
     if args.command == "data" and args.data_command == "verify":
         return _data_verify(args.manifest)
     if args.command == "data" and args.data_command == "fetch":
-        return _data_fetch(args.dataset_id, args.manifests, args.bbox, args.date, args.out)
+        return _data_fetch(
+            args.dataset_id, args.manifests, args.bbox, args.date, args.out, args.pbf
+        )
     if args.command == "data" and args.data_command == "inventory":
         return _data_inventory(args.root, args.readme, args.check)
     if args.command == "data" and args.data_command == "licenses":
@@ -1092,7 +1128,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     if args.command == "grade":
         return _grade(args.run_dir, args.data, args.evals, args.passes, args.force)
     if args.command == "evals" and args.evals_command == "measure-town":
-        return _evals_measure_town(args.name, args.bbox, args.date, args.out, args.source)
+        return _evals_measure_town(args.name, args.bbox, args.date, args.out, args.source, args.pbf)
     if args.command == "evals" and args.evals_command == "build-city":
         return _evals_build_city(args.dataset_id, args.manifests, args.source)
     if args.command == "evals" and args.evals_command == "regenerate":

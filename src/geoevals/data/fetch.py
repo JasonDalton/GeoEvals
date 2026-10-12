@@ -20,7 +20,9 @@ Fetchers:
   the same box and date return the same data. The response is normalized (the server header is
   dropped and the elements sorted) before its checksum is taken.
 - ``osm_city_<town>``: every tagged OpenStreetMap feature of a town for the graded evals, from
-  the Overpass API at a snapshot date (``city_query``), with full geometry.
+  the Overpass API at a snapshot date (``city_query``), with full geometry. With ``pbf``, the
+  same features are read from a local dated extract instead (``geoevals.data.pbf``); its
+  replication timestamp must fall on the snapshot date, and its SHA-256 is recorded.
 """
 
 import copy
@@ -75,6 +77,8 @@ class FetchRecord:
     bytes: int
     path: str
     """The asset file, as written."""
+    source_sha256: str | None = None
+    """The SHA-256 of the local ``.osm.pbf`` the asset was read from, if any."""
 
 
 def ensure_ignored(path: Path) -> None:
@@ -243,11 +247,13 @@ def fetch_dataset(
     snapshot_date: str | None = None,
     today: dt.date | None = None,
     opener: Opener = urllib.request.urlopen,
+    pbf: Path | None = None,
 ) -> FetchRecord:
     """Download the asset of ``dataset_id`` and record it; see the module docstring.
 
     ``bbox`` and ``snapshot_date`` default to the committed manifest's asset ``bbox`` and
-    ``time_range.end``. ``out_dir`` defaults to the directory of the asset path.
+    ``time_range.end``. ``out_dir`` defaults to the directory of the asset path. ``pbf`` reads a
+    city from a local extract instead of the Overpass API.
     """
     kind = fetcher_for(dataset_id)
     if kind is None:
@@ -264,6 +270,8 @@ def fetch_dataset(
     asset = manifest.assets[0]
     if asset.source_url is None:
         raise FetchError(f"{path}: asset {asset.asset_id!r} has no source_url")
+    if pbf is not None and kind != "overpass_city":
+        raise FetchError(f"{dataset_id}: only {CITY_PREFIX}<town> datasets read a local extract")
 
     bbox = check_bbox(asset.bbox) if bbox is None else bbox
     snapshot_date = snapshot_date or asset.time_range.end
@@ -278,10 +286,15 @@ def fetch_dataset(
     for output in outputs:
         ensure_ignored(output)
 
-    query = city_query(bbox, snapshot_date) if kind == "overpass_city" else None
-    query, extract, osm_base = fetch_overpass(
-        asset.source_url, bbox, snapshot_date, opener, query=query
-    )
+    source_sha256 = None
+    if pbf is not None:
+        query, extract, osm_base = _read_local_extract(pbf, bbox, snapshot_date)
+        source_sha256 = sha256_file(pbf)
+    else:
+        query = city_query(bbox, snapshot_date) if kind == "overpass_city" else None
+        query, extract, osm_base = fetch_overpass(
+            asset.source_url, bbox, snapshot_date, opener, query=query
+        )
     access_date = (today or dt.date.today()).isoformat()
     out_dir.mkdir(parents=True, exist_ok=True)
     outputs[0].write_bytes(extract)
@@ -297,11 +310,28 @@ def fetch_dataset(
         sha256=sha256_file(outputs[0]),
         bytes=len(extract),
         path=str(outputs[0]),
+        source_sha256=source_sha256,
     )
     document = load_yaml(path)
     outputs[1].write_text(_local_manifest(document, asset_file, record), encoding="utf-8")
     outputs[2].write_text(json.dumps(asdict(record), indent=2) + "\n", encoding="utf-8")
     return record
+
+
+def _read_local_extract(pbf: Path, bbox: Bbox, snapshot_date: str) -> tuple[str, bytes, str | None]:
+    """Read a city from a local extract dated ``snapshot_date``; return a description of the
+    read, the normalized extract and the extract's replication timestamp."""
+    from geoevals.data.pbf import pbf_timestamp, read_pbf  # needs osmium; only this path does
+
+    if not pbf.is_file():
+        raise FetchError(f"{pbf}: no such file")
+    timestamp = pbf_timestamp(pbf)
+    if timestamp is None or not timestamp.startswith(snapshot_date):
+        raise FetchError(
+            f"{pbf}: replication timestamp {timestamp} is not on the snapshot date {snapshot_date}"
+        )
+    query = f"geoevals.data.pbf.read_pbf({pbf.name}, bbox={list(bbox)})"
+    return query, read_pbf(pbf, bbox), timestamp
 
 
 def _local_manifest(document: dict[str, Any], asset_file: str, record: FetchRecord) -> str:
@@ -313,9 +343,16 @@ def _local_manifest(document: dict[str, Any], asset_file: str, record: FetchReco
     entry["sha256"] = record.sha256
     entry["bbox"] = record.bbox
     entry["time_range"] = {"start": record.snapshot_date, "end": record.snapshot_date}
-    entry["processing_steps"] = [
-        *entry.get("processing_steps", []),
-        f"Fetched by `geoevals data fetch {record.dataset_id}` on {record.access_date} "
-        f"(server database timestamp {record.osm_base}); query in {FETCH_RECORD}.",
-    ]
+    if record.source_sha256 is not None:
+        step = (
+            f"Read by `geoevals data fetch {record.dataset_id} --pbf` on {record.access_date} "
+            f"from a local extract (sha256 {record.source_sha256}, replication timestamp "
+            f"{record.osm_base}); details in {FETCH_RECORD}."
+        )
+    else:
+        step = (
+            f"Fetched by `geoevals data fetch {record.dataset_id}` on {record.access_date} "
+            f"(server database timestamp {record.osm_base}); query in {FETCH_RECORD}."
+        )
+    entry["processing_steps"] = [*entry.get("processing_steps", []), step]
     return yaml.safe_dump(local, sort_keys=False, allow_unicode=True, width=100)

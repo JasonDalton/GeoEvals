@@ -11,6 +11,7 @@ dependencies = [
     "geopandas>=1",
     "jinja2>=3.1.6",
     "jsonschema>=4.26.0",
+    "osmium>=4.3.1",
     "packaging>=24",
     "psutil>=7.2.2",
     "pyarrow>=26.0.0",
