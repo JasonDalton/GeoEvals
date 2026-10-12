@@ -134,3 +134,37 @@ def test_load_layers_names_missing_layers(tmp_path: Path) -> None:
     (tmp_path / "parks.parquet").unlink()
     with pytest.raises(CityError, match="parks"):
         load_layers(tmp_path)
+
+
+def _building_way(points: list[tuple[float, float]]) -> dict:
+    return {
+        "type": "way",
+        "id": 1,
+        "geometry": [{"lon": 10 + x * 1e-5, "lat": 50 + y * 1e-5} for x, y in points],
+        "tags": {"building": "yes"},
+    }
+
+
+@pytest.mark.parametrize(
+    "ring",
+    [
+        [(0, 0), (10, 10), (10, 0), (0, 10), (0, 0)],  # a bowtie
+        [(0, 0), (10, 0), (10, 10), (10, 20), (10, 10), (0, 10), (0, 0)],  # a spike
+    ],
+)
+def test_an_invalid_building_ring_stays_a_building(ring: list[tuple[float, float]]) -> None:
+    layers = convert_extract({"elements": [_building_way(ring)]})
+    (geometry,) = layers["buildings"].geometry
+    assert geometry.geom_type in ("Polygon", "MultiPolygon") and geometry.is_valid
+    assert layers["all_features"].geometry.iloc[0].geom_type in ("Polygon", "MultiPolygon")
+
+
+def test_a_line_that_collapses_to_a_point_is_left_out() -> None:
+    way = {
+        "type": "way",
+        "id": 2,
+        "geometry": [{"lon": 10.0, "lat": 50.0}, {"lon": 10.0, "lat": 50.0}],
+        "tags": {"highway": "footway"},
+    }
+    layers = convert_extract({"elements": [way]})
+    assert layers["paths"].empty and layers["all_features"].empty

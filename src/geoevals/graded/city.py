@@ -25,7 +25,9 @@ parses, else ``building:levels`` x 3 m, else unknown (``height_m`` empty, ``heig
 ``unknown``).
 
 Elements without usable geometry are left out: attic data can lack node positions, and a
-relation member can lack its geometry. Untagged elements are left out too.
+relation member can lack its geometry. An invalid geometry is repaired (``make_valid``) keeping
+only its area parts, or only its line parts for a line, so a self-intersecting building stays in
+``buildings``; a line that collapses to a point is left out. Untagged elements are left out too.
 """
 
 import hashlib
@@ -248,6 +250,17 @@ def _frame(layer: str, rows: list[dict[str, Any]]) -> gpd.GeoDataFrame:
     return gpd.GeoDataFrame(rows, columns=[*columns, "geometry"], geometry="geometry", crs=CRS)
 
 
+def _repaired(geometry: BaseGeometry) -> BaseGeometry:
+    """A valid geometry of the same kind: ``make_valid`` can add stray lines to an area (a ring
+    with a spike) or collapse a line to a point, so only the area or line parts are kept."""
+    polygonal = geometry.geom_type in ("Polygon", "MultiPolygon")
+    kinds = ("Polygon", "MultiPolygon") if polygonal else ("LineString", "MultiLineString")
+    parts = [
+        part for part in shapely.get_parts(shapely.make_valid(geometry)) if part.geom_type in kinds
+    ]
+    return unary_union(parts) if parts else Polygon()
+
+
 def convert_extract(document: Mapping[str, Any]) -> dict[str, gpd.GeoDataFrame]:
     """The layers of an Overpass extract; see the module docstring."""
     elements = document.get("elements")
@@ -262,7 +275,9 @@ def convert_extract(document: Mapping[str, Any]) -> dict[str, gpd.GeoDataFrame]:
         if geometry is None or geometry.is_empty:
             continue
         if not geometry.is_valid:
-            geometry = shapely.make_valid(geometry)
+            geometry = _repaired(geometry)
+            if geometry.is_empty:
+                continue
         base = {"feature_id": feature_id(element), "name": tags.get("name")}
         for layer in _layers_of(tags, geometry):
             point_only = layer == "pois" and geometry.geom_type != "Point"
