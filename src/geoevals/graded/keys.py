@@ -110,10 +110,17 @@ def load_keys(spec_path: Path, data_dir: Path) -> dict[str, dict[str, Any]]:
     if not path.is_file():
         raise KeysError(f"{path}: no keys file; run `geoevals evals regenerate {spec.id}`")
     stored = {}
-    for line in path.read_text(encoding="utf-8").splitlines():
-        if line.strip():
+    for number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), start=1):
+        if not line.strip():
+            continue
+        try:
             entry = json.loads(line)
             stored[entry["task_id"]] = entry["key"]
+        except (json.JSONDecodeError, KeyError, TypeError) as exc:
+            raise KeysError(
+                f"{path}: line {number} is not a {{task_id, key}} entry ({type(exc).__name__}: "
+                f"{exc}); run `geoevals evals regenerate {spec.id}`"
+            ) from exc
     keys = {}
     for task in load_tasks(spec_path, spec):
         key = stored.get(task.task_id)

@@ -29,7 +29,14 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from geoevals.graded.keys import KeysError, default_data_dir, load_keys
 from geoevals.graded.run import load_graded_result, word_count
-from geoevals.graded.spec import Criterion, EvalTask, find_eval_spec, load_rubric, load_tasks
+from geoevals.graded.spec import (
+    Criterion,
+    EvalTask,
+    find_eval_spec,
+    load_rubric,
+    load_tasks,
+    spec_file,
+)
 from geoevals.leaderboard.claude_cli import (
     ClaudeAuthError,
     ClaudeCliError,
@@ -243,6 +250,12 @@ def grade_run(run_dir: Path, data_dir: Path | None, config: GraderConfig) -> Gra
             f"the run answered {spec.id} {result['eval']['version']}; {spec_path} is {spec.version}"
         )
     tasks = {task.task_id: task for task in load_tasks(spec_path, spec)}
+    for record in result["tasks"]:
+        if record["task_id"] not in tasks:
+            raise GradeError(
+                f"the run's task {record['task_id']} is not in {spec_file(spec_path, spec.tasks)}; "
+                "was the eval changed without a version bump?"
+            )
     rubric = load_rubric(spec_path, spec)
     by_id = {criterion.id: criterion for criterion in rubric.criteria}
     try:

@@ -92,7 +92,8 @@ session per answer and pass, with no tools and the leaderboard's isolation. The 
 task, the rubric, the key and the answer, never which model answered. Each answer is graded
 twice; an error or invalid grade is retried once, and a task that still has no grade leaves the
 run off the leaderboard. `geoevals grade` exits 1 when grading stopped or any task is not
-graded. `leaderboard build` needs the `plots` extra when graded rows exist.
+graded. It refuses to replace an existing `grades.json` unless given `--force`: a run is graded
+once, not re-graded until the scores look better. `leaderboard build` needs the `plots` extra when graded rows exist.
 
 ## Review and versions
 

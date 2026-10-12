@@ -163,3 +163,34 @@ def test_grade_cli_exits_1_when_tasks_are_not_graded(
     assert code == 1
     [task] = load_grades(run_dir / "grades.json").tasks
     assert task.status == "not_graded"
+
+
+def test_grade_run_refuses_a_task_the_eval_no_longer_has(tmp_path: Path, fake: FakeClaude) -> None:
+    run_dir, data = graded_run_dir(tmp_path, {"sample-001": "answered"})
+    result = json.loads((run_dir / "result.json").read_text())
+    result["tasks"][0]["task_id"] = "sample-009"
+    (run_dir / "result.json").write_text(json.dumps(result), encoding="utf-8")
+    with pytest.raises(
+        GradeError, match=r"sample-009 is not in .*tasks\.jsonl; was the eval changed"
+    ):
+        grade_run(run_dir, data, _config(tmp_path))
+    assert not fake.called
+
+
+def test_grade_cli_refuses_to_overwrite_grades_without_force(
+    tmp_path: Path,
+    fake: FakeClaude,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    run_dir, data = graded_run_dir(tmp_path, {"sample-001": "answered"})
+    (run_dir / "grades.json").write_text("{}\n", encoding="utf-8")
+    fake.set(events(grade()))
+    monkeypatch.setattr("geoevals.cli.GRADER_COMMAND", FAKE_COMMAND)
+    args = ["grade", str(run_dir), "--data", str(data), "--evals", str(tmp_path / "evals")]
+    assert main(args) == 1
+    assert "--force" in capsys.readouterr().err
+    assert (run_dir / "grades.json").read_text() == "{}\n"
+    assert not fake.called
+    assert main([*args, "--force"]) == 0
+    assert load_grades(run_dir / "grades.json").tasks[0].status == "graded"

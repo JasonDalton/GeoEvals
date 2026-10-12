@@ -1,4 +1,5 @@
 import json
+import re
 from pathlib import Path
 
 import pytest
@@ -92,3 +93,19 @@ def test_regenerate_cli(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> N
 def test_committed_sample_hashes_are_current(tmp_path: Path) -> None:
     spec_path, data = copy_sample_eval(tmp_path), sample_data(tmp_path)
     assert regenerate_keys(spec_path, data, write=False) == []
+
+
+@pytest.mark.parametrize(
+    "bad_line", ["{not json", json.dumps({"task_id": "sample-002"}), json.dumps(["a", "b"])]
+)
+def test_load_keys_names_the_file_and_line_of_a_malformed_entry(
+    tmp_path: Path, bad_line: str
+) -> None:
+    spec_path, data = copy_sample_eval(tmp_path), sample_data(tmp_path)
+    regenerate_keys(spec_path, data)
+    path = keys_path(data, "sample")
+    lines = path.read_text(encoding="utf-8").splitlines()
+    lines[1] = bad_line
+    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    with pytest.raises(KeysError, match=re.escape(f"{path}: line 2")):
+        load_keys(spec_path, data)

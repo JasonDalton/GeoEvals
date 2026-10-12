@@ -432,6 +432,12 @@ def build_parser() -> argparse.ArgumentParser:
     grade.add_argument(
         "--passes", type=int, default=2, help="Grading passes per answer (default: 2)."
     )
+    grade.add_argument(
+        "--force",
+        action="store_true",
+        help="Replace an existing grades.json (by default grading refuses, so a run is not "
+        "re-graded until the grade looks better).",
+    )
     evals = subparsers.add_parser("evals", help="Graded eval tools (agent-graded, not benchmarks).")
     evals_commands = evals.add_subparsers(dest="evals_command", required=True)
     measure = evals_commands.add_parser(
@@ -993,10 +999,17 @@ def _evals_build_city(dataset_id: str, manifests: Path, source: Path | None) -> 
     return 0
 
 
-def _grade(run_dir: Path, data: Path | None, evals: Path, passes: int) -> int:
+def _grade(run_dir: Path, data: Path | None, evals: Path, passes: int, force: bool) -> int:
     if passes < 2:
         print(
             "--passes must be at least 2: the report states the grader's agreement with itself",
+            file=sys.stderr,
+        )
+        return 1
+    path = run_dir / GRADES_FILE
+    if path.exists() and not force:
+        print(
+            f"{path} exists; a run is graded once. Use --force to replace it on purpose.",
             file=sys.stderr,
         )
         return 1
@@ -1009,7 +1022,6 @@ def _grade(run_dir: Path, data: Path | None, evals: Path, passes: int) -> int:
     except (GradeError, OSError, ValueError) as exc:
         print(exc, file=sys.stderr)
         return 1
-    path = run_dir / GRADES_FILE
     path.write_text(json.dumps(grades.model_dump(mode="json"), indent=2) + "\n", encoding="utf-8")
     counts: dict[str, int] = {}
     for task in grades.tasks:
@@ -1076,7 +1088,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     if args.command == "leaderboard" and args.leaderboard_command == "build":
         return _leaderboard_build(args.results, args.readme, args.check, args.graded)
     if args.command == "grade":
-        return _grade(args.run_dir, args.data, args.evals, args.passes)
+        return _grade(args.run_dir, args.data, args.evals, args.passes, args.force)
     if args.command == "evals" and args.evals_command == "measure-town":
         return _evals_measure_town(args.name, args.bbox, args.date, args.out, args.source)
     if args.command == "evals" and args.evals_command == "build-city":
