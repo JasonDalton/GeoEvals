@@ -67,7 +67,11 @@ COMPASS = ("N", "NE", "E", "SE", "S", "SW", "W", "NW")
 OUTLINE_STEP_M = 0.5
 """Spacing of the points sighted along a target building's outline."""
 OWN_INTERIOR_M = 0.1
-"""A line of sight longer than this inside its target's own footprint ends on its far side."""
+"""A line of sight longer than this inside its target's own footprint ends on its far side.
+
+The tolerance keeps the samples on a wall seen edge-on or grazed at a silhouette corner, whose
+lines run along the boundary or clip the footprint by floating-point noise; it can count at most
+about one or two stray samples per silhouette edge (``OUTLINE_STEP_M`` each)."""
 
 Layers = Mapping[str, gpd.GeoDataFrame]
 Node = tuple[float, float]
@@ -481,7 +485,11 @@ def _coordinates(geometry: BaseGeometry) -> list[tuple[float, ...]]:
 
 
 def _outline(footprint: BaseGeometry) -> list[BaseGeometry]:
-    """The exterior rings of a footprint, one per polygon (holes are left out)."""
+    """The exterior rings of a footprint, one per polygon.
+
+    Holes are left out: a courtyard wall can only be seen from inside the courtyard, and from
+    anywhere else the line to it crosses the target's own roof (its far side).
+    """
     parts = footprint.geoms if hasattr(footprint, "geoms") else [footprint]
     return [part.exterior for part in parts if hasattr(part, "exterior")]
 
@@ -545,6 +553,10 @@ def visibility_key(params: Mapping[str, Any], layers: Layers) -> dict[str, Any]:
                 )
                 if inside <= OWN_INTERIOR_M:  # else it ends on the far side
                     sights.append(sight)
+        if not sights:
+            raise KeyComputationError(
+                f"no line of sight to target {target_id!r}: the observer is inside or on it"
+            )
         skip = {target_id, observer_id, *around}
         lines, positions = index.query(sights, predicate="intersects")
         crossers: dict[int, list[int]] = {}

@@ -563,3 +563,16 @@ def test_a_multipolygon_target_is_sampled_on_every_part() -> None:
     )
     key = _from_origin({"buildings": buildings, "all_features": buildings})
     assert key["visible"] is True and key["blocked_by"] == ["way/2"]
+
+
+@pytest.mark.parametrize(
+    "observer",
+    [
+        {"point": lonlat(110, 0), "height_m": 1.6},  # inside the target
+        {"feature_id": "way/3", "height_m": 1.6},  # on the target's roof
+    ],
+)
+def test_an_observer_inside_the_target_is_an_error(observer: dict) -> None:
+    layers = _box_layers({"way/3": (100, -10, 120, 10, 10.0)})
+    with pytest.raises(module["KeyComputationError"], match="no line of sight"):
+        _visibility(layers, observer)

@@ -69,8 +69,8 @@ The keys follow a few fixed rules, so a task author should expect them:
   sliver from a full view, and `blocked_by` lists every building that hides part of the target.
 - Visibility never guesses an unknown height. When a target or an observer has no known height
   and the answer depends on it, the key says `visible: null`, and a good answer says it cannot
-  tell. A building of unknown height on a sight line leaves that line undecided, and the
-  target too when no line to it is clear.
+  tell. A building of unknown height on a sight line leaves that line undecided; the target is
+  `null` when no line to it is clear and at least one is undecided.
 - In directions, step distances cover only the walk on the network, not the walks to and from
   it, so they do not sum to `walking_m`.
 
