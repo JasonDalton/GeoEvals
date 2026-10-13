@@ -13,3 +13,14 @@ reported apart from the deterministic benchmarks in `benchmarks/` and never comb
 The city's data and the keys are not committed (ODbL); `geoevals data fetch` and `geoevals
 evals regenerate` recreate them. How to write, run and grade an eval:
 [`docs/eval-authoring.md`](../docs/eval-authoring.md).
+
+The evals on Oregon City, Oregon (`datasets/manifests/osm_city_oregon_city.yaml`), each 12 tasks
+in three tiers (describe, analyze, infer):
+
+| Eval | Concept |
+| --- | --- |
+| [`proximity`](proximity/eval.yaml) | Nearness on foot against nearness on the map, across rivers and rail |
+| [`adjacency`](adjacency/eval.yaml) | Shared walls against corner touches; what a closure does to a walk |
+| [`visibility`](visibility/eval.yaml) | Lines of sight between buildings with heights; undecided views |
+| [`containment`](containment/eval.yaml) | Nested and overlapping boundaries; points on a boundary |
+| [`direction`](direction/eval.yaml) | Turn-by-turn directions with landmarks; misleading bearings |

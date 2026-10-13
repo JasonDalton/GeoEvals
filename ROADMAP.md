@@ -27,7 +27,7 @@ Feature extraction from imagery is not planned. Many benchmarks already cover it
 
 ### Graded evals on a real city
 
-The engine for agent-graded evals exists (see `docs/eval-authoring.md`). Planned: five evals (proximity, adjacency, visibility, containment, direction) on one pinned town, 12 tasks each, graded by Claude Opus 5.5. They arrive with the town's dataset manifest and the task drafting.
+The engine for agent-graded evals exists (see `docs/eval-authoring.md`). Planned: five evals (proximity, adjacency, visibility, containment, direction) on one pinned town, 12 tasks each, graded by Claude Opus 5.5. The town is Oregon City, Oregon; the 60 tasks are drafted and under review.
 
 Ideas for later graded evals, not yet designed:
 
