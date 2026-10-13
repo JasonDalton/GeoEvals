@@ -13,6 +13,7 @@ from geoevals.graded.city import (
     layers_sha256,
     load_layers,
     parse_height,
+    walkable,
     write_layers,
 )
 from graded_city import overpass_document
@@ -138,6 +139,54 @@ def test_a_water_point_is_not_a_barrier() -> None:
     node = {"type": "node", "id": 1, "lon": 10.0, "lat": 50.0, "tags": {"waterway": "waterfall"}}
     water = convert_extract({"elements": [node]})["water"]
     assert list(water["walk_barrier"]) == [False]
+
+
+@pytest.mark.parametrize(
+    ("tags", "expected"),
+    [
+        ({"highway": "residential"}, True),
+        ({"highway": "footway"}, True),
+        ({"highway": "motorway"}, False),
+        ({"highway": "motorway_link"}, False),
+        ({"highway": "trunk"}, True),
+        ({"highway": "service", "foot": "no"}, False),
+        ({"highway": "path", "foot": "private"}, False),
+        ({"highway": "service", "access": "no"}, False),
+        ({"highway": "service", "access": "private"}, False),
+        ({"highway": "service", "access": "private", "foot": "yes"}, True),
+        ({"highway": "service", "access": "no", "foot": "designated"}, True),
+        ({"highway": "service", "access": "private", "foot": "permissive"}, True),
+        ({"highway": "service", "access": "private", "foot": "destination"}, False),
+        ({"highway": "service", "access": "destination"}, True),
+        ({"highway": "motorway", "foot": "yes"}, False),
+    ],
+)
+def test_walkable(tags: dict[str, str], expected: bool) -> None:
+    assert walkable(tags) is expected
+
+
+def test_streets_and_paths_carry_walkable() -> None:
+    def way(id_: int, tags: dict[str, str]) -> dict:
+        points = [
+            {"lon": 10.0, "lat": 50.0 + id_ * 1e-4},
+            {"lon": 10.001, "lat": 50.0 + id_ * 1e-4},
+        ]
+        return {"type": "way", "id": id_, "geometry": points, "tags": tags}
+
+    layers = convert_extract(
+        {
+            "elements": [
+                way(1, {"highway": "motorway"}),
+                way(2, {"highway": "residential"}),
+                way(3, {"highway": "footway", "access": "private"}),
+                way(4, {"highway": "footway"}),
+            ]
+        }
+    )
+    streets = layers["streets"].set_index("feature_id")["walkable"]
+    paths = layers["paths"].set_index("feature_id")["walkable"]
+    assert streets.to_dict() == {"way/1": False, "way/2": True}
+    assert paths.to_dict() == {"way/3": False, "way/4": True}
 
 
 def test_multipolygon_relation_keeps_its_hole() -> None:

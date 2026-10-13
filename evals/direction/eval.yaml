@@ -21,6 +21,6 @@ provenance:
   created: 2026-10-12
 limitations:
   - One town, one snapshot (2026-10-11); slope matters on Oregon City's bluff.
-  - Walking distance is network length over every street and path, access tags ignored (motorways and private ways included); slope and crossings are ignored.
+  - Walking distance is network length over streets and paths that allow walking (motorways and ways tagged no access or no foot traffic are excluded); slope and crossings are ignored.
   - A turn is a change of bearing over 30 degrees; a landmark is a point of interest within 30 m of where a step begins.
   - A real town can be known to the models; Oregon City is not world famous, but memorization cannot be ruled out.

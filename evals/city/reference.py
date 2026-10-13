@@ -136,7 +136,8 @@ def _lines(geometry: BaseGeometry) -> list[LineString]:
 
 
 class WalkGraph:
-    """The walking network of the ``streets`` and ``paths`` layers, without ``closed`` features.
+    """The walking network of the ``streets`` and ``paths`` layers, without ``closed`` features
+    and without features whose ``walkable`` is false (motorways and ways closed to pedestrians).
 
     Each edge keeps its geodesic ``length``, its ``feature_id`` and its street ``name``.
     """
@@ -145,10 +146,10 @@ class WalkGraph:
         self.graph = nx.Graph()
         for layer in NETWORK_LAYERS:
             frame = layers[layer]
-            for feature_id, name, geometry in zip(
-                frame["feature_id"], frame["name"], frame.geometry, strict=True
+            for feature_id, name, walkable, geometry in zip(
+                frame["feature_id"], frame["name"], frame["walkable"], frame.geometry, strict=True
             ):
-                if feature_id in closed:
+                if feature_id in closed or not walkable:
                     continue
                 for line in _lines(geometry):
                     for a, b in itertools.pairwise(line.coords):

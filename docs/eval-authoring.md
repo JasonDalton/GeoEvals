@@ -55,6 +55,9 @@ The keys follow a few fixed rules, so a task author should expect them:
 - The walking network is densified to vertices at most 10 m apart, so a place joins the network
   within a few meters of its nearest street. A place can join each nearby connected part of the
   network, so a short isolated footway beside it does not cut it off from the street behind.
+- The walking network leaves out ways a pedestrian may not use: motorways and motorway ramps,
+  ways tagged `foot=no` or `foot=private`, and ways tagged `access=no` or `access=private`
+  unless `foot` is `yes`, `designated` or `permissive`. Other access tags are ignored.
 - A place more than 100 m from every network vertex it can reach is unreachable, and so is a
   place whose only nearby vertices are across a walk barrier: surface rail (not trams, subways,
   tunnels or bridges), a river, canal or stream that is not culverted, or a water area. Ditches

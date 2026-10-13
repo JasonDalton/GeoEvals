@@ -258,12 +258,19 @@ def _frame(rows: list[dict]) -> gpd.GeoDataFrame:
 def _line_layers(lines: list[tuple[str, str | None, list[tuple[float, float]]]]) -> dict:
     streets = _frame(
         [
-            {"feature_id": fid, "name": name, "geometry": LineString([lonlat(*p) for p in pts])}
+            {
+                "feature_id": fid,
+                "name": name,
+                "walkable": True,
+                "geometry": LineString([lonlat(*p) for p in pts]),
+            }
             for fid, name, pts in lines
         ]
     )
     empty = gpd.GeoDataFrame(
-        {"feature_id": [], "name": [], "geometry": []}, geometry="geometry", crs="OGC:CRS84"
+        {"feature_id": [], "name": [], "walkable": [], "geometry": []},
+        geometry="geometry",
+        crs="OGC:CRS84",
     )
     return {"streets": streets, "paths": empty, "pois": empty}
 
@@ -451,6 +458,33 @@ def test_only_walk_barriers_block_a_snap_leg(tags: dict[str, str], blocked: bool
     )
     assert route["reachable"] is not blocked
     assert route.get("reason") == ("blocked_by_barrier" if blocked else None)
+
+
+@pytest.mark.parametrize(
+    ("tags", "detour"),
+    [
+        ({"highway": "footway"}, False),
+        ({"highway": "motorway"}, True),
+        ({"highway": "footway", "access": "private"}, True),
+        ({"highway": "footway", "foot": "no"}, True),
+        ({"highway": "footway", "access": "private", "foot": "yes"}, False),
+    ],
+)
+def test_the_walk_skips_unwalkable_ways(tags: dict[str, str], detour: bool) -> None:
+    """A 200 m shortcut beside a 400 m loop of streets; the walk takes the loop when the
+    shortcut is not walkable."""
+    layers = _town(
+        [
+            (1, [(0, 0), (200, 0)], tags),
+            (2, [(0, 0), (0, 100), (200, 100), (200, 0)], {"highway": "residential"}),
+        ]
+    )
+    graph = module["WalkGraph"](layers)
+    route = graph.route(module["Point"](*lonlat(0, 0)), module["Point"](*lonlat(200, 0)))
+    assert route["reachable"] is True
+    assert route["walking_m"] == pytest.approx(400 if detour else 200, rel=0.02)
+    feature_ids = {data["feature_id"] for _, _, data in graph.graph.edges(data=True)}
+    assert ("way/1" in feature_ids) is not detour
 
 
 def test_a_point_observer_inside_a_building_is_not_blocked_by_it() -> None:
