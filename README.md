@@ -37,8 +37,7 @@ is checked against facts computed from the map data:
 - **Direction:** which way to go, the bearing compared with the turns of the actual walk, and
   the routes around or through a barrier.
 
-Other indicators of spatial thinking, such as influence at a distance, and over and under in
-three dimensions, are not covered yet.
+Other relations are not tested yet; see [Future work](#future-work).
 
 ## What GeoEvals evaluates, and why
 
@@ -288,6 +287,24 @@ repository"). In text:
 
 When you report results, also cite the benchmark ID and version, the metric versions and the
 dataset manifest hash, and cite each dataset as its manifest asks (`citation`, `attribution`).
+
+## Future work
+
+These spatial relations are part of spatial thinking but are not tested yet. Each one needs
+its own reference method, so that an answer can be checked against facts computed from the data.
+
+- **Influence at a distance:** how a feature affects the places around it, more weakly the
+  farther they are. Examples: noise from a highway, the shade of a tall building, the reach of
+  a flood, the catchment of a school.
+- **Over and under:** features stacked in three dimensions, such as a path under a bridge, a
+  road over a railway, a tunnel, or the floors of a building. Today the walking network
+  records only which ways connect, not which passes over which, and building heights are used
+  only for lines of sight.
+- **Patterns and association:** whether features cluster or spread out, and whether two kinds
+  of feature tend to occur together.
+
+[`ROADMAP.md`](ROADMAP.md#graded-evals-on-a-real-city) lists these with the other planned
+graded evals.
 
 ## Roadmap
 

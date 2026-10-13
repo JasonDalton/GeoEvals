@@ -27,7 +27,7 @@ Feature extraction from imagery is not planned. Many benchmarks already cover it
 
 ### Graded evals on a real city
 
-The engine for agent-graded evals exists (see `docs/eval-authoring.md`). Planned: five evals (proximity, adjacency, visibility, containment, direction) on one pinned town, 12 tasks each, graded by Claude Opus 5.5. The town is Oregon City, Oregon; the 60 tasks are drafted and under review.
+The engine for agent-graded evals exists (see `docs/eval-authoring.md`). Planned: five evals (proximity, adjacency, visibility, containment, direction) on one pinned town, 12 tasks each, graded by Claude Opus 5.5. The town is Oregon City, Oregon; the 60 tasks are frozen (visibility at 0.2.0, the other four at 0.1.0) and a one-task-per-eval pilot has run.
 
 Ideas for later graded evals, not yet designed:
 
@@ -44,6 +44,12 @@ Ideas for later graded evals, not yet designed:
 - **Grading the strategy.** A criterion graded from the python-track code transcript: whether
   the model narrowed candidates criterion by criterion, checked its distances, and kept the
   method in proportion to the problem. Needs a new grader prompt version.
+- **Influence at a distance.** How a feature affects the places around it, more weakly with
+  distance: noise from a highway, the shade of a tall building, the reach of a flood, a
+  school's catchment. Needs a reference method for each kind of influence.
+- **Over and under.** Features stacked in three dimensions: a path under a bridge, a road over
+  a railway, a tunnel, the floors of a building. Needs the layer, bridge and tunnel tags in
+  the walking network, which today records only which ways connect.
 - **Patterns and association.** Clustering and dispersion (nearest-neighbor ratio, quadrat
   counts) and association between feature types (co-location quotient), computed from the data.
 - **Difficulty tiers.** Each task tagged describe, analyze or infer in its `strata`, so the
