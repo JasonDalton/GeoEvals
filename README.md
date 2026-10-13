@@ -260,8 +260,7 @@ each release contains.
 
 ## Maintainers
 
-Jason Dalton ([@JasonDalton](https://github.com/JasonDalton)) maintains GeoEvals. There is no
-hosting organization: the repository is [`JasonDalton/GeoEvals`](https://github.com/JasonDalton/GeoEvals).
+Jason Dalton ([@JasonDalton](https://github.com/JasonDalton)) 
 
 ## License
 
