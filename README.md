@@ -15,7 +15,7 @@ river runs between them and the only bridge is upstream. A model that reasons on
 language will miss that, and it will miss it confidently. GeoEvals is built on the view that AI
 systems should reason directly on spatial relationships, the geometry, networks and heights
 themselves, and not only on the language we use for them. That capability belongs in
-multimodal frontier models, and it needs a way to be measured.
+multimodal frontier models, and it needs a way to be measured.  GeoEvals provides both deteministic benchmarks as well as agent scored evals. It's important to collect stats on the time and cost of reaching a solution as well. Complex reasoning often requires a model to revisit the question several times before submitting an answer.
 
 <p align="center">
   <img src="docs/images/words-vs-space.svg" alt="Left: a house and a café 200 meters apart, described as close. Right: the same places with a river between them; the walk over the only bridge is 1.4 kilometers." width="760">
@@ -42,10 +42,10 @@ Other relations are not tested yet; see [Future work](#future-work).
 ## What GeoEvals evaluates, and why
 
 General AI benchmarks score text or labels. A geospatial answer can read well and still be
-wrong in a way that only a GIS check finds: the wrong axis order, a distance in degrees, a
+wrong: the wrong axis order, a distance in units of degrees, a
 buffer on unprojected data, a polygon that is not valid, or a join across two coordinate
 reference systems (CRSs). A good score on a test region can also hide a failure in a
-different region, at a different time or at a different scale.
+different region, at a different time or at a different scale. The scoring of a particular model is given against each task category and for the model alone, and the model with soem Python tools available that can work with geospatial data. 
 
 GeoEvals helps a practitioner answer three questions:
 
