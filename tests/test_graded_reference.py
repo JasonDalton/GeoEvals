@@ -3,7 +3,7 @@ from pathlib import Path
 
 import geopandas as gpd
 import pytest
-from shapely.geometry import LineString, Polygon
+from shapely.geometry import LineString, MultiPolygon, Polygon
 
 from geoevals.graded.city import convert_extract
 from geoevals.graded.reference import load_reference
@@ -204,7 +204,7 @@ def test_visibility_uses_heights_and_flags_unknown_ones() -> None:
     assert key["observer_height_m"] == 1.6
     tower, school, library = (key["targets"][t] for t in ("way/400", "way/403", "way/405"))
     assert tower["visible"] is True and tower["blocked_by"] == []
-    assert tower["distance_m"] == pytest.approx(150, rel=0.01)
+    assert tower["distance_m"] == pytest.approx(140, rel=0.01)  # to the nearest outline point
     assert school["visible"] is False and school["blocked_by"] == ["way/402"]
     assert library["visible"] is None
     assert library["unknown_height_on_path"] == ["way/404"]
@@ -492,3 +492,74 @@ def test_a_point_observer_inside_a_building_is_not_blocked_by_it() -> None:
     key = _visibility(layers, {"point": lonlat(5, 0), "height_m": 1.6})  # inside way/1
     target = key["targets"]["way/3"]
     assert target["blocked_by"] == [] and target["visible"] is True
+
+
+def _box_layers(boxes: dict[str, tuple[float, float, float, float, float | None]]) -> dict:
+    """Buildings from ``{feature_id: (x0, y0, x1, y1, height_m)}`` on the grid, in meters."""
+    rows = [
+        {
+            "feature_id": fid,
+            "name": None,
+            "height_m": height,
+            "geometry": Polygon([lonlat(x0, y0), lonlat(x1, y0), lonlat(x1, y1), lonlat(x0, y1)]),
+        }
+        for fid, (x0, y0, x1, y1, height) in boxes.items()
+    ]
+    buildings = _frame(rows)
+    return {"buildings": buildings, "all_features": buildings}
+
+
+def _from_origin(layers: dict) -> dict:
+    return _visibility(layers, {"point": lonlat(0, 0), "height_m": 1.6})["targets"]["way/3"]
+
+
+def test_a_corner_seen_past_a_blocker_makes_the_target_visible() -> None:
+    # The blocker hides the middle of the target's near face (and its representative point) but
+    # not the last 2 m at either end.
+    layers = _box_layers({"way/2": (50, -4, 60, 4, 30.0), "way/3": (100, -10, 120, 10, 10.0)})
+    target = _from_origin(layers)
+    assert target["visible"] is True
+    assert 0 < target["visible_outline_m"] < 6
+    assert target["blocked_by"] == ["way/2"]  # it hides part of the outline
+    assert target["distance_m"] == pytest.approx(100, rel=0.01)  # to the nearest outline point
+
+
+def test_a_fully_hidden_target_is_not_visible() -> None:
+    layers = _box_layers({"way/2": (50, -15, 60, 15, 30.0), "way/3": (100, -10, 120, 10, 10.0)})
+    target = _from_origin(layers)
+    assert target["visible"] is False and target["blocked_by"] == ["way/2"]
+    assert target["visible_outline_m"] == 0.0
+
+
+def test_an_unknown_height_hiding_the_whole_outline_is_undecided() -> None:
+    layers = _box_layers({"way/2": (50, -15, 60, 15, None), "way/3": (100, -10, 120, 10, 10.0)})
+    target = _from_origin(layers)
+    assert target["visible"] is None and target["unknown_height_on_path"] == ["way/2"]
+    assert target["blocked_by"] == [] and target["visible_outline_m"] == 0.0
+
+
+def test_the_far_side_of_a_target_does_not_count() -> None:
+    # From the west only the 20 m west face is in view; the other three faces are behind the
+    # building itself, which never blocks its own outline.
+    layers = _box_layers({"way/3": (100, -10, 120, 10, 10.0)})
+    target = _from_origin(layers)
+    assert target["visible"] is True and target["blocked_by"] == []
+    assert target["visible_outline_m"] == pytest.approx(20, abs=1.5)
+
+
+def test_a_multipolygon_target_is_sampled_on_every_part() -> None:
+    # Two parts: the near one hidden, the far one (north of the blocker) in view.
+    parts = [
+        Polygon([lonlat(100, -5), lonlat(110, -5), lonlat(110, 5), lonlat(100, 5)]),
+        Polygon([lonlat(100, 40), lonlat(110, 40), lonlat(110, 50), lonlat(100, 50)]),
+    ]
+    blocker = Polygon([lonlat(50, -6), lonlat(60, -6), lonlat(60, 6), lonlat(50, 6)])
+    target = MultiPolygon(parts)
+    buildings = _frame(
+        [
+            {"feature_id": "way/2", "name": None, "height_m": 30.0, "geometry": blocker},
+            {"feature_id": "way/3", "name": None, "height_m": 10.0, "geometry": target},
+        ]
+    )
+    key = _from_origin({"buildings": buildings, "all_features": buildings})
+    assert key["visible"] is True and key["blocked_by"] == ["way/2"]

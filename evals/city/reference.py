@@ -29,7 +29,8 @@ Key types and their params:
   ``edge_min_m`` (default 0.5)
 - ``closure``: ``from``, ``to`` (places), ``closed`` (feature IDs of streets or paths)
 - ``visibility``: ``observer`` (a place and ``height_m``, the eye height above the ground, or
-  above the roof when the place is a building), ``targets`` (building feature IDs)
+  above the roof when the place is a building), ``targets`` (building feature IDs, each sighted
+  along its outline)
 - ``direction``: ``from``, ``to`` (places), ``landmark_radius_m`` (default 30),
   ``turn_threshold_deg`` (default 30)
 
@@ -63,6 +64,10 @@ BARRIER_LAYERS = ("railways", "water")
 SOURCE, SINK = "source", "sink"
 """The virtual end nodes of a route; network nodes are (lon, lat) tuples."""
 COMPASS = ("N", "NE", "E", "SE", "S", "SW", "W", "NW")
+OUTLINE_STEP_M = 0.5
+"""Spacing of the points sighted along a target building's outline."""
+OWN_INTERIOR_M = 0.1
+"""A line of sight longer than this inside its target's own footprint ends on its far side."""
 
 Layers = Mapping[str, gpd.GeoDataFrame]
 Node = tuple[float, float]
@@ -475,18 +480,35 @@ def _coordinates(geometry: BaseGeometry) -> list[tuple[float, ...]]:
     return list(geometry.coords)
 
 
-def visibility_key(params: Mapping[str, Any], layers: Layers) -> dict[str, Any]:
-    """Lines of sight from an eye point to the top of each target building.
+def _outline(footprint: BaseGeometry) -> list[BaseGeometry]:
+    """The exterior rings of a footprint, one per polygon (holes are left out)."""
+    parts = footprint.geoms if hasattr(footprint, "geoms") else [footprint]
+    return [part.exterior for part in parts if hasattr(part, "exterior")]
 
-    A building on the line blocks it when its height exceeds the line's height where the line
-    crosses it (the lower of the entry and exit heights, as the line is straight). A building of
-    unknown height on the line leaves the target undecided (``visible`` null). A target of
-    unknown height is sighted at ground level (``target_height_known`` false): a clear line is
-    still ``visible`` (a taller target only raises the line), but a blocked one is undecided
-    (null), with the blockers still listed. An observer building of unknown height is taken at
-    eye height above the ground (``observer_height_known`` false): targets visible from there stay
-    visible, targets blocked from there are undecided. A building that contains the observer point
-    never blocks (the observer looks out of it).
+
+def visibility_key(params: Mapping[str, Any], layers: Layers) -> dict[str, Any]:
+    """Lines of sight from an eye point to the top of each target building's outline.
+
+    A target is sighted at points every ``OUTLINE_STEP_M`` along its outline (the exterior ring
+    of every part of its footprint). A line that runs more than ``OWN_INTERIOR_M`` through the
+    target's own footprint ends on its far side and is left out; the target never blocks its own
+    lines. Each remaining line is judged on its own. A building on the line blocks it when its
+    height exceeds the line's height where the line crosses it (the lower of the entry and exit
+    heights, as the line is straight). A building of unknown height on the line leaves the line
+    undecided. A target of unknown height is sighted at ground level (``target_height_known``
+    false): a clear line is still clear (a taller target only raises the line), but a blocked one
+    is undecided. An observer building of unknown height is taken at eye height above the ground
+    (``observer_height_known`` false): lines clear from there stay clear, lines blocked from there
+    are undecided. A building that contains the observer point never blocks (the observer looks
+    out of it).
+
+    A target is ``visible`` true when any of its lines is clear, else null when any is undecided,
+    else false. Per target, the key also gives ``visible_outline_m`` (the clear lines times
+    ``OUTLINE_STEP_M``: how much of the outline is in view, a sliver or the whole near side),
+    ``distance_m`` (from the eye to the nearest point of the outline), ``target_height_m`` and
+    ``target_height_known``, ``blocked_by`` (the buildings that block at least one line, whatever
+    ``visible`` is: what hides the target or part of it) and ``unknown_height_on_path`` (the
+    buildings of unknown height on at least one line).
     """
     observer = params["observer"]
     eye = float(observer.get("height_m", 1.6))
@@ -501,46 +523,73 @@ def visibility_key(params: Mapping[str, Any], layers: Layers) -> dict[str, Any]:
     project = _projector(origin)
     buildings = layers["buildings"].to_crs(_aeqd(origin))
     index = buildings.sindex
+    feature_ids = buildings["feature_id"].to_numpy()
+    geometries = buildings.geometry.to_numpy()
     eye_point = project(origin)
     # an observer standing in a building looks out of it: that building never blocks
-    around = {
-        buildings.iloc[int(position)]["feature_id"]
-        for position in index.query(eye_point, predicate="within")
-    }
+    around = {feature_ids[int(position)] for position in index.query(eye_point, predicate="within")}
     targets: dict[str, Any] = {}
     for target_id in params["targets"]:
         target = _row(layers, target_id, "buildings")
         target_height = _height(target)
         top = target_height if target_height is not None else 0.0
-        sight = LineString([eye_point, project(target.geometry.representative_point())])
-        length = sight.length
-        blocked, unknown = [], []
-        for position in index.query(sight, predicate="intersects"):
-            other = buildings.iloc[int(position)]
-            if other["feature_id"] in (target_id, observer_id) or other["feature_id"] in around:
-                continue
-            crossing = other.geometry.intersection(sight)
-            if crossing.is_empty:
-                continue
-            along = [sight.project(Point(c[0], c[1])) for c in _coordinates(crossing)]
-            lowest = min(
-                observer_height + (top - observer_height) * d / length
-                for d in (min(along), max(along))
-            )
-            height = _height(other)
-            if height is None:
-                unknown.append(other["feature_id"])
-            elif height > lowest:
-                blocked.append(other["feature_id"])
-        if unknown:
-            visible = None
-        elif blocked:
-            visible = False if observer_known and target_height is not None else None
-        else:
+        footprint = project(target.geometry)
+        outline = _outline(footprint)
+        sights = []
+        for ring in outline:
+            for along_ring in np.arange(0.0, ring.length, OUTLINE_STEP_M):
+                sight = LineString([eye_point, ring.interpolate(along_ring)])
+                inside = (
+                    sight.intersection(footprint).length
+                    - sight.intersection(footprint.boundary).length
+                )
+                if inside <= OWN_INTERIOR_M:  # else it ends on the far side
+                    sights.append(sight)
+        skip = {target_id, observer_id, *around}
+        lines, positions = index.query(sights, predicate="intersects")
+        crossers: dict[int, list[int]] = {}
+        for line, position in zip(lines.tolist(), positions.tolist(), strict=True):
+            if feature_ids[position] not in skip:
+                crossers.setdefault(line, []).append(position)
+        verdicts: list[bool | None] = []
+        blocked: set[str] = set()
+        unknown: set[str] = set()
+        for line, sight in enumerate(sights):
+            length = sight.length
+            line_blocked, line_unknown = False, False
+            for position in crossers.get(line, []):
+                crossing = geometries[position].intersection(sight)
+                if crossing.is_empty:
+                    continue
+                along = [sight.project(Point(c[0], c[1])) for c in _coordinates(crossing)]
+                lowest = min(
+                    observer_height + (top - observer_height) * d / length
+                    for d in (min(along), max(along))
+                )
+                other = buildings.iloc[position]
+                height = _height(other)
+                if height is None:
+                    unknown.add(other["feature_id"])
+                    line_unknown = True
+                elif height > lowest:
+                    blocked.add(other["feature_id"])
+                    line_blocked = True
+            if line_unknown:
+                verdicts.append(None)
+            elif line_blocked:
+                verdicts.append(False if observer_known and target_height is not None else None)
+            else:
+                verdicts.append(True)
+        if True in verdicts:
             visible = True
+        elif None in verdicts:
+            visible = None
+        else:
+            visible = False
         targets[target_id] = {
             "visible": visible,
-            "distance_m": length,
+            "visible_outline_m": verdicts.count(True) * OUTLINE_STEP_M,
+            "distance_m": min(eye_point.distance(ring) for ring in outline),
             "target_height_m": target_height,
             "target_height_known": target_height is not None,
             "blocked_by": sorted(blocked),

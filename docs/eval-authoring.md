@@ -63,9 +63,14 @@ The keys follow a few fixed rules, so a task author should expect them:
   tunnels or bridges), a river, canal or stream that is not culverted, or a water area. Ditches
   and drains are not barriers.
 - Walls up to 5 cm apart, or overlapping by up to 5 cm, count as touching.
+- A target building is visible when any part of it can be seen: the key sights points every
+  0.5 m along the target's outline (leaving out its far side, which the building itself hides)
+  and calls the target visible when any of those lines is clear. `visible_outline_m` tells a
+  sliver from a full view, and `blocked_by` lists every building that hides part of the target.
 - Visibility never guesses an unknown height. When a target or an observer has no known height
   and the answer depends on it, the key says `visible: null`, and a good answer says it cannot
-  tell. A building of unknown height on a sight line also leaves the target undecided.
+  tell. A building of unknown height on a sight line leaves that line undecided, and the
+  target too when no line to it is clear.
 - In directions, step distances cover only the walk on the network, not the walks to and from
   it, so they do not sum to `walking_m`.
 
