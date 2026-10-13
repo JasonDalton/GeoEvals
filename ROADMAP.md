@@ -21,7 +21,7 @@ manifest and downloaded, never committed, as the
 [data governance rules](docs/data-governance.md) require. Open questions: which extracts and
 snapshot dates to pin, and how a reference output stays stable when OSM is edited.
 
-The graded evals will pin a whole-town OpenStreetMap snapshot. The tooling to fetch and convert one exists (`geoevals data fetch osm_city_<town>`, `geoevals evals build-city`), but no town is pinned yet; this benchmark can reuse that fetch.
+The graded evals will pin a whole-town OpenStreetMap snapshot. The tooling to fetch and convert one exists (`geoevals data fetch osm_city_<town>`, `geoevals evals build-city`), and the graded evals pin Oregon City, Oregon (`osm_city_oregon_city`, from Geofabrik's 2026-10-11 extract); this benchmark can reuse that fetch.
 
 Feature extraction from imagery is not planned. Many benchmarks already cover it.
 

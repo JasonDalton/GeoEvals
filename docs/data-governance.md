@@ -79,7 +79,7 @@ obligations, so v0.1 commits no OSM-derived data. Only synthetic fixtures are co
 Whether small derived samples may ever be committed is an open question for a qualified
 reviewer.
 
-The graded evals will use a whole-town OpenStreetMap extract (`osm_city_<town>`). Its layers and the evals' reference keys are derived data, so they stay in `data/raw/osm_city_<town>/`; `tasks.jsonl` commits only each key's SHA-256. Task prompts name features by their OSM name and ID, as a citation would.
+The graded evals will use a whole-town OpenStreetMap extract (`osm_city_<town>`). Its layers and the evals' reference keys are derived data, so they stay in `data/raw/osm_city_<town>/`; `tasks.jsonl` commits only each key's SHA-256. Task prompts name features by their OSM name and ID, as a citation would. The town is Oregon City, Oregon (`datasets/manifests/osm_city_oregon_city.yaml`), read from Geofabrik's dated Oregon extract.
 
 Graded runs are committed in `leaderboard/graded/`. A graded run's answers quote OSM names, IDs and distances, and the grader's justifications in `grades.json` cite the reference key. Decision (maintainer, 2026-10-12): these quotations, and the OSM names and IDs in task prompts, may be committed. They are individual facts cited in text, not an extract of the database; the layers and full keys still stay in `data/raw/`. Every page that shows graded results attributes the data as "© OpenStreetMap contributors".
 

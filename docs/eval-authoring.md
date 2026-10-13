@@ -75,6 +75,7 @@ its measurement row. Then fetch the chosen city, build its layers and compute th
 
 ```sh
 uv run geoevals data fetch osm_city_<town>
+uv run geoevals data fetch osm_city_<town> --pbf <extract>   # or read a local dated .osm.pbf
 uv run geoevals evals build-city osm_city_<town>
 uv run geoevals evals regenerate <eval id>          # writes data/raw/osm_city_<town>/keys/
 uv run geoevals evals regenerate <eval id> --check  # exit 1 when a key_sha256 is stale
