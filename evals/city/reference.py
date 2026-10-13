@@ -6,11 +6,13 @@ by hand (``geoevals evals regenerate``), and are not committed (OpenStreetMap-de
 
 Distances are geodesic meters on WGS 84. Walking distances use the ``streets`` and ``paths``
 layers as an undirected graph whose nodes are the lines' shared vertices, densified to
-``NETWORK_STEP_M``. A place joins the network by a straight snap leg to one of its nearest
-vertices (up to ``MAX_SNAP_CANDIDATES`` within ``MAX_SNAP_M``); a leg that crosses a ``railways``
-or ``water`` feature marked ``walk_barrier`` (surface rail, rivers, canals, streams and water
-areas; see ``geoevals.graded.city``) is not used, and only the nearest usable vertex of each
-connected part of the network is a candidate. The shortest walk picks the best leg at each end,
+``NETWORK_STEP_M``; ways that do not allow walking (``walkable`` false: motorways and ways tagged
+no access or no foot traffic, see ``geoevals.graded.city``) are left out. A place joins the
+network by a straight snap leg to one of its nearest vertices (up to ``MAX_SNAP_CANDIDATES``
+within ``MAX_SNAP_M``); a leg that crosses a ``railways`` or ``water`` feature marked
+``walk_barrier`` (surface rail, rivers, canals, streams and water areas; see
+``geoevals.graded.city``) is not used, and only the nearest usable vertex of each connected part
+of the network is a candidate. The shortest walk picks the best leg at each end,
 so a place beside an isolated fragment still joins the connected street behind it. A place with
 no vertex within ``MAX_SNAP_M`` is unreachable (``too_far_from_network``), as is one whose every
 candidate leg crosses a barrier (``blocked_by_barrier``). Local geometry (shared edges, lines of
