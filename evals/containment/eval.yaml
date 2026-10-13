@@ -1,0 +1,25 @@
+schema_version: "1.0.0"
+id: containment
+version: 0.1.0
+title: Containment and boundaries in Oregon City
+concept: >-
+  Which areas contain a place: nested and overlapping boundaries, points on a boundary, and
+  boundaries that run along a river.
+task_statement: >-
+  Answer one open-ended question about Oregon City, Oregon, from its OpenStreetMap layers.
+  Explain your reasoning for the audience named in the question.
+intended_use: >-
+  Comparing models' reasoning about containment and boundary edge cases on real, noisy city data.
+tasks: tasks.jsonl
+rubric_criteria: ../city/rubric_criteria.yaml
+reference: ../city/reference.py
+dataset_manifest: ../../datasets/manifests/osm_city_oregon_city.yaml
+answer_word_limit: 4000
+license: MIT
+provenance:
+  authors: [GeoEvals contributors]
+  created: 2026-10-12
+limitations:
+  - One town, one snapshot (2026-10-11); boundaries in OpenStreetMap are not legal descriptions.
+  - A point within the stated tolerance of an edge counts as on the boundary.
+  - A real town can be known to the models; Oregon City is not world famous, but memorization cannot be ruled out.
