@@ -1,0 +1,26 @@
+schema_version: "1.0.0"
+id: adjacency
+version: 0.1.0
+title: Adjacency and closures in Oregon City
+concept: >-
+  Topology of the built environment: buildings that share walls against those that only touch
+  at a corner, and what closing a street, path or bridge does to a walk.
+task_statement: >-
+  Answer one open-ended question about Oregon City, Oregon, from its OpenStreetMap layers.
+  Explain your reasoning for the audience named in the question.
+intended_use: >-
+  Comparing models' reasoning about adjacency and network connectivity on real, noisy city data.
+tasks: tasks.jsonl
+rubric_criteria: ../city/rubric_criteria.yaml
+reference: ../city/reference.py
+dataset_manifest: ../../datasets/manifests/osm_city_oregon_city.yaml
+answer_word_limit: 4000
+license: MIT
+provenance:
+  authors: [GeoEvals contributors]
+  created: 2026-10-12
+limitations:
+  - One town, one snapshot (2026-10-11); building outlines in OpenStreetMap are approximate.
+  - Walls up to 5 cm apart count as touching; a shared wall needs at least 0.5 m of common edge.
+  - Walking distance is network length; slope, crossings and private paths are ignored.
+  - A real town can be known to the models; Oregon City is not world famous, but memorization cannot be ruled out.
