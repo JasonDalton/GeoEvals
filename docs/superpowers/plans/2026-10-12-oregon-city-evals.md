@@ -301,30 +301,60 @@ def test_review_sheet_lists_every_task_with_its_key_and_a_map(tmp_path: Path) ->
     [
         (
             "proximity",
-            {"walking_nearest": None, "unreachable": ["node/1"], "by_walking": [],
-             "by_straight_line": [{"straight_line_m": 100.0}]},
+            {
+                "walking_nearest": None,
+                "unreachable": ["node/1"],
+                "by_walking": [],
+                "by_straight_line": [{"straight_line_m": 100.0}],
+            },
             "no candidate is reachable on foot",
         ),
         (
             "proximity",
-            {"walking_nearest": "node/1", "unreachable": [],
-             "by_walking": [{"feature_id": "node/1", "walking_m": 900.0, "straight_line_m": 200.0}],
-             "by_straight_line": []},
+            {
+                "walking_nearest": "node/1",
+                "unreachable": [],
+                "by_walking": [
+                    {"feature_id": "node/1", "walking_m": 900.0, "straight_line_m": 200.0}
+                ],
+                "by_straight_line": [],
+            },
             "more than 3x the straight line",
         ),
-        ("containment", {"points": {"a": {"inside": [], "on_boundary": []}}, "features": {}},
-         "point 'a' is in no polygon"),
-        ("adjacency", {"pairs": [{"a": "way/1", "b": "way/2", "relation": "disjoint"}]},
-         "no pair of features touches"),
-        ("closure", {"before": {"reachable": True, "walking_m": 100.0},
-                     "after": {"reachable": True, "walking_m": 100.0}, "added_m": 0.0},
-         "the closure does not change the walk"),
-        ("visibility", {"targets": {"way/1": {"visible": None}, "way/2": {"visible": None}}},
-         "every target is undecided"),
-        ("direction", {"reachable": True, "walking_m": 1000.0, "straight_line_m": 200.0,
-                       "steps": [{}, {}]}, "more than 3x the straight line"),
-        ("direction", {"reachable": True, "walking_m": 100.0, "straight_line_m": 90.0,
-                       "steps": [{}]}, "a one-step route"),
+        (
+            "containment",
+            {"points": {"a": {"inside": [], "on_boundary": []}}, "features": {}},
+            "point 'a' is in no polygon",
+        ),
+        (
+            "adjacency",
+            {"pairs": [{"a": "way/1", "b": "way/2", "relation": "disjoint"}]},
+            "no pair of features touches",
+        ),
+        (
+            "closure",
+            {
+                "before": {"reachable": True, "walking_m": 100.0},
+                "after": {"reachable": True, "walking_m": 100.0},
+                "added_m": 0.0,
+            },
+            "the closure does not change the walk",
+        ),
+        (
+            "visibility",
+            {"targets": {"way/1": {"visible": None}, "way/2": {"visible": None}}},
+            "every target is undecided",
+        ),
+        (
+            "direction",
+            {"reachable": True, "walking_m": 1000.0, "straight_line_m": 200.0, "steps": [{}, {}]},
+            "more than 3x the straight line",
+        ),
+        (
+            "direction",
+            {"reachable": True, "walking_m": 100.0, "straight_line_m": 90.0, "steps": [{}]},
+            "a one-step route",
+        ),
     ],
 )
 def test_key_warnings(key_type: str, key: dict, warning: str) -> None:
@@ -332,9 +362,12 @@ def test_key_warnings(key_type: str, key: dict, warning: str) -> None:
 
 
 def test_a_sound_key_has_no_warning() -> None:
-    key = {"walking_nearest": "node/1", "unreachable": [],
-           "by_walking": [{"feature_id": "node/1", "walking_m": 300.0, "straight_line_m": 250.0}],
-           "by_straight_line": []}
+    key = {
+        "walking_nearest": "node/1",
+        "unreachable": [],
+        "by_walking": [{"feature_id": "node/1", "walking_m": 300.0, "straight_line_m": 250.0}],
+        "by_straight_line": [],
+    }
     assert key_warnings("proximity", key) == []
 
 
@@ -343,11 +376,19 @@ def test_task_warnings_flag_duplicates_and_the_box_edge(tmp_path: Path) -> None:
     lines = spec_path.parent.joinpath("tasks.jsonl").read_text(encoding="utf-8").splitlines()
     first = json.loads(lines[0])
     duplicate = {**first, "task_id": "sample-004"}
-    edge = {**json.loads(lines[1]), "task_id": "sample-005",
-            "location": {"point": [BBOX[0] + 0.0001, BBOX[1] + 0.0001], "feature_ids": []}}
+    edge = {
+        **json.loads(lines[1]),
+        "task_id": "sample-005",
+        "location": {"point": [BBOX[0] + 0.0001, BBOX[1] + 0.0001], "feature_ids": []},
+    }
     spec_path.parent.joinpath("tasks.jsonl").write_text(
-        "".join(line + "\n" for line in lines) + json.dumps(duplicate) + "\n"
-        + json.dumps(edge) + "\n", encoding="utf-8")
+        "".join(line + "\n" for line in lines)
+        + json.dumps(duplicate)
+        + "\n"
+        + json.dumps(edge)
+        + "\n",
+        encoding="utf-8",
+    )
     tasks = load_tasks(spec_path, load_eval_spec(spec_path))
     warnings = task_warnings(tasks, BBOX)
     assert any("same key type and params as sample-001" in w for w in warnings["sample-004"])
@@ -496,7 +537,9 @@ def _feature_ids(value: Any) -> set[str]:
     if isinstance(value, str):
         return {value} if FEATURE_ID.match(value) else set()
     if isinstance(value, Mapping):
-        return set().union(*(_feature_ids(v) for v in value.values()), *(_feature_ids(k) for k in value))
+        return set().union(
+            *(_feature_ids(v) for v in value.values()), *(_feature_ids(k) for k in value)
+        )
     if isinstance(value, list):
         return set().union(*(_feature_ids(v) for v in value))
     return set()
@@ -509,14 +552,22 @@ def _draw(layers: Mapping[str, Any], task: EvalTask, key: Mapping[str, Any], pat
     import matplotlib.pyplot as plt
 
     features = layers["all_features"].set_index("feature_id")
-    ids = sorted((_feature_ids(task.params) | _feature_ids(key) | set(task.location.feature_ids)) & set(features.index))
+    ids = sorted(
+        (_feature_ids(task.params) | _feature_ids(key) | set(task.location.feature_ids))
+        & set(features.index)
+    )
     shapes = [features.geometry[i] for i in ids]
     points = [task.location.point] if task.location.point else []
     xs = [c for s in shapes for c in (s.bounds[0], s.bounds[2])] + [p[0] for p in points]
     ys = [c for s in shapes for c in (s.bounds[1], s.bounds[3])] + [p[1] for p in points]
     if not xs:
         return
-    box = (min(xs) - MAP_PAD_DEG, min(ys) - MAP_PAD_DEG, max(xs) + MAP_PAD_DEG, max(ys) + MAP_PAD_DEG)
+    box = (
+        min(xs) - MAP_PAD_DEG,
+        min(ys) - MAP_PAD_DEG,
+        max(xs) + MAP_PAD_DEG,
+        max(ys) + MAP_PAD_DEG,
+    )
     figure, axes = plt.subplots(figsize=(7, 7), dpi=110)
     styles = {
         "landuse": {"color": "#eeeeee"},
@@ -592,7 +643,11 @@ def review_sheet(spec_path: Path, data_dir: Path) -> Path:
             "<details><summary>Params and key</summary>",
             "",
             "```json",
-            json.dumps({"params": task.params, "anchors": task.anchors, "key": key}, indent=1, ensure_ascii=False),
+            json.dumps(
+                {"params": task.params, "anchors": task.anchors, "key": key},
+                indent=1,
+                ensure_ascii=False,
+            ),
             "```",
             "",
             "</details>",
@@ -763,10 +818,15 @@ from drafting import LAYERS, graph, reference, utm, lonlat
 
 water, rail = LAYERS["water"], LAYERS["railways"]
 barriers = utm(pd.concat([water[water.walk_barrier], rail[rail.walk_barrier]]))
-homes = LAYERS["buildings"][LAYERS["buildings"].building.isin(["house", "residential", "apartments", "detached", "yes"])]
+homes = LAYERS["buildings"][
+    LAYERS["buildings"].building.isin(["house", "residential", "apartments", "detached", "yes"])
+]
 near = utm(homes)[utm(homes).geometry.distance(barriers.union_all()) < 400]
 origins = near.sample(min(60, len(near)), random_state=0)
-categories = [{"amenity": v} for v in ("pharmacy", "cafe", "school", "toilets", "fuel", "bank", "restaurant", "library")]
+categories = [
+    {"amenity": v}
+    for v in ("pharmacy", "cafe", "school", "toilets", "fuel", "bank", "restaurant", "library")
+]
 g = graph()
 for cat in categories:
     candidates = reference._tagged(LAYERS, cat)
@@ -782,7 +842,17 @@ for cat in categories:
             continue
         by_walk = min(walkable, key=lambda r: r[1])
         if by_walk[2] != by_line[2] and by_walk[1] < 3 * by_walk[0]:
-            print(cat, fid, lonlat(origin), "line:", by_line[3], round(by_line[0]), "walk:", by_walk[3], round(by_walk[1]))
+            print(
+                cat,
+                fid,
+                lonlat(origin),
+                "line:",
+                by_line[3],
+                round(by_line[0]),
+                "walk:",
+                by_walk[3],
+                round(by_walk[1]),
+            )
 ```
 
 Save the output to `$DRAFT/proximity_candidates.txt`. If a category has fewer than 2 tagged features in the city, skip it.
@@ -903,7 +973,8 @@ import json
 af = LAYERS["all_features"]
 network = set(LAYERS["streets"].feature_id) | set(LAYERS["paths"].feature_id)
 crossings = [
-    (fid, name) for fid, name, tags in zip(af.feature_id, af.name, af.tags)
+    (fid, name)
+    for fid, name, tags in zip(af.feature_id, af.name, af.tags)
     if fid in network and json.loads(tags).get("bridge", "no") != "no"
 ]
 print(len(crossings), "bridges on the network")
@@ -1001,7 +1072,10 @@ for obs in tall.itertuples():
     if len(near) < 4:
         continue
     targets = near.sample(min(6, len(near)), random_state=0).feature_id.tolist()
-    k = key("visibility", {"observer": {"feature_id": obs.feature_id, "height_m": 1.6}, "targets": targets})
+    k = key(
+        "visibility",
+        {"observer": {"feature_id": obs.feature_id, "height_m": 1.6}, "targets": targets},
+    )
     outcomes = sorted({str(t["visible"]) for t in k["targets"].values()})
     if len(outcomes) >= 2:
         point = b.set_index("feature_id").geometry[obs.feature_id].representative_point()
@@ -1083,12 +1157,16 @@ hoods = utm(bd[(bd.boundary == "administrative") & (bd.admin_level == "10")])
 cities = utm(bd[(bd.boundary == "administrative") & (bd.admin_level == "8")])
 print(sorted(hoods.name.dropna()), sorted(cities.name.dropna()))
 # shared edges between neighborhoods: points exactly on, and 5 m inside each side
-for a, b in [(x, y) for i, x in enumerate(hoods.itertuples()) for y in list(hoods.itertuples())[i + 1:]]:
+for a, b in [
+    (x, y) for i, x in enumerate(hoods.itertuples()) for y in list(hoods.itertuples())[i + 1 :]
+]:
     edge = a.geometry.boundary.intersection(b.geometry.boundary)
     if edge.length < 100:
         continue
     on = edge.interpolate(0.5, normalized=True)
-    inside_a = a.geometry.buffer(-5).boundary.interpolate(a.geometry.buffer(-5).boundary.project(on))
+    inside_a = a.geometry.buffer(-5).boundary.interpolate(
+        a.geometry.buffer(-5).boundary.project(on)
+    )
     pts = gpd.GeoSeries([on, inside_a], crs=32610).to_crs(4326)
     print(a.name, "|", b.name, lonlat(pts[0]), lonlat(pts[1]), round(edge.length))
 ```
@@ -1186,13 +1264,25 @@ for s in starts.itertuples():
     for e in named.sample(8, random_state=1).itertuples():
         if s.feature_id == e.feature_id:
             continue
-        k = key("direction", {"from": {"feature_id": s.feature_id}, "to": {"feature_id": e.feature_id}})
+        k = key(
+            "direction", {"from": {"feature_id": s.feature_id}, "to": {"feature_id": e.feature_id}}
+        )
         if not k["reachable"] or not (300 < k["walking_m"] < 2000):
             continue
         landmarks = sum(1 for step in k["steps"] if step["landmark"])
         ratio = k["walking_m"] / k["straight_line_m"]
         if len(k["steps"]) >= 4 and landmarks >= 1:
-            print(s.name, "->", e.name, len(k["steps"]), "steps", landmarks, "landmarks", k["compass"], round(ratio, 2))
+            print(
+                s.name,
+                "->",
+                e.name,
+                len(k["steps"]),
+                "steps",
+                landmarks,
+                "landmarks",
+                k["compass"],
+                round(ratio, 2),
+            )
 ```
 
 The direction key builds a walk graph on every call, so this loop is slow; keep the sample small. A ratio from 1.6 to 3 is a "misleading bearing" candidate: the place looks close in one direction, but the walk goes around.
