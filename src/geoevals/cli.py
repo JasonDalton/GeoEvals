@@ -1043,6 +1043,9 @@ def _evals_review(eval_id: str, root: Path, data: Path | None) -> int:
     except KeysError as exc:
         print(f"{exc}; run `geoevals evals regenerate {eval_id}` first", file=sys.stderr)
         return 1
+    except ImportError:
+        print("the review maps need matplotlib: uv sync --extra plots", file=sys.stderr)
+        return 1
     except (OSError, ValueError, FetchError) as exc:
         print(exc, file=sys.stderr)
         return 1

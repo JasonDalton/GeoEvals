@@ -1,4 +1,5 @@
 import json
+import sys
 from pathlib import Path
 
 import pytest
@@ -143,3 +144,13 @@ def test_review_cli_needs_current_keys(tmp_path: Path, capsys: pytest.CaptureFix
     root = str(spec_path.parent.parent)
     assert main(["evals", "review", "sample", "--root", root, "--data", str(data)]) == 1
     assert "regenerate" in capsys.readouterr().err
+
+
+def test_review_cli_without_matplotlib(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    spec_path, data = _reviewed(tmp_path)
+    root = str(spec_path.parent.parent)
+    monkeypatch.setitem(sys.modules, "matplotlib", None)
+    assert main(["evals", "review", "sample", "--root", root, "--data", str(data)]) == 1
+    assert "need matplotlib" in capsys.readouterr().err
