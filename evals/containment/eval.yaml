@@ -4,8 +4,8 @@ version: 0.1.0
 title: Containment and boundaries in Oregon City
 concept: >-
   Which areas contain a place: administrative boundaries and areas on the ground (parks, land
-  use, buildings), nested and overlapping areas, points on a boundary, and boundaries that run
-  along a river.
+  use, water, buildings), nested and overlapping areas, points on a boundary, and boundaries
+  that run along a river.
 task_statement: >-
   Answer one open-ended question about Oregon City, Oregon, from its OpenStreetMap layers.
   Explain your reasoning for the audience named in the question.
