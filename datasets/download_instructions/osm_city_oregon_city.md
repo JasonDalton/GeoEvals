@@ -18,7 +18,7 @@ is committed; all of it stays in the gitignored `data/raw/`.
 ## Steps
 
 ```sh
-curl -o data/raw/oregon/oregon-261011.osm.pbf \
+curl --create-dirs -o data/raw/oregon/oregon-261011.osm.pbf \
   https://download.geofabrik.de/north-america/us/oregon-261011.osm.pbf
 shasum -a 256 data/raw/oregon/oregon-261011.osm.pbf     # must match the SHA-256 above
 uv run geoevals data fetch osm_city_oregon_city --pbf data/raw/oregon/oregon-261011.osm.pbf

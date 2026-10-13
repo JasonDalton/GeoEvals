@@ -10,7 +10,8 @@ task_statement: >-
   Explain your reasoning for the audience named in the question.
 intended_use: >-
   Comparing models' spatial reasoning about proximity on real, noisy city data. Not a measure
-  of routing accuracy: the reference walk ignores slope, crossings and access restrictions.
+  of routing accuracy: the reference walk uses every street and path
+  regardless of access tags, and ignores slope and crossings.
 tasks: tasks.jsonl
 rubric_criteria: ../city/rubric_criteria.yaml
 reference: ../city/reference.py
@@ -22,5 +23,5 @@ provenance:
   created: 2026-10-12
 limitations:
   - One town, one snapshot (2026-10-11); OpenStreetMap completeness limits what is reachable.
-  - Walking distance is network length; slope, crossings and private paths are ignored.
+  - Walking distance is network length over every street and path, access tags ignored (motorways and private ways included); slope and crossings are ignored.
   - A real town can be known to the models; Oregon City is not world famous, but memorization cannot be ruled out.

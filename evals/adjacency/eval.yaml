@@ -22,5 +22,5 @@ provenance:
 limitations:
   - One town, one snapshot (2026-10-11); building outlines in OpenStreetMap are approximate.
   - Walls up to 5 cm apart count as touching; a shared wall needs at least 0.5 m of common edge.
-  - Walking distance is network length; slope, crossings and private paths are ignored.
+  - Walking distance is network length over every street and path, access tags ignored (motorways and private ways included); slope and crossings are ignored.
   - A real town can be known to the models; Oregon City is not world famous, but memorization cannot be ruled out.
