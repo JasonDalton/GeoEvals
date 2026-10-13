@@ -84,6 +84,18 @@ uv run geoevals evals regenerate <eval id> --check  # exit 1 when a key_sha256 i
 `regenerate` records each key's SHA-256 in `tasks.jsonl`. Grading refuses keys whose hash does
 not match, so a reviewer always grades against the keys the tasks were reviewed with.
 
+## Review the drafts
+
+```sh
+uv run geoevals evals review <eval id>   # writes data/raw/osm_city_<town>/review/<eval id>.md
+```
+
+The review sheet shows each task's prompt, audience, strata, params and key, with a map of the
+features it names, and warns about keys that are probably not what the author meant: a walk more
+than 3 times the straight line (often a connection OpenStreetMap lacks), a location within 300 m
+of the edge of the city box, duplicate tasks, and keys with nothing to answer. The sheet holds
+the keys, so it stays in the gitignored data directory.
+
 ## Run and grade
 
 ```sh
