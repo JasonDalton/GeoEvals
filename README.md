@@ -4,11 +4,11 @@
 
 # GeoEvals
 
-A reproducible, practitioner-focused framework for evaluating geospatial AI systems.
+A reproducible, practitioner-focused framework for evaluating GeoAI systems.
 
 ## Why spatial reasoning needs its own tests
 
-Language models learn about places from the words people use to describe them: "near the
+GeoAI can be more than interpreting pixels in imagery and words used to describe places, but needs a way to measure how well it can capture the concepts of geospatial relationships.  Language models learn about places from the words people use to describe them: "near the
 river", "behind the courthouse", "just across the bridge". But the words are not the space. A
 café can be "close" to a house 200 meters away and still be a 1.4-kilometer walk, because a
 river runs between them and the only bridge is upstream. A model that reasons only on the
@@ -258,6 +258,7 @@ See [`docs/data-governance.md`](docs/data-governance.md).
 
 ## Contributing
 
+Admittedly, I've never created a large benchmark for others to use.  I've only created test suites and evals for my own work.  There may be community best practices that I'm missing, and I'd love help making it better. A proper way to measure the abilities of new AI systems on geospatial tasks is something that I think has been missing and woudl love to see this applied to many models to come.
 [`CONTRIBUTING.md`](CONTRIBUTING.md) covers the development setup, the quality gates, the
 benchmark definition of done and the version rules. Everyone who takes part follows the
 [code of conduct](CODE_OF_CONDUCT.md). In short, set up the environment and run the quality
