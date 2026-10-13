@@ -22,5 +22,5 @@ in three tiers (describe, analyze, infer):
 | [`proximity`](proximity/eval.yaml) | Nearness on foot against nearness on the map, across rivers and rail |
 | [`adjacency`](adjacency/eval.yaml) | Shared walls against corner touches; what a closure does to a walk |
 | [`visibility`](visibility/eval.yaml) | Lines of sight between buildings with heights; undecided views |
-| [`containment`](containment/eval.yaml) | Nested and overlapping boundaries; points on a boundary |
+| [`containment`](containment/eval.yaml) | Inside, on the edge of or across an area: boundaries, parks, land use, water, buildings |
 | [`direction`](direction/eval.yaml) | Turn-by-turn directions with landmarks; misleading bearings |
