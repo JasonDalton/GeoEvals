@@ -18,6 +18,7 @@ from collections.abc import Mapping
 from pathlib import Path
 from typing import Any
 
+from shapely.geometry import Point as ShapelyPoint
 from shapely.geometry import box as shapely_box
 
 from geoevals.data.fetch import ensure_ignored
@@ -32,6 +33,10 @@ EDGE_M = 300.0
 M_PER_DEG_LAT = 111_320.0
 MAP_PAD_DEG = 0.0015
 """Padding around a task's features on its map (about 120 to 170 m)."""
+POLYGONAL = ("Polygon", "MultiPolygon")
+CONTAINER_TOL_DEG = 2e-5
+"""How near a key polygon must be to a task's point to count as its container (about 2 m, so
+it covers the 1 m boundary tolerance of containment keys)."""
 FEATURE_ID = re.compile(r"^(node|way|relation)/[0-9]+$")
 ATTRIBUTION = "© OpenStreetMap contributors"
 
@@ -145,15 +150,31 @@ def _points(value: Any) -> list[list[float]]:
     return []
 
 
-def map_box(task: EvalTask, shapes: Mapping[str, Any]) -> Bbox | None:
-    """The map extent of a task: its params' features and points and its location, padded.
+def map_box(
+    task: EvalTask, shapes: Mapping[str, Any], key: Mapping[str, Any] | None = None
+) -> Bbox | None:
+    """The map extent of a task, padded: its params' features and points, plus the features its
+    location and key name, except containers.
 
-    Features that only the key names (such as the containers a containment key finds) do not
-    widen the box; one large polygon would otherwise stretch every map to the whole region.
+    A container is a polygon that holds one of the task's points or meets one of its params
+    polygons: the city limits, Metro or a neighboring district around a containment task. One
+    of them would stretch the map over the whole region, so it is drawn clipped instead. Other
+    features, such as a proximity key's candidates, widen the box so they appear on the map.
     ``shapes`` maps feature IDs to geometries. ``None`` when nothing locates the task.
     """
-    ids = (_feature_ids(task.params) | set(task.location.feature_ids)) & set(shapes)
     points = _points(task.params) + ([task.location.point] if task.location.point else [])
+    marks = [ShapelyPoint(p) for p in points]
+    subjects = _feature_ids(task.params) & set(shapes)
+    areas = [shapes[i] for i in subjects if shapes[i].geom_type in POLYGONAL]
+
+    def container(shape: Any) -> bool:
+        return shape.geom_type in POLYGONAL and (
+            any(shape.distance(mark) <= CONTAINER_TOL_DEG for mark in marks)
+            or any(shape.intersects(area) for area in areas)
+        )
+
+    named = set(task.location.feature_ids) | (_feature_ids(key) if key is not None else set())
+    ids = subjects | {i for i in (named & set(shapes)) - subjects if not container(shapes[i])}
     bounds = [shapes[i].bounds for i in ids]
     xs = [c for b in bounds for c in (b[0], b[2])] + [p[0] for p in points]
     ys = [c for b in bounds for c in (b[1], b[3])] + [p[1] for p in points]
@@ -176,13 +197,12 @@ def _draw(layers: Mapping[str, Any], task: EvalTask, key: Mapping[str, Any], pat
     features = layers["all_features"].set_index("feature_id")
     known = set(features.index)
     own = (_feature_ids(task.params) | set(task.location.feature_ids)) & known
-    box = map_box(task, {i: features.geometry[i] for i in own})
+    named = _feature_ids(key) & known
+    box = map_box(task, {i: features.geometry[i] for i in own | named}, key)
     if box is None:
         return
     frame_shape = shapely_box(*box)
-    ids = sorted(
-        own | {i for i in _feature_ids(key) & known if features.geometry[i].intersects(frame_shape)}
-    )
+    ids = sorted(own | {i for i in named if features.geometry[i].intersects(frame_shape)})
     shapes = [features.geometry[i] for i in ids]
     points = [task.location.point] if task.location.point else []
     figure, axes = plt.subplots(figsize=(7, 7), dpi=110)

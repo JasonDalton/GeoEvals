@@ -132,7 +132,7 @@ def test_task_warnings_flag_duplicates_and_the_box_edge(tmp_path: Path) -> None:
     assert any("within 300 m of the city box edge" in w for w in warnings["sample-005"])
 
 
-def test_map_box_ignores_features_only_the_key_names() -> None:
+def test_map_box_ignores_key_polygons_that_hold_the_point() -> None:
     task = EvalTask(
         task_id="sample-001",
         prompt="Which district is the marked point in?",
@@ -142,13 +142,60 @@ def test_map_box_ignores_features_only_the_key_names() -> None:
         params={"points": [{"label": "A", "point": [10.002, 50.001]}], "layers": ["boundaries"]},
         rubric=["relations"],
     )
-    region = box(9.0, 49.0, 11.0, 51.0)  # a large container the key would list
+    region = box(9.0, 49.0, 11.0, 51.0)  # a large container that holds the marked point
     shapes = {"way/1": Point(9.999, 49.999).buffer(0.0005), "relation/9": region}
-    min_lon, min_lat, max_lon, max_lat = map_box(task, shapes) or (0, 0, 0, 0)
+    key = {"points": {"A": {"inside": ["relation/9"], "on_boundary": []}}}
+    min_lon, min_lat, max_lon, max_lat = map_box(task, shapes, key) or (0, 0, 0, 0)
     assert min_lon == pytest.approx(9.9985 - MAP_PAD_DEG)
     assert min_lat == pytest.approx(49.9985 - MAP_PAD_DEG)
     assert max_lon == pytest.approx(10.002 + MAP_PAD_DEG), "params points widen the box"
     assert max_lat == pytest.approx(50.001 + MAP_PAD_DEG)
+
+
+def test_map_box_widens_to_the_candidates_a_proximity_key_names() -> None:
+    task = EvalTask(
+        task_id="sample-001",
+        prompt="Which pharmacy is the shortest walk from the marked house?",
+        audience="a resident",
+        location=Location(point=[10.0, 50.0], feature_ids=[]),
+        key_type="proximity",
+        params={"from": {"point": [10.0, 50.0]}, "category": {"amenity": "pharmacy"}},
+        rubric=["relations"],
+    )
+    shapes = {
+        "node/1": Point(10.01, 50.005),  # a candidate about 900 m away
+        "relation/9": box(9.0, 49.0, 11.0, 51.0),  # a district that holds the house
+    }
+    key = {
+        "walking_nearest": "node/1",
+        "by_walking": [{"feature_id": "node/1"}],
+        "district": "relation/9",
+    }
+    min_lon, min_lat, max_lon, max_lat = map_box(task, shapes, key) or (0, 0, 0, 0)
+    assert (min_lon, min_lat) == pytest.approx((10.0 - MAP_PAD_DEG, 50.0 - MAP_PAD_DEG))
+    assert (max_lon, max_lat) == pytest.approx((10.01 + MAP_PAD_DEG, 50.005 + MAP_PAD_DEG))
+
+
+def test_map_box_ignores_polygons_that_meet_a_params_polygon() -> None:
+    task = EvalTask(
+        task_id="sample-001",
+        prompt="Which districts does the park lie in?",
+        audience="a resident",
+        location=Location(point=[10.0, 50.0], feature_ids=["way/1", "relation/9"]),
+        key_type="containment",
+        params={"features": ["way/1"], "layers": ["boundaries"]},
+        rubric=["relations"],
+    )
+    park = box(10.0, 50.0, 10.002, 50.001)
+    shapes = {
+        "way/1": park,
+        "relation/8": box(10.002, 49.0, 11.0, 51.0),  # a district the park touches
+        "relation/9": box(9.0, 49.0, 10.001, 51.0),  # a district the park overlaps
+    }
+    key = {"features": {"way/1": {"overlaps": ["relation/9"], "touches": ["relation/8"]}}}
+    assert map_box(task, shapes, key) == pytest.approx(
+        (10.0 - MAP_PAD_DEG, 50.0 - MAP_PAD_DEG, 10.002 + MAP_PAD_DEG, 50.001 + MAP_PAD_DEG)
+    )
 
 
 def test_map_box_needs_a_location() -> None:
