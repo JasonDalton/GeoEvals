@@ -518,6 +518,21 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Write nothing; exit 1 when a committed key_sha256 is out of date.",
     )
+    review = evals_commands.add_parser(
+        "review",
+        help="Write an eval's review sheet (prompts, keys, warnings, a map per task) into the "
+        "gitignored data directory, for checking drafted tasks.",
+    )
+    review.add_argument("eval_id", help="The eval ID (a directory under --root).")
+    review.add_argument(
+        "--root", type=Path, default=Path("evals"), help="Directory of evals (default: evals)."
+    )
+    review.add_argument(
+        "--data",
+        type=Path,
+        help="Data directory with layers/ and keys/ (default: the city manifest asset's "
+        "directory).",
+    )
     return parser
 
 
@@ -1015,6 +1030,31 @@ def _evals_regenerate(eval_id: str, root: Path, data: Path | None, check: bool) 
     return 1 if check and stale else 0
 
 
+def _evals_review(eval_id: str, root: Path, data: Path | None) -> int:
+    from geoevals.graded.keys import KeysError
+    from geoevals.graded.review import review_sheet
+
+    spec_path = find_eval_spec(root, eval_id)
+    try:
+        sheet = review_sheet(spec_path, data or default_data_dir(spec_path))
+    except SpecValidationError as exc:
+        _print_issues(exc.path, exc.issues)
+        return 1
+    except KeysError as exc:
+        print(exc, file=sys.stderr)
+        return 1
+    except ImportError as exc:
+        if not (exc.name or "").startswith("matplotlib"):
+            raise
+        print("the review maps need matplotlib: uv sync --extra plots", file=sys.stderr)
+        return 1
+    except (OSError, ValueError, FetchError) as exc:
+        print(exc, file=sys.stderr)
+        return 1
+    print(f"{sheet}: written")
+    return 0
+
+
 def _evals_build_city(dataset_id: str, manifests: Path, source: Path | None) -> int:
     try:
         path = manifest_path(dataset_id, manifests)
@@ -1133,5 +1173,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         return _evals_build_city(args.dataset_id, args.manifests, args.source)
     if args.command == "evals" and args.evals_command == "regenerate":
         return _evals_regenerate(args.eval_id, args.root, args.data, args.check)
+    if args.command == "evals" and args.evals_command == "review":
+        return _evals_review(args.eval_id, args.root, args.data)
     parser.print_help()
     return 0

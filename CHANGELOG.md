@@ -31,6 +31,9 @@ no API key is used. The adapter version records the Claude Code version (`0.1.0+
 
 #### Graded evals
 
+- `proximity`, `adjacency`, `visibility`, `containment` and `direction` 0.1.0 (drafts, under
+  review): 60 open-ended tasks on Oregon City, Oregon, from Geofabrik's 2026-10-11 extract.
+- `geoevals evals review`: a review sheet with keys, warnings and a map per task.
 - Agent-graded spatial-reasoning evals, reported apart from the benchmarks: `geoevals evals
   measure-town`, `evals build-city`, `evals regenerate`, `geoevals run --eval`, `geoevals
   grade`, and a graded section in `geoevals leaderboard build` (quartile table and SVG box

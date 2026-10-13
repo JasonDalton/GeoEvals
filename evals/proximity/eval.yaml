@@ -1,0 +1,27 @@
+schema_version: "1.0.0"
+id: proximity
+version: 0.1.0
+title: Proximity on foot in Oregon City
+concept: >-
+  Nearness on foot against nearness on the map: walking distance over the street and path
+  network, rivers and rail as barriers, and which place is nearest for a person on foot.
+task_statement: >-
+  Answer one open-ended question about Oregon City, Oregon, from its OpenStreetMap layers.
+  Explain your reasoning for the audience named in the question.
+intended_use: >-
+  Comparing models' spatial reasoning about proximity on real, noisy city data. Not a measure
+  of routing accuracy: the reference walk uses the streets and paths that allow walking
+  (no motorways, no ways tagged no access or no foot traffic), and ignores slope and crossings.
+tasks: tasks.jsonl
+rubric_criteria: ../city/rubric_criteria.yaml
+reference: ../city/reference.py
+dataset_manifest: ../../datasets/manifests/osm_city_oregon_city.yaml
+answer_word_limit: 4000
+license: MIT
+provenance:
+  authors: [GeoEvals contributors]
+  created: 2026-10-12
+limitations:
+  - One town, one snapshot (2026-10-11); OpenStreetMap completeness limits what is reachable.
+  - Walking distance is network length over streets and paths that allow walking (motorways and ways tagged no access or no foot traffic are excluded); slope and crossings are ignored.
+  - A real town can be known to the models; Oregon City is not world famous, but memorization cannot be ruled out.

@@ -41,6 +41,7 @@ The table is generated: run `uv run geoevals data inventory` after editing a man
 | `human_context_access` | `town_neighborhoods` | `MIT` | GeoEvals contributors | yes | benchmark `human_context_access` | [`benchmarks/human_context/manifest.yaml`](../benchmarks/human_context/manifest.yaml) |
 | `smoke` | `smoke_cases` | `MIT` | GeoEvals contributors | yes | benchmark `smoke` | [`benchmarks/smoke/manifest.yaml`](../benchmarks/smoke/manifest.yaml) |
 | `human_context_pilot` | `osm_extract` | `ODbL-1.0` | © OpenStreetMap contributors | **no** | `human_context_pilot` (pilot.yaml of benchmark `human_context_access`) | [`datasets/manifests/human_context_pilot.yaml`](../datasets/manifests/human_context_pilot.yaml) |
+| `osm_city_oregon_city` | `osm_extract` | `ODbL-1.0` | © OpenStreetMap contributors | **no** | not used | [`datasets/manifests/osm_city_oregon_city.yaml`](../datasets/manifests/osm_city_oregon_city.yaml) |
 <!-- inventory:end -->
 
 ## Benchmark dataset cards

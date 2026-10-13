@@ -5,8 +5,9 @@ multipolygon and local boundary relations of a bounding box) into layers in long
 latitude (``OGC:CRS84``):
 
 - ``buildings``: ``building=*`` areas, with ``height_m`` and ``height_source`` (see below)
-- ``streets``: ``highway=*`` ways for vehicles (``STREET_HIGHWAYS``)
-- ``paths``: ``highway=*`` ways for walking and cycling (``PATH_HIGHWAYS``)
+- ``streets``: ``highway=*`` ways for vehicles (``STREET_HIGHWAYS``), with ``walkable`` (see
+  below)
+- ``paths``: ``highway=*`` ways for walking and cycling (``PATH_HIGHWAYS``), with ``walkable``
 - ``railways``: ``railway=*`` lines (``RAIL_TYPES``), with ``walk_barrier`` (see below)
 - ``water``: ``natural=water``, ``waterway=*`` and ``water=*``, with ``walk_barrier``
 - ``parks``: parks, gardens, playgrounds, nature reserves (``PARK_LEISURE``)
@@ -29,6 +30,11 @@ or path is mapped. Rail is a barrier when it is ``BARRIER_RAIL_TYPES`` at the su
 tunnel, on a bridge or ``location=underground``); trams and subways are not. Water is a barrier
 when it is a ``BARRIER_WATERWAYS`` line that is not in a tunnel (a culverted stream is tagged
 ``tunnel=culvert``), or any water area; ditches, drains, culverts and water points are not.
+
+Walkable ways: ``walkable`` is false for a street or path a pedestrian may not use. A way is not
+walkable when it is a motorway (``UNWALKABLE_HIGHWAYS``), when ``foot`` is ``no`` or ``private``
+(``NO_ACCESS``), or when ``access`` is ``no`` or ``private`` and ``foot`` is not ``yes``,
+``designated`` or ``permissive`` (``FOOT_ALLOWED``). Every other way is walkable.
 
 Elements without usable geometry are left out: attic data can lack node positions, and a
 relation member can lack its geometry. An invalid geometry is repaired (``make_valid``) keeping
@@ -66,8 +72,8 @@ LAYERS = (
 )
 LAYER_COLUMNS: dict[str, tuple[str, ...]] = {
     "buildings": ("building", "height_m", "height_source"),
-    "streets": ("highway",),
-    "paths": ("highway",),
+    "streets": ("highway", "walkable"),
+    "paths": ("highway", "walkable"),
     "railways": ("railway", "walk_barrier"),
     "water": ("water_kind", "walk_barrier"),
     "parks": ("leisure",),
@@ -93,6 +99,9 @@ RAIL_TYPES = frozenset(
 )
 BARRIER_RAIL_TYPES = frozenset({"rail", "light_rail", "narrow_gauge", "monorail", "funicular"})
 BARRIER_WATERWAYS = frozenset({"river", "canal", "stream"})
+UNWALKABLE_HIGHWAYS = frozenset({"motorway", "motorway_link"})
+NO_ACCESS = frozenset({"no", "private"})
+FOOT_ALLOWED = frozenset({"yes", "designated", "permissive"})
 PARK_LEISURE = frozenset({"park", "garden", "playground", "nature_reserve", "dog_park"})
 POI_KEYS = ("amenity", "shop", "tourism", "office", "healthcare", "historic", "craft")
 AREA_KEYS = frozenset(
@@ -217,6 +226,14 @@ def walk_barrier(layer: str, tags: Mapping[str, str], geometry: BaseGeometry) ->
     return linear and tags.get("waterway") in BARRIER_WATERWAYS and not _passes_over_or_under(tags)
 
 
+def walkable(tags: Mapping[str, str]) -> bool:
+    """Whether a ``streets`` or ``paths`` feature allows walking; see the module docstring."""
+    foot = tags.get("foot")
+    if tags.get("highway") in UNWALKABLE_HIGHWAYS or foot in NO_ACCESS:
+        return False
+    return not (tags.get("access") in NO_ACCESS and foot not in FOOT_ALLOWED)
+
+
 def _layers_of(tags: Mapping[str, str], geometry: BaseGeometry) -> list[str]:
     polygonal = geometry.geom_type in ("Polygon", "MultiPolygon")
     linear = geometry.geom_type in ("LineString", "MultiLineString")
@@ -248,7 +265,7 @@ def _columns(layer: str, tags: Mapping[str, str], geometry: BaseGeometry) -> dic
         height, source = building_height(tags)
         return {"building": tags["building"], "height_m": height, "height_source": source}
     if layer in ("streets", "paths"):
-        return {"highway": tags["highway"]}
+        return {"highway": tags["highway"], "walkable": walkable(tags)}
     if layer == "railways":
         return {"railway": tags["railway"], "walk_barrier": walk_barrier(layer, tags, geometry)}
     if layer == "water":

@@ -55,6 +55,9 @@ The keys follow a few fixed rules, so a task author should expect them:
 - The walking network is densified to vertices at most 10 m apart, so a place joins the network
   within a few meters of its nearest street. A place can join each nearby connected part of the
   network, so a short isolated footway beside it does not cut it off from the street behind.
+- The walking network leaves out ways a pedestrian may not use: motorways and motorway ramps,
+  ways tagged `foot=no` or `foot=private`, and ways tagged `access=no` or `access=private`
+  unless `foot` is `yes`, `designated` or `permissive`. Other access tags are ignored.
 - A place more than 100 m from every network vertex it can reach is unreachable, and so is a
   place whose only nearby vertices are across a walk barrier: surface rail (not trams, subways,
   tunnels or bridges), a river, canal or stream that is not culverted, or a water area. Ditches
@@ -75,6 +78,7 @@ its measurement row. Then fetch the chosen city, build its layers and compute th
 
 ```sh
 uv run geoevals data fetch osm_city_<town>
+uv run geoevals data fetch osm_city_<town> --pbf <extract>   # or read a local dated .osm.pbf
 uv run geoevals evals build-city osm_city_<town>
 uv run geoevals evals regenerate <eval id>          # writes data/raw/osm_city_<town>/keys/
 uv run geoevals evals regenerate <eval id> --check  # exit 1 when a key_sha256 is stale
@@ -82,6 +86,18 @@ uv run geoevals evals regenerate <eval id> --check  # exit 1 when a key_sha256 i
 
 `regenerate` records each key's SHA-256 in `tasks.jsonl`. Grading refuses keys whose hash does
 not match, so a reviewer always grades against the keys the tasks were reviewed with.
+
+## Review the drafts
+
+```sh
+uv run geoevals evals review <eval id>   # writes data/raw/osm_city_<town>/review/<eval id>.md
+```
+
+The review sheet shows each task's prompt, audience, strata, params and key, with a map of the
+features it names, and warns about keys that are probably not what the author meant: a walk more
+than 3 times the straight line (often a connection OpenStreetMap lacks), a location within 300 m
+of the edge of the city box, duplicate tasks, and keys with nothing to answer. The sheet holds
+the keys, so it stays in the gitignored data directory.
 
 ## Run and grade
 

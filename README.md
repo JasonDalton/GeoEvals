@@ -142,6 +142,17 @@ data. Each answer is graded twice. The table shows each model's distribution of 
 benchmark scores and are never combined with them. How evals are written and graded:
 [`docs/eval-authoring.md`](docs/eval-authoring.md).
 
+Five evals on Oregon City, Oregon, each 12 tasks in three tiers (describe, analyze, infer), are
+drafted at 0.1.0 and under review. Results will appear below once runs are made.
+
+| Eval | Concept |
+| --- | --- |
+| [`proximity`](evals/proximity/eval.yaml) | Nearness on foot against nearness on the map, across rivers and rail |
+| [`adjacency`](evals/adjacency/eval.yaml) | Shared walls against corner touches; what a closure does to a walk |
+| [`visibility`](evals/visibility/eval.yaml) | Lines of sight between buildings with heights; undecided views |
+| [`containment`](evals/containment/eval.yaml) | Nested and overlapping boundaries; points on a boundary |
+| [`direction`](evals/direction/eval.yaml) | Turn-by-turn directions with landmarks; misleading bearings |
+
 <!-- graded:start -->
 No graded runs have been added yet. See [`evals/README.md`](evals/README.md).
 <!-- graded:end -->

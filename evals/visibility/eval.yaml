@@ -1,0 +1,25 @@
+schema_version: "1.0.0"
+id: visibility
+version: 0.1.0
+title: Lines of sight in Oregon City
+concept: >-
+  Line of sight between places and buildings with heights: which buildings block a view, and
+  when missing heights leave the answer undecided.
+task_statement: >-
+  Answer one open-ended question about Oregon City, Oregon, from its OpenStreetMap layers.
+  Explain your reasoning for the audience named in the question.
+intended_use: >-
+  Comparing models' reasoning about visibility and missing data on real, noisy city data.
+tasks: tasks.jsonl
+rubric_criteria: ../city/rubric_criteria.yaml
+reference: ../city/reference.py
+dataset_manifest: ../../datasets/manifests/osm_city_oregon_city.yaml
+answer_word_limit: 4000
+license: MIT
+provenance:
+  authors: [GeoEvals contributors]
+  created: 2026-10-12
+limitations:
+  - One town, one snapshot (2026-10-11); most buildings have no height in OpenStreetMap.
+  - Heights are the height tag, else building:levels x 3 m, else unknown; terrain is ignored (flat ground), which matters on Oregon City's bluff.
+  - A real town can be known to the models; Oregon City is not world famous, but memorization cannot be ruled out.

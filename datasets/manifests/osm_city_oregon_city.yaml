@@ -1,0 +1,32 @@
+schema_version: "1.0.0"
+dataset_id: osm_city_oregon_city
+description: >-
+  Every tagged OpenStreetMap feature of Oregon City, Oregon, USA (OSM relation 186594, its
+  bounding box), for the graded spatial-reasoning evals. Read from Geofabrik's dated Oregon
+  extract of 2026-10-11 by `geoevals data fetch osm_city_oregon_city --pbf <extract>`. Licensed
+  under the ODbL and never committed: the extract, the layers and the reference keys stay in the
+  gitignored data/raw/osm_city_oregon_city/. See
+  datasets/download_instructions/osm_city_oregon_city.md.
+assets:
+  - asset_id: osm_extract
+    path: ../../data/raw/osm_city_oregon_city/osm_extract.json
+    source_url: https://download.geofabrik.de/north-america/us/oregon-261011.osm.pbf
+    citation: OpenStreetMap contributors. OpenStreetMap data, Geofabrik extract oregon-261011.osm.pbf, https://www.openstreetmap.org/copyright
+    access_date: 2026-10-12
+    license: ODbL-1.0
+    attribution: © OpenStreetMap contributors
+    redistributable: false
+    sha256: "356dee3e3c234c296bd2f1f07c8e5e79a6bc870c51286674239aeb6c7158e430"
+    crs: EPSG:4326
+    bbox: [-122.6400863, 45.3110543, -122.5430931, 45.3805715]
+    time_range:
+      start: 2026-10-11
+      end: 2026-10-11
+    processing_steps:
+      - Downloaded oregon-261011.osm.pbf from Geofabrik (254,366,080 bytes, SHA-256 7f70f5800df8e49155bf2b253fb731e1789ef1b83c0683358e37960b08864000, replication timestamp 2026-10-11T20:21:06Z).
+      - Read by geoevals.data.pbf.read_pbf for the bounding box (tagged nodes in the box; ways with a node in the box or crossing it, with full geometry; multipolygon relations and boundary relations of admin level 8 to 11 or none with a member in the box) and normalized by geoevals.data.fetch.normalize_overpass before the SHA-256 is taken.
+    split: test
+    known_limitations:
+      - Geofabrik keeps dated daily extracts for a limited time; the SHA-256 above identifies the file if it has to be obtained elsewhere.
+      - The bounding box of the city limits also covers parts of West Linn, Gladstone and unincorporated Clackamas County.
+      - OpenStreetMap completeness varies; most buildings have no height or levels tag, so many visibility questions are undecidable from the data by design.
