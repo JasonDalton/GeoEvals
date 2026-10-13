@@ -18,6 +18,8 @@ from collections.abc import Mapping
 from pathlib import Path
 from typing import Any
 
+from shapely.geometry import box as shapely_box
+
 from geoevals.data.fetch import ensure_ignored
 from geoevals.graded.city import LAYERS_DIR, load_layers
 from geoevals.graded.keys import load_keys
@@ -128,6 +130,43 @@ def _feature_ids(value: Any) -> set[str]:
     return set()
 
 
+def _points(value: Any) -> list[list[float]]:
+    """Every ``"point": [lon, lat]`` pair in a task's params."""
+    if isinstance(value, Mapping):
+        found = []
+        for name, item in value.items():
+            if name == "point" and isinstance(item, list) and len(item) == 2:
+                found.append([float(item[0]), float(item[1])])
+            else:
+                found += _points(item)
+        return found
+    if isinstance(value, list):
+        return [p for item in value for p in _points(item)]
+    return []
+
+
+def map_box(task: EvalTask, shapes: Mapping[str, Any]) -> Bbox | None:
+    """The map extent of a task: its params' features and points and its location, padded.
+
+    Features that only the key names (such as the containers a containment key finds) do not
+    widen the box; one large polygon would otherwise stretch every map to the whole region.
+    ``shapes`` maps feature IDs to geometries. ``None`` when nothing locates the task.
+    """
+    ids = (_feature_ids(task.params) | set(task.location.feature_ids)) & set(shapes)
+    points = _points(task.params) + ([task.location.point] if task.location.point else [])
+    bounds = [shapes[i].bounds for i in ids]
+    xs = [c for b in bounds for c in (b[0], b[2])] + [p[0] for p in points]
+    ys = [c for b in bounds for c in (b[1], b[3])] + [p[1] for p in points]
+    if not xs:
+        return None
+    return (
+        min(xs) - MAP_PAD_DEG,
+        min(ys) - MAP_PAD_DEG,
+        max(xs) + MAP_PAD_DEG,
+        max(ys) + MAP_PAD_DEG,
+    )
+
+
 def _draw(layers: Mapping[str, Any], task: EvalTask, key: Mapping[str, Any], path: Path) -> None:
     import matplotlib
 
@@ -135,22 +174,17 @@ def _draw(layers: Mapping[str, Any], task: EvalTask, key: Mapping[str, Any], pat
     import matplotlib.pyplot as plt
 
     features = layers["all_features"].set_index("feature_id")
+    known = set(features.index)
+    own = (_feature_ids(task.params) | set(task.location.feature_ids)) & known
+    box = map_box(task, {i: features.geometry[i] for i in own})
+    if box is None:
+        return
+    frame_shape = shapely_box(*box)
     ids = sorted(
-        (_feature_ids(task.params) | _feature_ids(key) | set(task.location.feature_ids))
-        & set(features.index)
+        own | {i for i in _feature_ids(key) & known if features.geometry[i].intersects(frame_shape)}
     )
     shapes = [features.geometry[i] for i in ids]
     points = [task.location.point] if task.location.point else []
-    xs = [c for s in shapes for c in (s.bounds[0], s.bounds[2])] + [p[0] for p in points]
-    ys = [c for s in shapes for c in (s.bounds[1], s.bounds[3])] + [p[1] for p in points]
-    if not xs:
-        return
-    box = (
-        min(xs) - MAP_PAD_DEG,
-        min(ys) - MAP_PAD_DEG,
-        max(xs) + MAP_PAD_DEG,
-        max(ys) + MAP_PAD_DEG,
-    )
     figure, axes = plt.subplots(figsize=(7, 7), dpi=110)
     styles = {
         "landuse": {"color": "#eeeeee"},
@@ -165,13 +199,15 @@ def _draw(layers: Mapping[str, Any], task: EvalTask, key: Mapping[str, Any], pat
         if len(frame):
             frame.plot(ax=axes, **style)
     for feature_id, shape in zip(ids, shapes, strict=True):
-        axes.plot(*shape.representative_point().xy, "o", color="#e6550d", markersize=3)
+        label = shape if shape.within(frame_shape) else shape.intersection(frame_shape)
+        anchor = label.representative_point()
+        axes.plot(*anchor.xy, "o", color="#e6550d", markersize=3)
         series = layers["all_features"][layers["all_features"]["feature_id"] == feature_id]
         if shape.geom_type in ("Polygon", "MultiPolygon"):
             series.boundary.plot(ax=axes, color="#e6550d", linewidth=1.2)
         elif shape.geom_type in ("LineString", "MultiLineString"):
             series.plot(ax=axes, color="#e6550d", linewidth=1.2)
-        axes.annotate(feature_id, shape.representative_point().coords[0], fontsize=6)
+        axes.annotate(feature_id, anchor.coords[0], fontsize=6)
     for point in points:
         axes.plot(point[0], point[1], "*", color="#de2d26", markersize=12)
     axes.set_xlim(box[0], box[2])

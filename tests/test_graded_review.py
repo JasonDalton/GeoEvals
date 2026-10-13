@@ -3,11 +3,12 @@ import sys
 from pathlib import Path
 
 import pytest
+from shapely.geometry import Point, box
 
 from geoevals.cli import main
 from geoevals.graded.keys import regenerate_keys
-from geoevals.graded.review import key_warnings, review_sheet, task_warnings
-from geoevals.graded.spec import load_tasks
+from geoevals.graded.review import MAP_PAD_DEG, key_warnings, map_box, review_sheet, task_warnings
+from geoevals.graded.spec import EvalTask, Location, load_tasks
 from geoevals.validation import load_eval_spec
 from graded_city import BBOX
 from graded_helpers import copy_sample_eval, sample_data
@@ -131,6 +132,38 @@ def test_task_warnings_flag_duplicates_and_the_box_edge(tmp_path: Path) -> None:
     assert any("within 300 m of the city box edge" in w for w in warnings["sample-005"])
 
 
+def test_map_box_ignores_features_only_the_key_names() -> None:
+    task = EvalTask(
+        task_id="sample-001",
+        prompt="Which district is the marked point in?",
+        audience="a resident",
+        location=Location(point=[10.0, 50.0], feature_ids=["way/1"]),
+        key_type="containment",
+        params={"points": [{"label": "A", "point": [10.002, 50.001]}], "layers": ["boundaries"]},
+        rubric=["relations"],
+    )
+    region = box(9.0, 49.0, 11.0, 51.0)  # a large container the key would list
+    shapes = {"way/1": Point(9.999, 49.999).buffer(0.0005), "relation/9": region}
+    min_lon, min_lat, max_lon, max_lat = map_box(task, shapes) or (0, 0, 0, 0)
+    assert min_lon == pytest.approx(9.9985 - MAP_PAD_DEG)
+    assert min_lat == pytest.approx(49.9985 - MAP_PAD_DEG)
+    assert max_lon == pytest.approx(10.002 + MAP_PAD_DEG), "params points widen the box"
+    assert max_lat == pytest.approx(50.001 + MAP_PAD_DEG)
+
+
+def test_map_box_needs_a_location() -> None:
+    task = EvalTask(
+        task_id="sample-001",
+        prompt="Where?",
+        audience="a resident",
+        location=Location(),
+        key_type="containment",
+        params={"layers": ["boundaries"]},
+        rubric=["relations"],
+    )
+    assert map_box(task, {"relation/9": box(9.0, 49.0, 11.0, 51.0)}) is None
+
+
 def test_review_cli(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
     spec_path, data = _reviewed(tmp_path)
     root = str(spec_path.parent.parent)
@@ -154,3 +187,17 @@ def test_review_cli_without_matplotlib(
     monkeypatch.setitem(sys.modules, "matplotlib", None)
     assert main(["evals", "review", "sample", "--root", root, "--data", str(data)]) == 1
     assert "need matplotlib" in capsys.readouterr().err
+
+
+def test_review_cli_reraises_other_import_errors(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    spec_path, data = _reviewed(tmp_path)
+    root = str(spec_path.parent.parent)
+
+    def broken(*_: object) -> Path:
+        raise ImportError("no module named 'pyogrio'", name="pyogrio")
+
+    monkeypatch.setattr("geoevals.graded.review.review_sheet", broken)
+    with pytest.raises(ImportError, match="pyogrio"):
+        main(["evals", "review", "sample", "--root", root, "--data", str(data)])
