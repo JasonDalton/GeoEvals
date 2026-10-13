@@ -61,6 +61,15 @@ no API key is used. The adapter version records the Claude Code version (`0.1.0+
   so `EPSG:4326` passes where `OGC:CRS84` is expected, and the reverse. Coordinates are always
   longitude first; a swapped answer still fails `geometry_match`. Another datum (for example
   `EPSG:4258`) still fails `crs_match`. Scores are not comparable with 0.2.0.
+- `visibility` 0.2.0: a target building is visible when any part of its outline can be seen,
+  not only its representative point (maintainer decision 2026-10-13). The reference script
+  sights points every 0.5 m along each target's outline, leaves out the far side, and keys the
+  target visible when any line is clear; each target also reports `visible_outline_m`, and
+  `distance_m` is now to the nearest point of the outline. Three targets turn visible
+  (visibility-004, -005 and -006), and the anchors of those tasks and of -007 and -011 follow
+  their new keys. visibility-002 is redrafted (its target turned visible from any heights, so
+  its layer trap no longer worked), and visibility-012's marked point moves 4.5 m so its answer
+  holds a few meters around it. Scores are not comparable with 0.1.0.
 
 ### Fixed
 

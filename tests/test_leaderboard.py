@@ -7,6 +7,7 @@ import pytest
 from geoevals.adapters.claude import ClaudeAdapterConfig
 from geoevals.cli import main
 from geoevals.graded.board import GRADED_END, GRADED_START
+from geoevals.graded.spec import load_tasks
 from geoevals.leaderboard.table import (
     END,
     START,
@@ -18,7 +19,7 @@ from geoevals.leaderboard.table import (
 )
 from geoevals.runner.config import load_run_config
 from geoevals.runner.run import load_cases
-from geoevals.validation import load_benchmark_spec
+from geoevals.validation import load_benchmark_spec, load_eval_spec
 
 README = f"# Title\n\nIntro.\n\n{START}\nold table\n{END}\n\n## Next\n"
 GRADED_README = README.replace("## Next", f"{GRADED_START}\nold graded\n{GRADED_END}\n\n## Next")
@@ -187,6 +188,7 @@ def test_leaderboard_configs_are_valid() -> None:
     assert [path.name for path in configs] == [
         "direct.yaml",
         "pilot-direct.yaml",
+        "pilot-graded.yaml",
         "pilot-python.yaml",
         "python.yaml",
     ]
@@ -197,12 +199,23 @@ def test_leaderboard_configs_are_valid() -> None:
     ]:
         spec = load_benchmark_spec(bench_dir / "benchmark.yaml")
         case_ids[spec.id] = {case.case_id for case in load_cases(spec, bench_dir)}
+    task_ids: dict[str, set[str]] = {}
+    for eval_dir in sorted((repo / "evals").glob("*/eval.yaml")):
+        if eval_dir.parent.name == "city":
+            continue
+        eval_spec = load_eval_spec(eval_dir)
+        task_ids[eval_spec.id] = {task.task_id for task in load_tasks(eval_dir, eval_spec)}
     for path in configs:
         config = load_run_config(path)
         adapter = ClaudeAdapterConfig.model_validate(config.adapter)
         assert adapter.case_timeout_s < config.timeout_s, path.name
         assert adapter.effort == "high" and adapter.prompt_version == "v1"
-        if path.name.startswith("pilot-"):
+        if path.name == "pilot-graded.yaml":
+            assert adapter.only_cases is not None
+            for ids in task_ids.values():
+                assert len(set(adapter.only_cases) & ids) == 1, path.name
+            assert set(adapter.only_cases) <= set.union(*task_ids.values())
+        elif path.name.startswith("pilot-"):
             assert adapter.only_cases is not None
             for ids in case_ids.values():
                 assert len(set(adapter.only_cases) & ids) == 5, path.name
