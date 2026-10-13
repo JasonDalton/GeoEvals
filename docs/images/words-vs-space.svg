@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 330" width="800" height="330" font-family="Helvetica, Arial, sans-serif" role="img" aria-labelledby="t d">
+  <title id="t">Reasoning on words versus reasoning on space</title>
+  <desc id="d">Left: a house and a café 200 meters apart in a straight line, which language calls close. Right: the same two places on a map, with a river between them; the only bridge is far upstream, so the walk is 1.4 kilometers.</desc>
+  <rect width="800" height="330" rx="12" fill="#ffffff"/>
+
+  <!-- left panel -->
+  <text x="200" y="34" text-anchor="middle" font-size="17" font-weight="bold" fill="#1f2933">Reasoning on the words</text>
+  <rect x="40" y="52" width="320" height="240" rx="8" fill="#f5f7fa" stroke="#cbd2d9"/>
+  <line x1="110" y1="200" x2="290" y2="150" stroke="#52606d" stroke-width="2.5" stroke-dasharray="7 6"/>
+  <text x="200" y="160" text-anchor="middle" font-size="14" fill="#52606d" transform="rotate(-15 200 160)">200 m</text>
+  <circle cx="110" cy="200" r="9" fill="#e12d39"/>
+  <text x="110" y="228" text-anchor="middle" font-size="14" fill="#1f2933">house</text>
+  <circle cx="290" cy="150" r="9" fill="#2186eb"/>
+  <text x="290" y="132" text-anchor="middle" font-size="14" fill="#1f2933">café</text>
+  <text x="200" y="272" text-anchor="middle" font-size="15" font-style="italic" fill="#1f2933">“The café is close to my house.”</text>
+
+  <!-- right panel -->
+  <text x="600" y="34" text-anchor="middle" font-size="17" font-weight="bold" fill="#1f2933">Reasoning on the space</text>
+  <rect x="440" y="52" width="320" height="240" rx="8" fill="#f5f7fa" stroke="#cbd2d9"/>
+  <!-- river -->
+  <path d="M440 120 C 520 140, 600 150, 760 140 L 760 182 C 600 192, 520 182, 440 162 Z" fill="#9fd3f5"/>
+  <text x="700" y="168" text-anchor="middle" font-size="13" font-style="italic" fill="#1f5f8b">river</text>
+  <!-- bridge -->
+  <rect x="470" y="118" width="14" height="70" fill="#7b8794"/>
+  <text x="490" y="157" font-size="12" fill="#1f2933">bridge</text>
+  <!-- straight line, blocked -->
+  <line x1="610" y1="232" x2="690" y2="95" stroke="#9aa5b1" stroke-width="2" stroke-dasharray="6 6"/>
+  <!-- walking route -->
+  <path d="M610 232 L 610 215 L 477 205 L 477 100 L 690 90 L 690 95" fill="none" stroke="#e12d39" stroke-width="3.5" stroke-linejoin="round"/>
+  <circle cx="610" cy="232" r="9" fill="#e12d39"/>
+  <text x="640" y="252" text-anchor="middle" font-size="14" fill="#1f2933">house</text>
+  <circle cx="690" cy="95" r="9" fill="#2186eb"/>
+  <text x="725" y="80" text-anchor="middle" font-size="14" fill="#1f2933">café</text>
+  <text x="600" y="282" text-anchor="middle" font-size="15" fill="#1f2933">The walk is <tspan font-weight="bold" fill="#e12d39">1.4 km</tspan>, over the only bridge.</text>
+</svg>

@@ -6,6 +6,40 @@
 
 A reproducible, practitioner-focused framework for evaluating geospatial AI systems.
 
+## Why spatial reasoning needs its own tests
+
+Language models learn about places from the words people use to describe them: "near the
+river", "behind the courthouse", "just across the bridge". But the words are not the space. A
+café can be "close" to a house 200 meters away and still be a 1.4-kilometer walk, because a
+river runs between them and the only bridge is upstream. A model that reasons only on the
+language will miss that, and it will miss it confidently. GeoEvals is built on the view that AI
+systems should reason directly on spatial relationships, the geometry, networks and heights
+themselves, and not only on the language we use for them. That capability belongs in
+multimodal frontier models, and it needs a way to be measured.
+
+<p align="center">
+  <img src="docs/images/words-vs-space.svg" alt="Left: a house and a café 200 meters apart, described as close. Right: the same places with a river between them; the walk over the only bridge is 1.4 kilometers." width="760">
+</p>
+
+GeoEvals offers researchers and practitioners in GeoAI a suite of benchmarks and evals to
+gauge how well models, and the harnesses and tools around them, handle spatial thinking, and
+to track that as they improve. The evals ask open questions about a real town, and each answer
+is checked against facts computed from the map data:
+
+<p align="center">
+  <img src="docs/images/spatial-relations.svg" alt="Six panels showing the relations the evals test: proximity, adjacency, line of sight, containment, direction, and detours around a closure." width="760">
+</p>
+
+- **Proximity:** what is near, far or nearest, measured on foot rather than as the crow flies.
+- **Adjacency:** what touches, shares a wall or is next to what, and what a closure cuts off.
+- **Line of sight:** what can be seen from a spot, and what is hidden behind a taller building.
+- **Containment:** what lies inside, on the edge of, or across an area.
+- **Direction:** which way to go, the bearing compared with the turns of the actual walk, and
+  the routes around or through a barrier.
+
+Other indicators of spatial thinking, such as influence at a distance, and over and under in
+three dimensions, are not covered yet.
+
 ## What GeoEvals evaluates, and why
 
 General AI benchmarks score text or labels. A geospatial answer can read well and still be
@@ -143,14 +177,14 @@ benchmark scores and are never combined with them. How evals are written and gra
 [`docs/eval-authoring.md`](docs/eval-authoring.md).
 
 Five evals on Oregon City, Oregon, each 12 tasks in three tiers (describe, analyze, infer), are
-drafted at 0.1.0 and under review. Results will appear below once runs are made.
+frozen: visibility at 0.2.0, the other four at 0.1.0. Results will appear below once runs are made.
 
 | Eval | Concept |
 | --- | --- |
 | [`proximity`](evals/proximity/eval.yaml) | Nearness on foot against nearness on the map, across rivers and rail |
 | [`adjacency`](evals/adjacency/eval.yaml) | Shared walls against corner touches; what a closure does to a walk |
 | [`visibility`](evals/visibility/eval.yaml) | Lines of sight between buildings with heights; undecided views |
-| [`containment`](evals/containment/eval.yaml) | Nested and overlapping boundaries; points on a boundary |
+| [`containment`](evals/containment/eval.yaml) | Inside, on the edge of or across an area: boundaries, parks, land use, water, buildings |
 | [`direction`](evals/direction/eval.yaml) | Turn-by-turn directions with landmarks; misleading bearings |
 
 <!-- graded:start -->
