@@ -36,8 +36,10 @@ is checked against facts computed from the map data:
 - **Containment:** what lies inside, on the edge of, or across an area.
 - **Direction:** which way to go, the bearing compared with the turns of the actual walk, and
   the routes around or through a barrier.
+- **Others to come:** see [Future work](#future-work).
 
-Other relations are not tested yet; see [Future work](#future-work).
+It's likely that we will get improvements in autonomous driving, package deliveries, robotics, and applications in urban planning and management from AI systems that absorb these concepts into their models directly.
+
 
 ## What GeoEvals evaluates, and why
 
