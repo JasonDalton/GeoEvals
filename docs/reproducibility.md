@@ -102,11 +102,11 @@ listed in [`baselines/README.md`](../baselines/README.md).
 
 ## Leaderboard runs
 
-The Claude leaderboard ([`leaderboard/README.md`](../leaderboard/README.md)) pins what it can:
+The leaderboard ([`leaderboard/README.md`](../leaderboard/README.md)) pins what it can:
 the benchmark version and dataset manifest hash (the same for every row of a benchmark), the
 run config in `leaderboard/configs/`, the prompt template version
-(`src/geoevals/adapters/prompts/`), the effort level, the model ID, and the Claude Code version
-(in the adapter version). The python track's sandbox image is built from `uv.lock`.
+(`src/geoevals/adapters/prompts/`), the effort level, the model ID, and the Claude Code or Codex CLI
+version (in the adapter version). The python track's sandbox image is built from `uv.lock`.
 
 Model outputs are not deterministic, so a leaderboard run cannot be reproduced bit for bit, and
 `geoevals reproduce` does not apply to it. Each committed `result.json` holds every case's

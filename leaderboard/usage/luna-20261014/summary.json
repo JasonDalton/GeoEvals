@@ -1,0 +1,721 @@
+{
+  "model": "gpt-6-luna",
+  "effort": "high",
+  "service_tier": "default",
+  "authentication": "ChatGPT subscription; API keys removed",
+  "adapter_version": "0.1.1+codex.0.160.0",
+  "pricing": {
+    "source": "https://developers.openai.com/api/docs/models/gpt-6-luna",
+    "verified_on": "2026-10-14",
+    "usd_per_million": {
+      "input": 0.1,
+      "cached_input": 0.01,
+      "cache_write_input": 0.125,
+      "output": 0.5
+    }
+  },
+  "runs": [
+    {
+      "benchmark": {
+        "id": "gis_correctness",
+        "version": "0.3.0"
+      },
+      "adapter": {
+        "config": {
+          "case_timeout_s": 840,
+          "effort": "high",
+          "prompt_version": "v1",
+          "telemetry_path": "/workspace/tmp/GeoEvals/runs/luna-full-20261014/gis_correctness-direct-usage.jsonl"
+        },
+        "name": "codex_direct_luna",
+        "version": "0.1.1+codex.0.160.0"
+      },
+      "run_id": "gis_correctness-codex_direct_luna-20261014T154459Z-0c87e667",
+      "cases": 56,
+      "passed": 23,
+      "all_case_pass_rate": 0.4107142857142857,
+      "by_operation": {
+        "abstention": {
+          "cases": 8,
+          "passed": 4,
+          "not_scored": 0
+        },
+        "buffer": {
+          "cases": 7,
+          "passed": 4,
+          "not_scored": 0
+        },
+        "crs_transform": {
+          "cases": 10,
+          "passed": 3,
+          "not_scored": 0
+        },
+        "distance": {
+          "cases": 9,
+          "passed": 0,
+          "not_scored": 1
+        },
+        "overlay": {
+          "cases": 6,
+          "passed": 4,
+          "not_scored": 0
+        },
+        "spatial_join": {
+          "cases": 7,
+          "passed": 6,
+          "not_scored": 0
+        },
+        "validity": {
+          "cases": 9,
+          "passed": 2,
+          "not_scored": 7
+        }
+      },
+      "statuses": {
+        "scored": 48,
+        "invalid_output": 8
+      },
+      "task_success": {
+        "ci_high": 0.625,
+        "ci_low": 0.333333333333333,
+        "mean": 0.479166666666667,
+        "median": 0.0,
+        "n": 48,
+        "n_failed": 25,
+        "version": "1.3.0"
+      },
+      "tokens": {
+        "totalTokens": 704788,
+        "inputTokens": 638018,
+        "cachedInputTokens": 270080,
+        "cacheWriteInputTokens": 0,
+        "outputTokens": 66770,
+        "reasoningOutputTokens": 55510
+      },
+      "python_calls": 0,
+      "api_equivalent_usd": 0.0728796,
+      "wall_clock_s": 952.348206719849,
+      "started_at": "2026-10-14T15:44:59.629614Z",
+      "finished_at": "2026-10-14T16:00:51.979317Z",
+      "latency_p50_s": 10.7635707055451,
+      "latency_p90_s": 35.2222449569963,
+      "quota_before": {
+        "rateLimits": {
+          "limitId": "codex",
+          "limitName": null,
+          "planType": "prolite",
+          "normalModelSlug": null,
+          "primary": {
+            "usedPercent": 30,
+            "windowDurationMins": 10080,
+            "resetsAt": 1792498140
+          },
+          "secondary": null,
+          "individualLimit": null,
+          "rateLimitReachedType": null,
+          "spendControlReached": false
+        },
+        "rateLimitsByLimitId": {
+          "codex": {
+            "limitId": "codex",
+            "limitName": null,
+            "planType": "prolite",
+            "normalModelSlug": null,
+            "primary": {
+              "usedPercent": 30,
+              "windowDurationMins": 10080,
+              "resetsAt": 1792498140
+            },
+            "secondary": null,
+            "individualLimit": null,
+            "rateLimitReachedType": null,
+            "spendControlReached": false
+          }
+        },
+        "ordinaryUsageAllowed": true
+      },
+      "quota_after": {
+        "rateLimits": {
+          "limitId": "codex",
+          "limitName": null,
+          "planType": "prolite",
+          "normalModelSlug": null,
+          "primary": {
+            "usedPercent": 32,
+            "windowDurationMins": 10080,
+            "resetsAt": 1792498140
+          },
+          "secondary": null,
+          "individualLimit": null,
+          "rateLimitReachedType": null,
+          "spendControlReached": false
+        },
+        "rateLimitsByLimitId": {
+          "codex": {
+            "limitId": "codex",
+            "limitName": null,
+            "planType": "prolite",
+            "normalModelSlug": null,
+            "primary": {
+              "usedPercent": 32,
+              "windowDurationMins": 10080,
+              "resetsAt": 1792498140
+            },
+            "secondary": null,
+            "individualLimit": null,
+            "rateLimitReachedType": null,
+            "spendControlReached": false
+          }
+        },
+        "ordinaryUsageAllowed": true
+      },
+      "telemetry_file": "leaderboard/usage/luna-20261014/gis_correctness-direct-usage.jsonl",
+      "result_file": "leaderboard/results/gis_correctness/codex_direct_luna/result.json"
+    },
+    {
+      "benchmark": {
+        "id": "gis_correctness",
+        "version": "0.3.0"
+      },
+      "adapter": {
+        "config": {
+          "case_timeout_s": 840,
+          "effort": "high",
+          "max_tool_calls": 20,
+          "prompt_version": "v1",
+          "telemetry_path": "/workspace/tmp/GeoEvals/runs/luna-full-20261014/gis_correctness-python-usage.jsonl"
+        },
+        "name": "codex_python_luna",
+        "version": "0.1.1+codex.0.160.0"
+      },
+      "run_id": "gis_correctness-codex_python_luna-20261014T154348Z-41d0c557",
+      "cases": 56,
+      "passed": 41,
+      "all_case_pass_rate": 0.7321428571428571,
+      "by_operation": {
+        "abstention": {
+          "cases": 8,
+          "passed": 5,
+          "not_scored": 0
+        },
+        "buffer": {
+          "cases": 7,
+          "passed": 7,
+          "not_scored": 0
+        },
+        "crs_transform": {
+          "cases": 10,
+          "passed": 10,
+          "not_scored": 0
+        },
+        "distance": {
+          "cases": 9,
+          "passed": 6,
+          "not_scored": 0
+        },
+        "overlay": {
+          "cases": 6,
+          "passed": 6,
+          "not_scored": 0
+        },
+        "spatial_join": {
+          "cases": 7,
+          "passed": 5,
+          "not_scored": 0
+        },
+        "validity": {
+          "cases": 9,
+          "passed": 2,
+          "not_scored": 7
+        }
+      },
+      "statuses": {
+        "scored": 49,
+        "invalid_output": 7
+      },
+      "task_success": {
+        "ci_high": 0.938775510204082,
+        "ci_low": 0.73469387755102,
+        "mean": 0.836734693877551,
+        "median": 1.0,
+        "n": 49,
+        "n_failed": 8,
+        "version": "1.3.0"
+      },
+      "tokens": {
+        "totalTokens": 1109820,
+        "inputTokens": 1083630,
+        "cachedInputTokens": 657920,
+        "cacheWriteInputTokens": 0,
+        "outputTokens": 26190,
+        "reasoningOutputTokens": 5950
+      },
+      "python_calls": 79,
+      "api_equivalent_usd": 0.0622452,
+      "wall_clock_s": 735.953873242019,
+      "started_at": "2026-10-14T15:43:48.926850Z",
+      "finished_at": "2026-10-14T15:56:04.882274Z",
+      "latency_p50_s": 11.9162352085114,
+      "latency_p90_s": 16.366920605069,
+      "quota_before": {
+        "rateLimits": {
+          "limitId": "codex",
+          "limitName": null,
+          "planType": "prolite",
+          "normalModelSlug": null,
+          "primary": {
+            "usedPercent": 30,
+            "windowDurationMins": 10080,
+            "resetsAt": 1792498140
+          },
+          "secondary": null,
+          "individualLimit": null,
+          "rateLimitReachedType": null,
+          "spendControlReached": false
+        },
+        "rateLimitsByLimitId": {
+          "codex": {
+            "limitId": "codex",
+            "limitName": null,
+            "planType": "prolite",
+            "normalModelSlug": null,
+            "primary": {
+              "usedPercent": 30,
+              "windowDurationMins": 10080,
+              "resetsAt": 1792498140
+            },
+            "secondary": null,
+            "individualLimit": null,
+            "rateLimitReachedType": null,
+            "spendControlReached": false
+          }
+        },
+        "ordinaryUsageAllowed": true
+      },
+      "quota_after": {
+        "rateLimits": {
+          "limitId": "codex",
+          "limitName": null,
+          "planType": "prolite",
+          "normalModelSlug": null,
+          "primary": {
+            "usedPercent": 31,
+            "windowDurationMins": 10080,
+            "resetsAt": 1792498140
+          },
+          "secondary": null,
+          "individualLimit": null,
+          "rateLimitReachedType": null,
+          "spendControlReached": false
+        },
+        "rateLimitsByLimitId": {
+          "codex": {
+            "limitId": "codex",
+            "limitName": null,
+            "planType": "prolite",
+            "normalModelSlug": null,
+            "primary": {
+              "usedPercent": 31,
+              "windowDurationMins": 10080,
+              "resetsAt": 1792498140
+            },
+            "secondary": null,
+            "individualLimit": null,
+            "rateLimitReachedType": null,
+            "spendControlReached": false
+          }
+        },
+        "ordinaryUsageAllowed": true
+      },
+      "telemetry_file": "leaderboard/usage/luna-20261014/gis_correctness-python-usage.jsonl",
+      "result_file": "leaderboard/results/gis_correctness/codex_python_luna/result.json"
+    },
+    {
+      "benchmark": {
+        "id": "human_context_access",
+        "version": "0.2.0"
+      },
+      "adapter": {
+        "config": {
+          "case_timeout_s": 840,
+          "effort": "high",
+          "prompt_version": "v1",
+          "telemetry_path": "/workspace/tmp/GeoEvals/runs/luna-full-20261014/human_context-direct-usage.jsonl"
+        },
+        "name": "codex_direct_luna",
+        "version": "0.1.1+codex.0.160.0"
+      },
+      "run_id": "human_context_access-codex_direct_luna-20261014T154459Z-3cf58da8",
+      "cases": 51,
+      "passed": 34,
+      "all_case_pass_rate": 0.6666666666666666,
+      "by_operation": {
+        "abstention": {
+          "cases": 13,
+          "passed": 8,
+          "not_scored": 0
+        },
+        "amenity_count": {
+          "cases": 9,
+          "passed": 8,
+          "not_scored": 0
+        },
+        "nearest_amenity": {
+          "cases": 8,
+          "passed": 1,
+          "not_scored": 0
+        },
+        "network_detour": {
+          "cases": 6,
+          "passed": 3,
+          "not_scored": 0
+        },
+        "open_amenities": {
+          "cases": 15,
+          "passed": 14,
+          "not_scored": 0
+        }
+      },
+      "statuses": {
+        "scored": 51
+      },
+      "task_success": {
+        "ci_high": 0.803921568627451,
+        "ci_low": 0.529411764705882,
+        "mean": 0.666666666666667,
+        "median": 1.0,
+        "n": 51,
+        "n_failed": 17,
+        "version": "1.3.0"
+      },
+      "tokens": {
+        "totalTokens": 5363810,
+        "inputTokens": 5307669,
+        "cachedInputTokens": 2703104,
+        "cacheWriteInputTokens": 0,
+        "outputTokens": 56141,
+        "reasoningOutputTokens": 53404
+      },
+      "python_calls": 0,
+      "api_equivalent_usd": 0.31555804,
+      "wall_clock_s": 886.842816772871,
+      "started_at": "2026-10-14T15:44:59.553056Z",
+      "finished_at": "2026-10-14T15:59:46.397379Z",
+      "latency_p50_s": 16.1255822200328,
+      "latency_p90_s": 25.7726424860302,
+      "quota_before": {
+        "rateLimits": {
+          "limitId": "codex",
+          "limitName": null,
+          "planType": "prolite",
+          "normalModelSlug": null,
+          "primary": {
+            "usedPercent": 30,
+            "windowDurationMins": 10080,
+            "resetsAt": 1792498140
+          },
+          "secondary": null,
+          "individualLimit": null,
+          "rateLimitReachedType": null,
+          "spendControlReached": false
+        },
+        "rateLimitsByLimitId": {
+          "codex": {
+            "limitId": "codex",
+            "limitName": null,
+            "planType": "prolite",
+            "normalModelSlug": null,
+            "primary": {
+              "usedPercent": 30,
+              "windowDurationMins": 10080,
+              "resetsAt": 1792498140
+            },
+            "secondary": null,
+            "individualLimit": null,
+            "rateLimitReachedType": null,
+            "spendControlReached": false
+          }
+        },
+        "ordinaryUsageAllowed": true
+      },
+      "quota_after": {
+        "rateLimits": {
+          "limitId": "codex",
+          "limitName": null,
+          "planType": "prolite",
+          "normalModelSlug": null,
+          "primary": {
+            "usedPercent": 32,
+            "windowDurationMins": 10080,
+            "resetsAt": 1792498140
+          },
+          "secondary": null,
+          "individualLimit": null,
+          "rateLimitReachedType": null,
+          "spendControlReached": false
+        },
+        "rateLimitsByLimitId": {
+          "codex": {
+            "limitId": "codex",
+            "limitName": null,
+            "planType": "prolite",
+            "normalModelSlug": null,
+            "primary": {
+              "usedPercent": 32,
+              "windowDurationMins": 10080,
+              "resetsAt": 1792498140
+            },
+            "secondary": null,
+            "individualLimit": null,
+            "rateLimitReachedType": null,
+            "spendControlReached": false
+          }
+        },
+        "ordinaryUsageAllowed": true
+      },
+      "telemetry_file": "leaderboard/usage/luna-20261014/human_context-direct-usage.jsonl",
+      "result_file": "leaderboard/results/human_context_access/codex_direct_luna/result.json"
+    },
+    {
+      "benchmark": {
+        "id": "human_context_access",
+        "version": "0.2.0"
+      },
+      "adapter": {
+        "config": {
+          "case_timeout_s": 840,
+          "effort": "high",
+          "max_tool_calls": 20,
+          "prompt_version": "v1",
+          "telemetry_path": "/workspace/tmp/GeoEvals/runs/luna-full-20261014/human_context-python-usage.jsonl"
+        },
+        "name": "codex_python_luna",
+        "version": "0.1.1+codex.0.160.0"
+      },
+      "run_id": "human_context_access-codex_python_luna-20261014T154459Z-98e7419c",
+      "cases": 51,
+      "passed": 33,
+      "all_case_pass_rate": 0.6470588235294118,
+      "by_operation": {
+        "abstention": {
+          "cases": 13,
+          "passed": 7,
+          "not_scored": 0
+        },
+        "amenity_count": {
+          "cases": 9,
+          "passed": 8,
+          "not_scored": 0
+        },
+        "nearest_amenity": {
+          "cases": 8,
+          "passed": 0,
+          "not_scored": 0
+        },
+        "network_detour": {
+          "cases": 6,
+          "passed": 4,
+          "not_scored": 0
+        },
+        "open_amenities": {
+          "cases": 15,
+          "passed": 14,
+          "not_scored": 0
+        }
+      },
+      "statuses": {
+        "scored": 51
+      },
+      "task_success": {
+        "ci_high": 0.784313725490196,
+        "ci_low": 0.509803921568627,
+        "mean": 0.647058823529412,
+        "median": 1.0,
+        "n": 51,
+        "n_failed": 18,
+        "version": "1.3.0"
+      },
+      "tokens": {
+        "totalTokens": 2145017,
+        "inputTokens": 2057285,
+        "cachedInputTokens": 1427456,
+        "cacheWriteInputTokens": 0,
+        "outputTokens": 87732,
+        "reasoningOutputTokens": 39631
+      },
+      "python_calls": 190,
+      "api_equivalent_usd": 0.12112346,
+      "wall_clock_s": 1568.33947995701,
+      "started_at": "2026-10-14T15:44:59.605151Z",
+      "finished_at": "2026-10-14T16:11:07.946190Z",
+      "latency_p50_s": 29.1637201600242,
+      "latency_p90_s": 42.9741495859344,
+      "quota_before": {
+        "rateLimits": {
+          "limitId": "codex",
+          "limitName": null,
+          "planType": "prolite",
+          "normalModelSlug": null,
+          "primary": {
+            "usedPercent": 30,
+            "windowDurationMins": 10080,
+            "resetsAt": 1792498140
+          },
+          "secondary": null,
+          "individualLimit": null,
+          "rateLimitReachedType": null,
+          "spendControlReached": false
+        },
+        "rateLimitsByLimitId": {
+          "codex": {
+            "limitId": "codex",
+            "limitName": null,
+            "planType": "prolite",
+            "normalModelSlug": null,
+            "primary": {
+              "usedPercent": 30,
+              "windowDurationMins": 10080,
+              "resetsAt": 1792498140
+            },
+            "secondary": null,
+            "individualLimit": null,
+            "rateLimitReachedType": null,
+            "spendControlReached": false
+          }
+        },
+        "ordinaryUsageAllowed": true
+      },
+      "quota_after": {
+        "rateLimits": {
+          "limitId": "codex",
+          "limitName": null,
+          "planType": "prolite",
+          "normalModelSlug": null,
+          "primary": {
+            "usedPercent": 32,
+            "windowDurationMins": 10080,
+            "resetsAt": 1792498140
+          },
+          "secondary": null,
+          "individualLimit": null,
+          "rateLimitReachedType": null,
+          "spendControlReached": false
+        },
+        "rateLimitsByLimitId": {
+          "codex": {
+            "limitId": "codex",
+            "limitName": null,
+            "planType": "prolite",
+            "normalModelSlug": null,
+            "primary": {
+              "usedPercent": 32,
+              "windowDurationMins": 10080,
+              "resetsAt": 1792498140
+            },
+            "secondary": null,
+            "individualLimit": null,
+            "rateLimitReachedType": null,
+            "spendControlReached": false
+          }
+        },
+        "ordinaryUsageAllowed": true
+      },
+      "telemetry_file": "leaderboard/usage/luna-20261014/human_context-python-usage.jsonl",
+      "result_file": "leaderboard/results/human_context_access/codex_python_luna/result.json"
+    }
+  ],
+  "total": {
+    "cases": 214,
+    "passed": 131,
+    "tokens": {
+      "totalTokens": 9323435,
+      "inputTokens": 9086602,
+      "cachedInputTokens": 5058560,
+      "cacheWriteInputTokens": 0,
+      "outputTokens": 236833,
+      "reasoningOutputTokens": 154495
+    },
+    "python_calls": 269,
+    "api_equivalent_usd": 0.5718063,
+    "aggregate_run_wall_clock_s": 4143.484376691749,
+    "elapsed_wall_clock_s": 1639.01934,
+    "quota_before": {
+      "rateLimits": {
+        "limitId": "codex",
+        "limitName": null,
+        "planType": "prolite",
+        "normalModelSlug": null,
+        "primary": {
+          "usedPercent": 30,
+          "windowDurationMins": 10080,
+          "resetsAt": 1792498140
+        },
+        "secondary": null,
+        "individualLimit": null,
+        "rateLimitReachedType": null,
+        "spendControlReached": false
+      },
+      "rateLimitsByLimitId": {
+        "codex": {
+          "limitId": "codex",
+          "limitName": null,
+          "planType": "prolite",
+          "normalModelSlug": null,
+          "primary": {
+            "usedPercent": 30,
+            "windowDurationMins": 10080,
+            "resetsAt": 1792498140
+          },
+          "secondary": null,
+          "individualLimit": null,
+          "rateLimitReachedType": null,
+          "spendControlReached": false
+        }
+      },
+      "ordinaryUsageAllowed": true
+    },
+    "quota_after": {
+      "rateLimits": {
+        "limitId": "codex",
+        "limitName": null,
+        "planType": "prolite",
+        "normalModelSlug": null,
+        "primary": {
+          "usedPercent": 32,
+          "windowDurationMins": 10080,
+          "resetsAt": 1792498140
+        },
+        "secondary": null,
+        "individualLimit": null,
+        "rateLimitReachedType": null,
+        "spendControlReached": false
+      },
+      "rateLimitsByLimitId": {
+        "codex": {
+          "limitId": "codex",
+          "limitName": null,
+          "planType": "prolite",
+          "normalModelSlug": null,
+          "primary": {
+            "usedPercent": 32,
+            "windowDurationMins": 10080,
+            "resetsAt": 1792498140
+          },
+          "secondary": null,
+          "individualLimit": null,
+          "rateLimitReachedType": null,
+          "spendControlReached": false
+        }
+      },
+      "ordinaryUsageAllowed": true
+    }
+  },
+  "limitations": [
+    "API list-price comparison is not a subscription bill or allowance conversion.",
+    "Quota snapshots are rounded account-wide readings and may include other activity.",
+    "Four fresh full runs include pilot cases for consistent corrected geometry schema provenance.",
+    "These deterministic benchmarks do not include open-ended graded evals.",
+    "Model outputs are nondeterministic; CLI harness and high reasoning effort are part of the measurement.",
+    "Saved task_success summaries cover cases with metric values; all_case_pass_rate counts every case and treats invalid outputs as failures."
+  ]
+}

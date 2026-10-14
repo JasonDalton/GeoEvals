@@ -100,6 +100,34 @@ def test_render_with_no_runs(tmp_path: Path) -> None:
     assert "No runs have been added yet" in render([])
 
 
+def test_codex_run_provenance_and_mixed_leaderboard(tmp_path: Path) -> None:
+    _write(tmp_path, _result())
+    result = _result("codex_python_luna")
+    result["adapter"]["version"] = "0.1.1+codex.0.160.0"
+    _write(tmp_path, result)
+    table = render(load_rows(tmp_path))
+    assert "GPT-6 Luna | python" in table
+    assert "Claude Code 2.1.296 on a Claude subscription" in table
+    assert "Codex CLI 0.160.0 on a ChatGPT subscription" in table
+
+
+@pytest.mark.parametrize("error", ["CodexHarnessError", "CodexUsageLimit"])
+def test_codex_harness_failures_cannot_be_published(tmp_path: Path, error: str) -> None:
+    _write(
+        tmp_path,
+        _result("codex_direct_luna", statuses=("adapter_error",), errors={0: error}),
+    )
+    with pytest.raises(LeaderboardError, match="failed in the harness"):
+        load_rows(tmp_path)
+
+
+@pytest.mark.parametrize("adapter", ["codex_python_opus_5_5", "claude_direct_luna"])
+def test_model_must_match_provider(tmp_path: Path, adapter: str) -> None:
+    _write(tmp_path, _result(adapter))
+    with pytest.raises(LeaderboardError, match="supported leaderboard adapter"):
+        load_rows(tmp_path)
+
+
 def test_build_rejects_runs_with_skipped_cases(tmp_path: Path) -> None:
     _write(tmp_path, _result(statuses=("scored", "skipped")))
     with pytest.raises(LeaderboardError, match="1 of 2 case"):

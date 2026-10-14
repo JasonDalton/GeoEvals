@@ -108,6 +108,10 @@ CLI, which uses the maintainer's own sign-in. They send each case's prompt, para
 files to Anthropic. Those inputs are the MIT-licensed synthetic fixtures of the v0.1.0
 benchmarks; no personal or restricted data is sent. In a graded eval, the python-track model also reads the town's OpenStreetMap layers in its sandbox, and what it prints is sent to Anthropic as part of the conversation; OpenStreetMap data is public and ODbL licensed, and no personal data is sent.
 
+The Codex leaderboard adapters likewise store no credentials: they use the local Codex CLI
+signed in to a ChatGPT subscription. They send the same synthetic benchmark inputs and Python
+tool output to OpenAI.
+
 CI scans the full git history with [gitleaks](https://github.com/gitleaks/gitleaks) and fails
 on any finding. A secret that reaches a commit stays in the history: revoke it first, then
 rewrite the history. To scan locally before you push, run `gitleaks git .` from the repository

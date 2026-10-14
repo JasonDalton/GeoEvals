@@ -61,7 +61,8 @@ Ideas for later graded evals, not yet designed:
 
 Adapters for language models and hosted APIs. The first are not yet released: the Claude
 leaderboard adapters (`claude_direct_<model>`, `claude_python_<model>`) run Claude models
-through the local Claude Code CLI on a subscription, with no API key
+through the local Claude Code CLI; Codex Luna adapters (`codex_direct_luna`,
+`codex_python_luna`) use the local Codex CLI. Both use subscriptions, with no API key
 ([`leaderboard/README.md`](leaderboard/README.md)). Still open: adapters that call hosted APIs
 with keys, who maintains the price table, and how price changes are versioned so that
 historical cost figures stay interpretable.
@@ -80,10 +81,10 @@ validated rating protocol exists. The 1,000-case PlaceContext-1K benchmark is a 
 
 ### Leaderboard policy
 
-A first leaderboard is not yet released: Claude models on the two v0.1.0 benchmarks, run
-locally by the maintainer, in the [README](README.md#leaderboard). Its rules: a row is a
+A first leaderboard is not yet released: Claude models and GPT-6 Luna on the two v0.1.0
+benchmarks, run locally by the maintainer, in the [README](README.md#leaderboard). Its rules: a row is a
 complete run (no skipped case), every row of a benchmark shares its version and dataset
-manifest hash, and the Claude Code version, prompt version and effort are stated with the
+manifest hash, and the CLI version, prompt version and effort are stated with the
 table. These rows are local runs, not verified submissions. Still open: what a submission
 contains, how a result is verified (local runs, submitted artifacts or community reports), the
 trust level each one carries, and whether the run-result schema reserves a submission or

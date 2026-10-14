@@ -386,7 +386,7 @@ def build_parser() -> argparse.ArgumentParser:
     leaderboard_commands = leaderboard.add_subparsers(dest="leaderboard_command", required=True)
     add = leaderboard_commands.add_parser(
         "add",
-        help="Copy a complete Claude run's result.json and config.yaml to "
+        help="Copy a complete subscription run's result.json and config.yaml to "
         "<results>/<benchmark>/<adapter>/.",
     )
     add.add_argument("run_dir", type=Path, help="Run directory or its result.json.")

@@ -5,7 +5,7 @@ Each accepted run is ``leaderboard/results/<benchmark_id>/<adapter>/result.json`
 leaderboard build`` writes the table between the README markers ``<!-- leaderboard:start -->``
 and ``<!-- leaderboard:end -->``.
 
-A run is accepted only if it comes from a Claude leaderboard adapter with the default CLI, on
+A run is accepted only if it comes from a supported subscription adapter with the default CLI, on
 the ``test`` split, and every case ran on the model: no case was skipped (a pilot with
 ``only_cases``, or a run stopped by the usage limit), hit the runner's own timeout, or failed
 with a harness error (``claude_cli.HARNESS_ERRORS``: auth, CLI errors, an unexpected model, a
@@ -32,8 +32,13 @@ RESULT_FILE = "result.json"
 CONFIG_FILE = "config.yaml"
 TRACKS = ("direct", "python")
 SPLIT = "test"
-ADAPTER_PATTERN = re.compile(rf"^claude_({'|'.join(TRACKS)})_({'|'.join(MODELS)})$")
-MODEL_NAMES = {"opus_5_5": "Opus 5.5", "sonnet_5_5": "Sonnet 5.5", "haiku_5_5": "Haiku 5.5"}
+ADAPTER_PATTERN = re.compile(rf"^(claude|codex)_({'|'.join(TRACKS)})_({'|'.join(MODELS)}|luna)$")
+MODEL_NAMES = {
+    "opus_5_5": "Opus 5.5",
+    "sonnet_5_5": "Sonnet 5.5",
+    "haiku_5_5": "Haiku 5.5",
+    "luna": "GPT-6 Luna",
+}
 
 
 class LeaderboardError(ValueError):
@@ -58,22 +63,23 @@ class Row:
     tokens_in: int
     tokens_out: int
     claude_code: str
+    codex_cli: str
     prompt_version: str
     effort: str
 
     def sort_key(self) -> tuple[str, int, int]:
-        return (self.benchmark, TRACKS.index(self.track), list(MODELS).index(self.model))
+        return (self.benchmark, TRACKS.index(self.track), list(MODEL_NAMES).index(self.model))
 
 
 def row_from_result(result: dict[str, Any], where: str) -> Row:
     """The table row of one run result. Raises ``LeaderboardError`` when it is not accepted."""
     adapter = result["adapter"]
     match = ADAPTER_PATTERN.match(adapter["name"])
-    if match is None:
+    if match is None or (match[1] == "codex") != (match[3] == "luna"):
         raise LeaderboardError(
-            f"{where}: adapter {adapter['name']!r} is not a Claude leaderboard adapter"
+            f"{where}: adapter {adapter['name']!r} is not a supported leaderboard adapter"
         )
-    track, model = match.groups()
+    _, track, model = match.groups()
     config = adapter.get("config") or {}
     if "claude_command" in config:
         raise LeaderboardError(f"{where}: runs with a custom claude_command are not accepted")
@@ -88,7 +94,8 @@ def row_from_result(result: dict[str, Any], where: str) -> Row:
             c
             for c in cases
             if c["status"] == "adapter_error"
-            and (c.get("error") or {}).get("type") in HARNESS_ERRORS
+            and (c.get("error") or {}).get("type")
+            in (HARNESS_ERRORS | {"CodexHarnessError", "CodexUsageLimit"})
         ],
     }
     for reason, bad in problems.items():
@@ -119,6 +126,7 @@ def row_from_result(result: dict[str, Any], where: str) -> Row:
         tokens_in=efficiency["tokens_input_total"],
         tokens_out=efficiency["tokens_output_total"],
         claude_code=version.split("+cc.", 1)[1] if "+cc." in version else "unknown",
+        codex_cli=version.split("+codex.", 1)[1] if "+codex." in version else "unknown",
         prompt_version=str(config.get("prompt_version", "v1")),
         effort=str(config.get("effort", "high")),
     )
@@ -187,15 +195,27 @@ def render(rows: list[Row]) -> str:
             {(r.benchmark, r.benchmark_version, r.manifest_hash) for r in rows}
         )
     )
+    claude_rows = [row for row in rows if row.model in MODELS]
+    codex_rows = [row for row in rows if row.model == "luna"]
+    clients = []
+    if claude_rows:
+        clients.append(
+            f"Claude Code {_sorted_values(claude_rows, 'claude_code')} on a Claude subscription"
+        )
+    if codex_rows:
+        clients.append(
+            f"Codex CLI {_sorted_values(codex_rows, 'codex_cli')} on a ChatGPT subscription"
+        )
     notes = [
         "",
-        f"Run locally through Claude Code {_sorted_values(rows, 'claude_code')} on a Claude "
-        f"subscription, effort {_sorted_values(rows, 'effort')}, prompt version "
+        f"Run locally through {'; '.join(clients)}, effort {_sorted_values(rows, 'effort')}, "
+        "prompt version "
         f"{_sorted_values(rows, 'prompt_version')}. Benchmarks: {manifests}.",
         "",
-        "Task success is the mean of `task_success` over every case, with its 95% interval; cases "
-        "that were not scored (errors, invalid output, timeouts) count as failures. Latency is the "
-        "wall-clock time per case, including CLI startup. Tokens in count every prompt token the "
+        "Task success is the mean of `task_success` over cases with a metric value, with its "
+        "95% interval; cases that were not scored are reported separately. "
+        "Latency is the wall-clock time per case, including CLI startup. "
+        "Tokens in count every prompt token the "
         "model processed, cache reads included; tokens out include thinking. Runs on a "
         "subscription have no per-token charge, so there is no cost column.",
     ]

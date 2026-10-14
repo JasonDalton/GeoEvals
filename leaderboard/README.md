@@ -1,12 +1,12 @@
-# Claude leaderboard
+# Claude and Codex leaderboard
 
 This directory holds the run configs and the committed results behind the leaderboard table in
 the [main README](../README.md#leaderboard). The design is in
 [`docs/superpowers/specs/2026-10-09-claude-leaderboard-design.md`](../docs/superpowers/specs/2026-10-09-claude-leaderboard-design.md).
 
-Every run happens on the maintainer's machine through the local Claude Code CLI, signed in to a
-Claude subscription. No API key is used: the adapters remove `ANTHROPIC_API_KEY` from the CLI's
-environment and fail a case unless the CLI reports the subscription sign-in.
+Runs use local CLIs signed in to subscriptions: Claude Code for Claude and Codex for GPT-6
+Luna. Adapters remove provider API keys from the CLI environment and require subscription
+authentication.
 
 ## Adapters
 
@@ -24,12 +24,13 @@ environment and fail a case unless the CLI reports the subscription sign-in.
   20 KB of output per call, 20 calls per case.
 
 The model never sees the expected output, the case strata (which flag trap cases), the
-tolerances or the case ID. Each CLI call runs with `--restricted --tools ""` in an empty
+tolerances or the case ID. Each Claude Code call runs with `--restricted --tools ""` in an empty
 temporary directory, so the maintainer's plugins, hooks and `CLAUDE.md` do not reach it.
 
 ## Requirements
 
-- Claude Code on `PATH`, signed in (`claude` then `/login`).
+- Claude Code on `PATH`, signed in (`claude` then `/login`), or Codex on `PATH`, signed in
+  (`codex login`) for Luna.
 - For the python track, a running Docker daemon. The first run builds the sandbox image from
   `uv.lock` (about 800 MB; it needs network access once).
 
@@ -46,6 +47,42 @@ uv run geoevals run --benchmark benchmarks/gis_correctness/benchmark.yaml \
 Use `pilot-python.yaml` with a `claude_python_*` adapter, and
 `benchmarks/human_context/benchmark.yaml` for the other benchmark.
 
+### Codex Luna
+
+`codex_direct_luna` and `codex_python_luna` run `gpt-6-luna` through the local Codex
+app-server using the existing ChatGPT subscription login (`codex login status`). They
+require Codex CLI's experimental dynamic-tool protocol; the CLI version is recorded
+as `0.1.1+codex.<version>`. Each case has a new ephemeral thread in an empty directory,
+with native tools, MCP servers, apps, plugins and skill discovery disabled. The Python
+track uses the same offline Docker executor as Claude. Model fallback is disabled.
+
+```sh
+uv run geoevals run --benchmark benchmarks/gis_correctness/benchmark.yaml \
+  --adapter codex_direct_luna --config leaderboard/configs/codex/pilot-direct.yaml \
+  --out runs/luna-pilot
+```
+
+Use `codex_python_luna` with `leaderboard/configs/codex/pilot-python.yaml` for the
+Python track, and `benchmarks/human_context/benchmark.yaml` for walking access.
+These four pilots make 20 case calls in total. They use high reasoning effort and
+standard speed, with no automatic retries. They do not run graders.
+
+Set the adapter's optional `telemetry_path` to a JSONL path to save per-case token
+breakdowns and subscription allowance snapshots. Input tokens already include cache
+reads; output tokens already include reasoning. The telemetry omits account identifiers
+and credit balances. The runner's `cost_usd` stays null without a price table; API list
+price estimates are separate from subscription allowance consumption. If ordinary
+subscription usage is unavailable, no inference starts. A harness error stops later
+selected cases in that worker. Pilots remain local; complete Codex runs are accepted by
+the leaderboard publisher.
+
+The initial `0.1.0` GIS cost pilots exposed a Codex schema conversion issue: coordinate
+arrays without explicit `items` become arrays of strings. Their geometry accuracy is
+provisional. Adapter `0.1.1` supplies recursive numeric coordinate items for the tool,
+while leaving the benchmark schema and scoring unchanged. The full runs use the corrected
+schema; the initial pilots remain separate cost records. Walking-access schemas already have
+explicit array items and are unchanged.
+
 ## Run and add a full run
 
 ```sh
@@ -59,6 +96,16 @@ uv run geoevals leaderboard build
 `results/<benchmark_id>/<adapter>/`, replacing an earlier run of the same adapter. It refuses a
 run with skipped cases. `leaderboard build` rewrites the table in the README; CI checks that
 the table matches the committed results.
+
+For full Luna runs, use `leaderboard/configs/codex/direct.yaml` or
+`leaderboard/configs/codex/python.yaml` with the corresponding Codex adapter. The two
+benchmarks contain 56 GIS cases and 51 walking-access cases; both tracks total 214 cases.
+Full runs use high effort, standard speed, and no automatic retries.
+
+The [2026-10-14 Luna report](usage/luna-20261014/summary.json) records all-case pass rates,
+token breakdowns, elapsed time, API list-price comparisons, and subscription allowance
+snapshots for the four full runs. Its adjacent JSONL files preserve per-case usage. API
+comparisons are estimates, separate from subscription billing.
 
 ## When a run stops early
 
@@ -116,7 +163,8 @@ grading sessions on the subscription.
 
 ## What the numbers mean
 
-- **Task success** is the mean of `task_success` over every case, with its 95% interval.
+- **Task success** is the mean of `task_success` over cases with a metric value, with its
+  95% interval. Unscored cases appear in a separate column.
 - **Latency** is wall-clock time per case, CLI startup included.
 - **Tokens in** count every prompt token the model processed, cache reads included (Claude
   Code caches its own prompt); **tokens out** include thinking.
