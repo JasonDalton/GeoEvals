@@ -133,14 +133,16 @@ v0.1 ships three adapters, and none of them needs credentials or network access:
 | `mock` | Configurable failures (wrong output, exceptions, sleeps, retries, token counts) and scripted agent trajectories (`mode: mock_agent`) |
 
 Not yet released: six Claude adapters for the leaderboard (`claude_direct_<model>` and
-`claude_python_<model>`) run Claude models through the local Claude Code CLI. They need a
-signed-in Claude Code and, for the python track, Docker. See
+`claude_python_<model>`) run Claude models through the local Claude Code CLI; two Codex
+adapters (`codex_direct_luna` and `codex_python_luna`) run GPT-6 Luna through Codex. They need a
+signed-in CLI and, for the python track, Docker. See
 [`leaderboard/README.md`](leaderboard/README.md).
 
 ## Leaderboard
 
-Claude models on the two v0.1.0 benchmarks, in two tracks: **direct**, where the model answers
-from the input data inlined in the prompt with no tools, and **python**, where the model can run
+Claude models and GPT-6 Luna on the two v0.1.0 benchmarks, in two tracks: **direct**, where the
+model answers from the input data inlined in the prompt with no tools, and **python**, where
+the model can run
 Python (GeoPandas, Shapely, pyproj, NetworkX, SciPy) in a Docker container with no network. Every
 row is a complete run on the maintainer's machine, generated from the committed results in
 [`leaderboard/results/`](leaderboard/results/); these are local runs, not verified submissions.
@@ -152,19 +154,23 @@ How to run and add a model: [`leaderboard/README.md`](leaderboard/README.md).
 | Opus 5.5 | direct | `gis_correctness` 0.3.0 | 0.804 [0.70, 0.91] | 0 of 56 | 9.2 / 108.8 | 148,766 | 244,931 |
 | Sonnet 5.5 | direct | `gis_correctness` 0.3.0 | 0.691 [0.56, 0.80] | 1 of 56 | 6.6 / 90.4 | 146,410 | 210,830 |
 | Haiku 5.5 | direct | `gis_correctness` 0.3.0 | 0.800 [0.69, 0.91] | 1 of 56 | 8.9 / 325.5 | 149,465 | 1,100,530 |
+| GPT-6 Luna | direct | `gis_correctness` 0.3.0 | 0.479 [0.33, 0.62] | 8 of 56 | 10.8 / 35.2 | 638,018 | 66,770 |
 | Opus 5.5 | python | `gis_correctness` 0.3.0 | 0.964 [0.91, 1.00] | 0 of 56 | 7.0 / 13.5 | 383,637 | 34,037 |
 | Sonnet 5.5 | python | `gis_correctness` 0.3.0 | 0.929 [0.86, 0.98] | 0 of 56 | 6.9 / 12.3 | 412,122 | 32,511 |
 | Haiku 5.5 | python | `gis_correctness` 0.3.0 | 0.911 [0.84, 0.98] | 0 of 56 | 7.6 / 15.2 | 499,170 | 60,401 |
+| GPT-6 Luna | python | `gis_correctness` 0.3.0 | 0.837 [0.73, 0.94] | 7 of 56 | 11.9 / 16.4 | 1,083,630 | 26,190 |
 | Opus 5.5 | direct | `human_context_access` 0.2.0 | 0.961 [0.90, 1.00] | 0 of 51 | 13.9 / 24.1 | 3,244,870 | 71,071 |
 | Sonnet 5.5 | direct | `human_context_access` 0.2.0 | 0.725 [0.61, 0.84] | 0 of 51 | 15.0 / 24.8 | 3,245,074 | 89,898 |
 | Haiku 5.5 | direct | `human_context_access` 0.2.0 | 0.882 [0.78, 0.96] | 0 of 51 | 38.3 / 75.5 | 3,244,964 | 469,903 |
+| GPT-6 Luna | direct | `human_context_access` 0.2.0 | 0.667 [0.53, 0.80] | 0 of 51 | 16.1 / 25.8 | 5,307,669 | 56,141 |
 | Opus 5.5 | python | `human_context_access` 0.2.0 | 0.980 [0.94, 1.00] | 0 of 51 | 19.0 / 25.8 | 896,689 | 77,564 |
 | Sonnet 5.5 | python | `human_context_access` 0.2.0 | 0.882 [0.78, 0.96] | 0 of 51 | 17.0 / 21.7 | 839,798 | 79,134 |
 | Haiku 5.5 | python | `human_context_access` 0.2.0 | 0.745 [0.63, 0.86] | 0 of 51 | 28.4 / 39.2 | 1,808,326 | 232,847 |
+| GPT-6 Luna | python | `human_context_access` 0.2.0 | 0.647 [0.51, 0.78] | 0 of 51 | 29.2 / 43.0 | 2,057,285 | 87,732 |
 
-Run locally through Claude Code 2.1.296 on a Claude subscription, effort high, prompt version v1. Benchmarks: `gis_correctness` 0.3.0, manifest `20beb1d10b21`; `human_context_access` 0.2.0, manifest `f2d344c9051b`.
+Run locally through Claude Code 2.1.296 on a Claude subscription; Codex CLI 0.160.0 on a ChatGPT subscription, effort high, prompt version v1. Benchmarks: `gis_correctness` 0.3.0, manifest `20beb1d10b21`; `human_context_access` 0.2.0, manifest `f2d344c9051b`.
 
-Task success is the mean of `task_success` over every case, with its 95% interval; cases that were not scored (errors, invalid output, timeouts) count as failures. Latency is the wall-clock time per case, including CLI startup. Tokens in count every prompt token the model processed, cache reads included; tokens out include thinking. Runs on a subscription have no per-token charge, so there is no cost column.
+Task success is the mean of `task_success` over cases with a metric value, with its 95% interval; cases that were not scored are reported separately. Latency is the wall-clock time per case, including CLI startup. Tokens in count every prompt token the model processed, cache reads included; tokens out include thinking. Runs on a subscription have no per-token charge, so there is no cost column.
 <!-- leaderboard:end -->
 
 ## Graded evals (agent-graded)

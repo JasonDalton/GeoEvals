@@ -3,6 +3,7 @@
 from geoevals.adapters.access_baseline import AccessBaselineAdapter, UnsupportedAccessOperation
 from geoevals.adapters.base import Adapter, AdapterResponse, SkipCase, TokenUsage
 from geoevals.adapters.claude import ClaudeDirectAdapter, ClaudePythonAdapter, adapter_factories
+from geoevals.adapters.codex import CodexDirectAdapter, CodexPythonAdapter
 from geoevals.adapters.gis_baseline import GisBaselineAdapter, UnsupportedOperation
 from geoevals.adapters.mock import MockAdapter, MockAdapterError, MockConfigError
 from geoevals.adapters.registry import (
@@ -15,6 +16,8 @@ from geoevals.adapters.registry import (
 register_adapter(MockAdapter.name, MockAdapter)
 register_adapter(AccessBaselineAdapter.name, AccessBaselineAdapter)
 register_adapter(GisBaselineAdapter.name, GisBaselineAdapter)
+register_adapter(CodexDirectAdapter.name, CodexDirectAdapter)
+register_adapter(CodexPythonAdapter.name, CodexPythonAdapter)
 for _name, _factory in adapter_factories().items():
     register_adapter(_name, _factory)
 
@@ -24,6 +27,8 @@ __all__ = [
     "AdapterResponse",
     "ClaudeDirectAdapter",
     "ClaudePythonAdapter",
+    "CodexDirectAdapter",
+    "CodexPythonAdapter",
     "GisBaselineAdapter",
     "MockAdapter",
     "MockAdapterError",

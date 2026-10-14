@@ -1,0 +1,514 @@
+{
+  "model": "gpt-6-luna",
+  "date": "2026-10-14",
+  "scope": "Four five-case cost pilots only; no full runs or graders.",
+  "reasoning_effort": "high",
+  "service_tier": "default",
+  "auth": "ChatGPT subscription",
+  "api_equivalent_prices_usd_per_million": {
+    "input": 0.1,
+    "cached_input": 0.01,
+    "cache_write_input": 0.125,
+    "output": 0.5
+  },
+  "price_source": "https://developers.openai.com/api/docs/models/gpt-6-luna",
+  "price_checked_at": "2026-10-14",
+  "pilots": [
+    {
+      "benchmark": {
+        "id": "gis_correctness",
+        "version": "0.3.0"
+      },
+      "track": "direct",
+      "adapter": {
+        "config": {
+          "case_timeout_s": 840,
+          "effort": "high",
+          "only_cases": [
+            "crs_transform-001",
+            "distance-003",
+            "buffer-001",
+            "spatial_join-005",
+            "abstention-001",
+            "nearest_amenity-001",
+            "amenity_count-001",
+            "network_detour-001",
+            "open_amenities-001"
+          ],
+          "prompt_version": "v1",
+          "telemetry_path": "/workspace/tmp/GeoEvals/runs/luna-pilot-20261014/gis_correctness-direct-usage.jsonl"
+        },
+        "name": "codex_direct_luna",
+        "version": "0.1.0+codex.0.160.0"
+      },
+      "run_id": "gis_correctness-codex_direct_luna-20261014T152402Z-6f2c0ef9",
+      "selected_cases": 5,
+      "skipped_cases": 51,
+      "passed_cases": 1,
+      "accuracy_provisional": true,
+      "wall_clock_s": 103.745707235066,
+      "tokens": {
+        "totalTokens": 66175,
+        "inputTokens": 58153,
+        "cachedInputTokens": 13568,
+        "cacheWriteInputTokens": 0,
+        "outputTokens": 8022,
+        "reasoningOutputTokens": 6731
+      },
+      "python_calls": 0,
+      "api_equivalent_usd": 0.00860518,
+      "result_file": "runs/luna-pilot-20261014/gis_correctness-direct/gis_correctness-codex_direct_luna-20261014T152402Z-6f2c0ef9/result.json",
+      "telemetry_file": "runs/luna-pilot-20261014/gis_correctness-direct-usage.jsonl",
+      "quota_before": {
+        "rateLimits": {
+          "limitId": "codex",
+          "limitName": null,
+          "planType": "prolite",
+          "normalModelSlug": null,
+          "primary": {
+            "usedPercent": 29,
+            "windowDurationMins": 10080,
+            "resetsAt": 1792498140
+          },
+          "secondary": null,
+          "individualLimit": null,
+          "rateLimitReachedType": null,
+          "spendControlReached": false
+        },
+        "rateLimitsByLimitId": {
+          "codex": {
+            "limitId": "codex",
+            "limitName": null,
+            "planType": "prolite",
+            "normalModelSlug": null,
+            "primary": {
+              "usedPercent": 29,
+              "windowDurationMins": 10080,
+              "resetsAt": 1792498140
+            },
+            "secondary": null,
+            "individualLimit": null,
+            "rateLimitReachedType": null,
+            "spendControlReached": false
+          }
+        },
+        "ordinaryUsageAllowed": true
+      },
+      "quota_after": {
+        "rateLimits": {
+          "limitId": "codex",
+          "limitName": null,
+          "planType": "prolite",
+          "normalModelSlug": null,
+          "primary": {
+            "usedPercent": 29,
+            "windowDurationMins": 10080,
+            "resetsAt": 1792498140
+          },
+          "secondary": null,
+          "individualLimit": null,
+          "rateLimitReachedType": null,
+          "spendControlReached": false
+        },
+        "rateLimitsByLimitId": {
+          "codex": {
+            "limitId": "codex",
+            "limitName": null,
+            "planType": "prolite",
+            "normalModelSlug": null,
+            "primary": {
+              "usedPercent": 29,
+              "windowDurationMins": 10080,
+              "resetsAt": 1792498140
+            },
+            "secondary": null,
+            "individualLimit": null,
+            "rateLimitReachedType": null,
+            "spendControlReached": false
+          }
+        },
+        "ordinaryUsageAllowed": true
+      }
+    },
+    {
+      "benchmark": {
+        "id": "human_context_access",
+        "version": "0.2.0"
+      },
+      "track": "direct",
+      "adapter": {
+        "config": {
+          "case_timeout_s": 840,
+          "effort": "high",
+          "only_cases": [
+            "crs_transform-001",
+            "distance-003",
+            "buffer-001",
+            "spatial_join-005",
+            "abstention-001",
+            "nearest_amenity-001",
+            "amenity_count-001",
+            "network_detour-001",
+            "open_amenities-001"
+          ],
+          "prompt_version": "v1",
+          "telemetry_path": "/workspace/tmp/GeoEvals/runs/luna-pilot-20261014/human_context-direct-usage.jsonl"
+        },
+        "name": "codex_direct_luna",
+        "version": "0.1.0+codex.0.160.0"
+      },
+      "run_id": "human_context_access-codex_direct_luna-20261014T152624Z-4f192977",
+      "selected_cases": 5,
+      "skipped_cases": 46,
+      "passed_cases": 2,
+      "accuracy_provisional": false,
+      "wall_clock_s": 77.8468455350958,
+      "tokens": {
+        "totalTokens": 520414,
+        "inputTokens": 515016,
+        "cachedInputTokens": 249600,
+        "cacheWriteInputTokens": 0,
+        "outputTokens": 5398,
+        "reasoningOutputTokens": 5159
+      },
+      "python_calls": 0,
+      "api_equivalent_usd": 0.031736600000000004,
+      "result_file": "runs/luna-pilot-20261014/human_context-direct/human_context_access-codex_direct_luna-20261014T152624Z-4f192977/result.json",
+      "telemetry_file": "runs/luna-pilot-20261014/human_context-direct-usage.jsonl",
+      "quota_before": {
+        "rateLimits": {
+          "limitId": "codex",
+          "limitName": null,
+          "planType": "prolite",
+          "normalModelSlug": null,
+          "primary": {
+            "usedPercent": 29,
+            "windowDurationMins": 10080,
+            "resetsAt": 1792498140
+          },
+          "secondary": null,
+          "individualLimit": null,
+          "rateLimitReachedType": null,
+          "spendControlReached": false
+        },
+        "rateLimitsByLimitId": {
+          "codex": {
+            "limitId": "codex",
+            "limitName": null,
+            "planType": "prolite",
+            "normalModelSlug": null,
+            "primary": {
+              "usedPercent": 29,
+              "windowDurationMins": 10080,
+              "resetsAt": 1792498140
+            },
+            "secondary": null,
+            "individualLimit": null,
+            "rateLimitReachedType": null,
+            "spendControlReached": false
+          }
+        },
+        "ordinaryUsageAllowed": true
+      },
+      "quota_after": {
+        "rateLimits": {
+          "limitId": "codex",
+          "limitName": null,
+          "planType": "prolite",
+          "normalModelSlug": null,
+          "primary": {
+            "usedPercent": 29,
+            "windowDurationMins": 10080,
+            "resetsAt": 1792498140
+          },
+          "secondary": null,
+          "individualLimit": null,
+          "rateLimitReachedType": null,
+          "spendControlReached": false
+        },
+        "rateLimitsByLimitId": {
+          "codex": {
+            "limitId": "codex",
+            "limitName": null,
+            "planType": "prolite",
+            "normalModelSlug": null,
+            "primary": {
+              "usedPercent": 29,
+              "windowDurationMins": 10080,
+              "resetsAt": 1792498140
+            },
+            "secondary": null,
+            "individualLimit": null,
+            "rateLimitReachedType": null,
+            "spendControlReached": false
+          }
+        },
+        "ordinaryUsageAllowed": true
+      }
+    },
+    {
+      "benchmark": {
+        "id": "gis_correctness",
+        "version": "0.3.0"
+      },
+      "track": "python",
+      "adapter": {
+        "config": {
+          "case_timeout_s": 840,
+          "effort": "high",
+          "max_tool_calls": 20,
+          "only_cases": [
+            "crs_transform-001",
+            "distance-003",
+            "buffer-001",
+            "spatial_join-005",
+            "abstention-001",
+            "nearest_amenity-001",
+            "amenity_count-001",
+            "network_detour-001",
+            "open_amenities-001"
+          ],
+          "prompt_version": "v1",
+          "telemetry_path": "/workspace/tmp/GeoEvals/runs/luna-pilot-20261014/gis_correctness-python-usage.jsonl"
+        },
+        "name": "codex_python_luna",
+        "version": "0.1.0+codex.0.160.0"
+      },
+      "run_id": "gis_correctness-codex_python_luna-20261014T152807Z-7676aecb",
+      "selected_cases": 5,
+      "skipped_cases": 51,
+      "passed_cases": 3,
+      "accuracy_provisional": true,
+      "wall_clock_s": 99.2143139149994,
+      "tokens": {
+        "totalTokens": 103899,
+        "inputTokens": 99635,
+        "cachedInputTokens": 40960,
+        "cacheWriteInputTokens": 0,
+        "outputTokens": 4264,
+        "reasoningOutputTokens": 1289
+      },
+      "python_calls": 7,
+      "api_equivalent_usd": 0.008409100000000001,
+      "result_file": "runs/luna-pilot-20261014/gis_correctness-python/gis_correctness-codex_python_luna-20261014T152807Z-7676aecb/result.json",
+      "telemetry_file": "runs/luna-pilot-20261014/gis_correctness-python-usage.jsonl",
+      "quota_before": {
+        "rateLimits": {
+          "limitId": "codex",
+          "limitName": null,
+          "planType": "prolite",
+          "normalModelSlug": null,
+          "primary": {
+            "usedPercent": 29,
+            "windowDurationMins": 10080,
+            "resetsAt": 1792498140
+          },
+          "secondary": null,
+          "individualLimit": null,
+          "rateLimitReachedType": null,
+          "spendControlReached": false
+        },
+        "rateLimitsByLimitId": {
+          "codex": {
+            "limitId": "codex",
+            "limitName": null,
+            "planType": "prolite",
+            "normalModelSlug": null,
+            "primary": {
+              "usedPercent": 29,
+              "windowDurationMins": 10080,
+              "resetsAt": 1792498140
+            },
+            "secondary": null,
+            "individualLimit": null,
+            "rateLimitReachedType": null,
+            "spendControlReached": false
+          }
+        },
+        "ordinaryUsageAllowed": true
+      },
+      "quota_after": {
+        "rateLimits": {
+          "limitId": "codex",
+          "limitName": null,
+          "planType": "prolite",
+          "normalModelSlug": null,
+          "primary": {
+            "usedPercent": 29,
+            "windowDurationMins": 10080,
+            "resetsAt": 1792498140
+          },
+          "secondary": null,
+          "individualLimit": null,
+          "rateLimitReachedType": null,
+          "spendControlReached": false
+        },
+        "rateLimitsByLimitId": {
+          "codex": {
+            "limitId": "codex",
+            "limitName": null,
+            "planType": "prolite",
+            "normalModelSlug": null,
+            "primary": {
+              "usedPercent": 29,
+              "windowDurationMins": 10080,
+              "resetsAt": 1792498140
+            },
+            "secondary": null,
+            "individualLimit": null,
+            "rateLimitReachedType": null,
+            "spendControlReached": false
+          }
+        },
+        "ordinaryUsageAllowed": true
+      }
+    },
+    {
+      "benchmark": {
+        "id": "human_context_access",
+        "version": "0.2.0"
+      },
+      "track": "python",
+      "adapter": {
+        "config": {
+          "case_timeout_s": 840,
+          "effort": "high",
+          "max_tool_calls": 20,
+          "only_cases": [
+            "crs_transform-001",
+            "distance-003",
+            "buffer-001",
+            "spatial_join-005",
+            "abstention-001",
+            "nearest_amenity-001",
+            "amenity_count-001",
+            "network_detour-001",
+            "open_amenities-001"
+          ],
+          "prompt_version": "v1",
+          "telemetry_path": "/workspace/tmp/GeoEvals/runs/luna-pilot-20261014/human_context-python-usage.jsonl"
+        },
+        "name": "codex_python_luna",
+        "version": "0.1.0+codex.0.160.0"
+      },
+      "run_id": "human_context_access-codex_python_luna-20261014T153010Z-c2426c22",
+      "selected_cases": 5,
+      "skipped_cases": 46,
+      "passed_cases": 4,
+      "accuracy_provisional": false,
+      "wall_clock_s": 179.122104833135,
+      "tokens": {
+        "totalTokens": 222025,
+        "inputTokens": 212029,
+        "cachedInputTokens": 123904,
+        "cacheWriteInputTokens": 0,
+        "outputTokens": 9996,
+        "reasoningOutputTokens": 4192
+      },
+      "python_calls": 20,
+      "api_equivalent_usd": 0.01504954,
+      "result_file": "runs/luna-pilot-20261014/human_context-python/human_context_access-codex_python_luna-20261014T153010Z-c2426c22/result.json",
+      "telemetry_file": "runs/luna-pilot-20261014/human_context-python-usage.jsonl",
+      "quota_before": {
+        "rateLimits": {
+          "limitId": "codex",
+          "limitName": null,
+          "planType": "prolite",
+          "normalModelSlug": null,
+          "primary": {
+            "usedPercent": 29,
+            "windowDurationMins": 10080,
+            "resetsAt": 1792498140
+          },
+          "secondary": null,
+          "individualLimit": null,
+          "rateLimitReachedType": null,
+          "spendControlReached": false
+        },
+        "rateLimitsByLimitId": {
+          "codex": {
+            "limitId": "codex",
+            "limitName": null,
+            "planType": "prolite",
+            "normalModelSlug": null,
+            "primary": {
+              "usedPercent": 29,
+              "windowDurationMins": 10080,
+              "resetsAt": 1792498140
+            },
+            "secondary": null,
+            "individualLimit": null,
+            "rateLimitReachedType": null,
+            "spendControlReached": false
+          }
+        },
+        "ordinaryUsageAllowed": true
+      },
+      "quota_after": {
+        "rateLimits": {
+          "limitId": "codex",
+          "limitName": null,
+          "planType": "prolite",
+          "normalModelSlug": null,
+          "primary": {
+            "usedPercent": 30,
+            "windowDurationMins": 10080,
+            "resetsAt": 1792498140
+          },
+          "secondary": null,
+          "individualLimit": null,
+          "rateLimitReachedType": null,
+          "spendControlReached": false
+        },
+        "rateLimitsByLimitId": {
+          "codex": {
+            "limitId": "codex",
+            "limitName": null,
+            "planType": "prolite",
+            "normalModelSlug": null,
+            "primary": {
+              "usedPercent": 30,
+              "windowDurationMins": 10080,
+              "resetsAt": 1792498140
+            },
+            "secondary": null,
+            "individualLimit": null,
+            "rateLimitReachedType": null,
+            "spendControlReached": false
+          }
+        },
+        "ordinaryUsageAllowed": true
+      }
+    }
+  ],
+  "limitations": [
+    "API-equivalent dollar amounts are comparisons, not subscription charges.",
+    "Allowance is an integer percentage shared with other account usage; its change cannot be attributed precisely to these pilots.",
+    "Only five selected cases per benchmark and track; full-run extrapolations are rough.",
+    "GIS adapter 0.1.0 coordinate schemas were rewritten by Codex as arrays of strings. GIS accuracy is provisional; the numeric-coordinate translation fix in adapter 0.1.1 passed local tests and was not rerun against the model.",
+    "Pilot results contain intentionally skipped cases and are not full leaderboard entries."
+  ],
+  "total": {
+    "selected_cases": 20,
+    "passed_cases": 10,
+    "wall_clock_s": 459.9289715182962,
+    "tokens": {
+      "totalTokens": 912513,
+      "inputTokens": 884833,
+      "cachedInputTokens": 428032,
+      "cacheWriteInputTokens": 0,
+      "outputTokens": 27680,
+      "reasoningOutputTokens": 17371
+    },
+    "python_calls": 27,
+    "api_equivalent_usd": 0.06380042000000001,
+    "weekly_allowance_used_percent_before": 29,
+    "weekly_allowance_used_percent_after": 30
+  },
+  "rough_full_luna_extrapolation": {
+    "cases": 214,
+    "api_equivalent_usd": 0.6677785640000001,
+    "wall_clock_s": 4894.235530636687,
+    "method": "Scale each five-case pilot mean to its benchmark case count, for both tracks. No subscription-dollar or allowance-percentage extrapolation."
+  }
+}

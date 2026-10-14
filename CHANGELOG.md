@@ -22,6 +22,15 @@ metrics and schemas carry their own versions; see
 Both tracks call the local Claude Code CLI (`claude -p`) signed in to a Claude subscription;
 no API key is used. The adapter version records the Claude Code version (`0.1.0+cc.<version>`).
 
+- `codex_direct_luna` and `codex_python_luna` 0.1.0 (initial pilots), 0.1.1 (full runs):
+  GPT-6 Luna through the local Codex app-server, authenticated with a ChatGPT subscription.
+  Both tracks use isolated ephemeral threads with native tools disabled; Python uses the
+  existing offline Docker executor. Version 0.1.1 gives coordinate arrays recursive numeric
+  items to prevent Codex's schema conversion from turning geometry coordinates into strings.
+  Detailed token usage and allowance snapshots can be saved with `telemetry_path`.
+- Complete Luna runs can be added to the deterministic benchmark leaderboard, with Codex
+  CLI provenance recorded separately from Claude Code. Pilots and harness failures are rejected.
+
 #### Schemas
 
 - Graded eval spec schema 1.0.0 (`schemas/eval-spec.schema.json`), for open-ended evals that a
